@@ -71,28 +71,15 @@ class AppDatabase extends _$AppDatabase {
     await into(tasks).insert(companion);
   }
 
-  Future<void> updateTaskOrder({
-    required int taskId,
-    required String sortOrder,
-  }) async {
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(
-      TasksCompanion(sortOrder: Value(sortOrder)),
-    );
+  Future<void> updateTaskOrder({required int taskId, required String sortOrder}) async {
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(sortOrder: Value(sortOrder)));
   }
 
-  Future<void> startTaskSession({
-    required int taskId,
-    required DateTime startedAt,
-  }) async {
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(
-      TasksCompanion(latestStart: Value(startedAt)),
-    );
+  Future<void> startTaskSession({required int taskId, required DateTime startedAt}) async {
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(latestStart: Value(startedAt)));
   }
 
-  Future<void> pauseTaskSession({
-    required int taskId,
-    required DateTime pausedAt,
-  }) async {
+  Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt}) async {
     final task = await getTaskById(taskId);
     if (task == null || task.latestStart == null) {
       return;
@@ -101,29 +88,17 @@ class AppDatabase extends _$AppDatabase {
     final elapsed = pausedAt.difference(task.latestStart!).inMilliseconds;
     final clampedElapsed = elapsed < 0 ? 0 : elapsed;
 
-    await (update(tasks)..where((row) => row.id.equals(taskId))).write(
-      TasksCompanion(
-        timeSpent: Value(task.timeSpent + clampedElapsed),
-        latestStart: const Value(null),
-      ),
-    );
+    await (update(tasks)..where((row) => row.id.equals(taskId))).write(TasksCompanion(timeSpent: Value(task.timeSpent + clampedElapsed), latestStart: const Value(null)));
   }
 
-  Future<void> completeTask({
-    required int taskId,
-    required DateTime completedAt,
-  }) async {
+  Future<void> completeTask({required int taskId, required DateTime completedAt}) async {
     await pauseTaskSession(taskId: taskId, pausedAt: completedAt);
 
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(
-      const TasksCompanion(isCompleted: Value(true)),
-    );
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(isCompleted: Value(true)));
   }
 
   Future<void> discardUnfinishedSession(int taskId) async {
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(
-      const TasksCompanion(latestStart: Value(null)),
-    );
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(latestStart: Value(null)));
   }
 
   Future<List<Task>> getRecoverableSessions() {

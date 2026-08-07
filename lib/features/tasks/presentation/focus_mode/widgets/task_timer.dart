@@ -1,27 +1,18 @@
 import 'package:flutter/material.dart';
 
 class TaskTimer extends StatelessWidget {
-  const TaskTimer({
-    super.key,
-    required this.duration,
-  });
+  const TaskTimer({super.key, required this.duration});
 
   final Duration duration;
 
   @override
   Widget build(BuildContext context) {
-    return _TimerBox(
-      label: 'Task',
-      value: _format(duration),
-    );
+    return _TimerBox(label: 'Task', value: _format(duration));
   }
 }
 
 class _TimerBox extends StatelessWidget {
-  const _TimerBox({
-    required this.label,
-    required this.value,
-  });
+  const _TimerBox({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -33,9 +24,7 @@ class _TimerBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
-        ),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

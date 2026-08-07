@@ -7,19 +7,10 @@ import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
 class PlanModeState {
-  const PlanModeState({
-    required this.selectedDay,
-    required this.tasks,
-    required this.isLoading,
-    this.error,
-  });
+  const PlanModeState({required this.selectedDay, required this.tasks, required this.isLoading, this.error});
 
   factory PlanModeState.initial() {
-    return PlanModeState(
-      selectedDay: _dateOnly(DateTime.now()),
-      tasks: const [],
-      isLoading: true,
-    );
+    return PlanModeState(selectedDay: _dateOnly(DateTime.now()), tasks: const [], isLoading: true);
   }
 
   final DateTime selectedDay;
@@ -27,13 +18,7 @@ class PlanModeState {
   final bool isLoading;
   final String? error;
 
-  PlanModeState copyWith({
-    DateTime? selectedDay,
-    List<TaskEntity>? tasks,
-    bool? isLoading,
-    String? error,
-    bool clearError = false,
-  }) {
+  PlanModeState copyWith({DateTime? selectedDay, List<TaskEntity>? tasks, bool? isLoading, String? error, bool clearError = false}) {
     return PlanModeState(
       selectedDay: selectedDay ?? this.selectedDay,
       tasks: tasks ?? this.tasks,
@@ -59,21 +44,16 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
     _subscription?.cancel();
     state = state.copyWith(isLoading: true, clearError: true);
 
-    _subscription = _repository.watchTasksForDay(day).listen(
-      (tasks) {
-        state = state.copyWith(
-          tasks: tasks,
-          isLoading: false,
-          clearError: true,
+    _subscription = _repository
+        .watchTasksForDay(day)
+        .listen(
+          (tasks) {
+            state = state.copyWith(tasks: tasks, isLoading: false, clearError: true);
+          },
+          onError: (Object error) {
+            state = state.copyWith(isLoading: false, error: error.toString());
+          },
         );
-      },
-      onError: (Object error) {
-        state = state.copyWith(
-          isLoading: false,
-          error: error.toString(),
-        );
-      },
-    );
   }
 
   Future<void> setSelectedDay(DateTime day) async {
@@ -86,19 +66,11 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
     _bind(normalized);
   }
 
-  Future<void> addTask({
-    required String title,
-    String? description,
-  }) async {
+  Future<void> addTask({required String title, String? description}) async {
     final lastSort = state.tasks.isEmpty ? null : state.tasks.last.sortOrder;
     final nextSort = FractionalIndexer.between(lastSort, null);
 
-    await _repository.createTask(
-      title: title,
-      description: description,
-      assignedDate: state.selectedDay,
-      sortOrder: nextSort,
-    );
+    await _repository.createTask(title: title, description: description, assignedDate: state.selectedDay, sortOrder: nextSort);
   }
 
   Future<void> reorderTask(int oldIndex, int newIndex) async {
@@ -112,19 +84,11 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
     tasks.insert(adjustedNewIndex, movedTask);
 
     final before = adjustedNewIndex > 0 ? tasks[adjustedNewIndex - 1] : null;
-    final after = adjustedNewIndex < tasks.length - 1
-        ? tasks[adjustedNewIndex + 1]
-        : null;
+    final after = adjustedNewIndex < tasks.length - 1 ? tasks[adjustedNewIndex + 1] : null;
 
-    final nextSort = FractionalIndexer.between(
-      before?.sortOrder,
-      after?.sortOrder,
-    );
+    final nextSort = FractionalIndexer.between(before?.sortOrder, after?.sortOrder);
 
-    await _repository.updateTaskOrder(
-      taskId: movedTask.id,
-      sortOrder: nextSort,
-    );
+    await _repository.updateTaskOrder(taskId: movedTask.id, sortOrder: nextSort);
   }
 
   @override

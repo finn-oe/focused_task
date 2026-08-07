@@ -1,27 +1,18 @@
 import 'package:flutter/material.dart';
 
 class SessionTimer extends StatelessWidget {
-  const SessionTimer({
-    super.key,
-    required this.duration,
-  });
+  const SessionTimer({super.key, required this.duration});
 
   final Duration duration;
 
   @override
   Widget build(BuildContext context) {
-    return _TimerBox(
-      label: 'Session',
-      value: _format(duration),
-    );
+    return _TimerBox(label: 'Session', value: _format(duration));
   }
 }
 
 class _TimerBox extends StatelessWidget {
-  const _TimerBox({
-    required this.label,
-    required this.value,
-  });
+  const _TimerBox({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -30,10 +21,7 @@ class _TimerBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

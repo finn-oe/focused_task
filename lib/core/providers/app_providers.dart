@@ -16,13 +16,11 @@ final taskRepositoryProvider = Provider<ITaskRepository>((ref) {
   return TaskRepositoryImpl(ref.watch(appDatabaseProvider));
 });
 
-final planModeNotifierProvider =
-    StateNotifierProvider<PlanModeNotifier, PlanModeState>((ref) {
+final planModeNotifierProvider = StateNotifierProvider<PlanModeNotifier, PlanModeState>((ref) {
   return PlanModeNotifier(ref.watch(taskRepositoryProvider));
 });
 
-final focusModeNotifierProvider =
-    StateNotifierProvider<FocusModeNotifier, FocusModeState>((ref) {
+final focusModeNotifierProvider = StateNotifierProvider<FocusModeNotifier, FocusModeState>((ref) {
   final notifier = FocusModeNotifier(ref.watch(taskRepositoryProvider));
   ref.onDispose(notifier.disposeNotifier);
   return notifier;

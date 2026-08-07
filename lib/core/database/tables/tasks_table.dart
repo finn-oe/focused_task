@@ -11,13 +11,11 @@ class Tasks extends Table {
 
   TextColumn get sortOrder => text().named('sort_order')();
 
-  BoolColumn get isCompleted =>
-      boolean().named('is_completed').withDefault(const Constant(false))();
+  BoolColumn get isCompleted => boolean().named('is_completed').withDefault(const Constant(false))();
 
   IntColumn get priority => integer().withDefault(const Constant(0))();
 
-  IntColumn get timeSpent =>
-      integer().named('time_spent').withDefault(const Constant(0))();
+  IntColumn get timeSpent => integer().named('time_spent').withDefault(const Constant(0))();
 
   DateTimeColumn get latestStart => dateTime().named('latest_start').nullable()();
 }

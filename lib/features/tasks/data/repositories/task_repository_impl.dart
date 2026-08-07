@@ -11,9 +11,7 @@ class TaskRepositoryImpl implements ITaskRepository {
 
   @override
   Stream<List<TaskEntity>> watchTasksForDay(DateTime day) {
-    return _database.watchTasksForDay(day).map(
-          (tasks) => tasks.map(_toEntity).toList(growable: false),
-        );
+    return _database.watchTasksForDay(day).map((tasks) => tasks.map(_toEntity).toList(growable: false));
   }
 
   @override
@@ -35,53 +33,29 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
-  Future<void> createTask({
-    required String title,
-    String? description,
-    required DateTime assignedDate,
-    required String sortOrder,
-    TaskPriority priority = TaskPriority.low,
-  }) {
+  Future<void> createTask({required String title, String? description, required DateTime assignedDate, required String sortOrder, TaskPriority priority = TaskPriority.low}) {
     return _database.createTask(
-      TasksCompanion.insert(
-        title: title,
-        description: Value(description),
-        assignedDate: assignedDate,
-        sortOrder: sortOrder,
-        priority: Value(priority.value),
-      ),
+      TasksCompanion.insert(title: title, description: Value(description), assignedDate: assignedDate, sortOrder: sortOrder, priority: Value(priority.value)),
     );
   }
 
   @override
-  Future<void> updateTaskOrder({
-    required int taskId,
-    required String sortOrder,
-  }) {
+  Future<void> updateTaskOrder({required int taskId, required String sortOrder}) {
     return _database.updateTaskOrder(taskId: taskId, sortOrder: sortOrder);
   }
 
   @override
-  Future<void> startTaskSession({
-    required int taskId,
-    required DateTime startedAt,
-  }) {
+  Future<void> startTaskSession({required int taskId, required DateTime startedAt}) {
     return _database.startTaskSession(taskId: taskId, startedAt: startedAt);
   }
 
   @override
-  Future<void> pauseTaskSession({
-    required int taskId,
-    required DateTime pausedAt,
-  }) {
+  Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt}) {
     return _database.pauseTaskSession(taskId: taskId, pausedAt: pausedAt);
   }
 
   @override
-  Future<void> completeTask({
-    required int taskId,
-    required DateTime completedAt,
-  }) {
+  Future<void> completeTask({required int taskId, required DateTime completedAt}) {
     return _database.completeTask(taskId: taskId, completedAt: completedAt);
   }
 

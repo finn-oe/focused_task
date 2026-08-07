@@ -18,9 +18,7 @@ class FocusedTaskApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Focused Task',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2266EE)),
-      ),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2266EE))),
       routerConfig: router,
     );
   }

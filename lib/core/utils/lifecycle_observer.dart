@@ -1,12 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 class FocusLifecycleObserver extends StatefulWidget {
-  const FocusLifecycleObserver({
-    super.key,
-    required this.child,
-    required this.onPause,
-    required this.onResume,
-  });
+  const FocusLifecycleObserver({super.key, required this.child, required this.onPause, required this.onResume});
 
   final Widget child;
   final VoidCallback onPause;
@@ -22,13 +17,7 @@ class _FocusLifecycleObserverState extends State<FocusLifecycleObserver> {
   @override
   void initState() {
     super.initState();
-    _listener = AppLifecycleListener(
-      onPause: widget.onPause,
-      onHide: widget.onPause,
-      onDetach: widget.onPause,
-      onResume: widget.onResume,
-      onInactive: widget.onPause,
-    );
+    _listener = AppLifecycleListener(onPause: widget.onPause, onHide: widget.onPause, onDetach: widget.onPause, onResume: widget.onResume, onInactive: widget.onPause);
   }
 
   @override

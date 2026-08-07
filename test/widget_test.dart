@@ -8,14 +8,7 @@ import 'package:focused_task/main.dart';
 
 void main() {
   testWidgets('App boots into plan mode shell', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          taskRepositoryProvider.overrideWithValue(_FakeTaskRepository()),
-        ],
-        child: const FocusedTaskApp(),
-      ),
-    );
+    await tester.pumpWidget(ProviderScope(overrides: [taskRepositoryProvider.overrideWithValue(_FakeTaskRepository())], child: const FocusedTaskApp()));
     await tester.pumpAndSettle();
 
     expect(find.text('Plan Mode'), findsOneWidget);
@@ -25,10 +18,7 @@ void main() {
 
 class _FakeTaskRepository implements ITaskRepository {
   @override
-  Future<void> completeTask({
-    required int taskId,
-    required DateTime completedAt,
-  }) async {}
+  Future<void> completeTask({required int taskId, required DateTime completedAt}) async {}
 
   @override
   Future<void> createTask({
@@ -55,22 +45,13 @@ class _FakeTaskRepository implements ITaskRepository {
   Future<List<TaskEntity>> getTasksForDay(DateTime day) async => const [];
 
   @override
-  Future<void> pauseTaskSession({
-    required int taskId,
-    required DateTime pausedAt,
-  }) async {}
+  Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt}) async {}
 
   @override
-  Future<void> startTaskSession({
-    required int taskId,
-    required DateTime startedAt,
-  }) async {}
+  Future<void> startTaskSession({required int taskId, required DateTime startedAt}) async {}
 
   @override
-  Future<void> updateTaskOrder({
-    required int taskId,
-    required String sortOrder,
-  }) async {}
+  Future<void> updateTaskOrder({required int taskId, required String sortOrder}) async {}
 
   @override
   Stream<List<TaskEntity>> watchTasksForDay(DateTime day) {

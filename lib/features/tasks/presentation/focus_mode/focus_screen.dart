@@ -72,11 +72,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 }
 
 class _FocusBody extends StatelessWidget {
-  const _FocusBody({
-    required this.state,
-    required this.onComplete,
-    required this.onExit,
-  });
+  const _FocusBody({required this.state, required this.onComplete, required this.onExit});
 
   final FocusModeState state;
   final VoidCallback onComplete;
@@ -87,10 +83,7 @@ class _FocusBody extends StatelessWidget {
     final task = state.currentTask;
     if (task == null) {
       return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('No unfinished tasks for today.'),
-        ),
+        child: Padding(padding: EdgeInsets.all(24), child: Text('No unfinished tasks for today.')),
       );
     }
 
@@ -112,30 +105,16 @@ class _FocusBody extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    task.title,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineLarge,
-                  ),
+                  Text(task.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineLarge),
                   const SizedBox(height: 12),
-                  Text(
-                    task.description ?? 'No description',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
+                  Text(task.description ?? 'No description', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
                 ],
               ),
             ),
           ),
-          FilledButton(
-            onPressed: onComplete,
-            child: const Text('Complete Task'),
-          ),
+          FilledButton(onPressed: onComplete, child: const Text('Complete Task')),
           const SizedBox(height: 8),
-          OutlinedButton(
-            onPressed: onExit,
-            child: const Text('Exit Focus'),
-          ),
+          OutlinedButton(onPressed: onExit, child: const Text('Exit Focus')),
         ],
       ),
     );

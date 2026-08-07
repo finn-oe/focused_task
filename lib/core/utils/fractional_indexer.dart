@@ -4,7 +4,6 @@ class FractionalIndexer {
   const FractionalIndexer._();
 
   static String between(String? before, String? after) {
-    return fi.FractionalIndexer.generateKeyBetween(before, after) ??
-        fi.FractionalIndexer.integerZero;
+    return fi.FractionalIndexer.generateKeyBetween(before, after) ?? fi.FractionalIndexer.integerZero;
   }
 }

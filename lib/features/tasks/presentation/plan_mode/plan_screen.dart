@@ -37,12 +37,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     }
 
     final now = DateTime.now();
-    final total = sessions.fold<Duration>(
-      Duration.zero,
-      (sum, task) => task.latestStart == null
-          ? sum
-          : sum + now.difference(task.latestStart!),
-    );
+    final total = sessions.fold<Duration>(Duration.zero, (sum, task) => task.latestStart == null ? sum : sum + now.difference(task.latestStart!));
 
     final recover = await showDialog<bool>(
       context: context,
@@ -54,14 +49,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             'Recover ${_formatDuration(total)} of tracked time?',
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Discard'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Recover'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Discard')),
+            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Recover')),
           ],
         );
       },
@@ -71,9 +60,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
       return;
     }
 
-    await ref
-        .read(focusModeNotifierProvider.notifier)
-        .recoverOrDiscardSessions(recover: recover, sessions: sessions);
+    await ref.read(focusModeNotifierProvider.notifier).recoverOrDiscardSessions(recover: recover, sessions: sessions);
   }
 
   @override
@@ -88,23 +75,14 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
           IconButton(
             tooltip: 'Pick Day',
             onPressed: () async {
-              final selected = await showDatePicker(
-                context: context,
-                firstDate: DateTime(2020),
-                lastDate: DateTime(2100),
-                initialDate: state.selectedDay,
-              );
+              final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: state.selectedDay);
               if (selected != null) {
                 await notifier.setSelectedDay(selected);
               }
             },
             icon: const Icon(Icons.calendar_today_outlined),
           ),
-          IconButton(
-            tooltip: 'Start Focus',
-            onPressed: () => context.go('/focus'),
-            icon: const Icon(Icons.play_arrow),
-          ),
+          IconButton(tooltip: 'Start Focus', onPressed: () => context.go('/focus'), icon: const Icon(Icons.play_arrow)),
         ],
       ),
       body: Column(
@@ -122,43 +100,33 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : state.tasks.isEmpty
-                    ? const Center(child: Text('No tasks for this day.'))
-                    : ReorderableListView.builder(
-                        itemCount: state.tasks.length,
-                      onReorderItem: notifier.reorderTask,
-                        buildDefaultDragHandles: false,
-                        itemBuilder: (context, index) {
-                          final task = state.tasks[index];
-                          return ReorderableDragStartListener(
-                            key: ValueKey(task.id),
-                            index: index,
-                            child: TaskListItem(task: task),
-                          );
-                        },
-                      ),
+                ? const Center(child: Text('No tasks for this day.'))
+                : ReorderableListView.builder(
+                    itemCount: state.tasks.length,
+                    onReorderItem: notifier.reorderTask,
+                    buildDefaultDragHandles: false,
+                    itemBuilder: (context, index) {
+                      final task = state.tasks[index];
+                      return ReorderableDragStartListener(
+                        key: ValueKey(task.id),
+                        index: index,
+                        child: TaskListItem(task: task),
+                      );
+                    },
+                  ),
           ),
           if (state.error != null)
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(
-                state.error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
+              child: Text(state.error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddTaskDialog(context, notifier),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Task'),
-      ),
+      floatingActionButton: FloatingActionButton.extended(onPressed: () => _showAddTaskDialog(context, notifier), icon: const Icon(Icons.add), label: const Text('Add Task')),
     );
   }
 
-  Future<void> _showAddTaskDialog(
-    BuildContext context,
-    PlanModeNotifier notifier,
-  ) async {
+  Future<void> _showAddTaskDialog(BuildContext context, PlanModeNotifier notifier) async {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
 
@@ -181,10 +149,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
             FilledButton(
               onPressed: () async {
                 final title = titleController.text.trim();
@@ -192,12 +157,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                   return;
                 }
 
-                await notifier.addTask(
-                  title: title,
-                  description: descriptionController.text.trim().isEmpty
-                      ? null
-                      : descriptionController.text.trim(),
-                );
+                await notifier.addTask(title: title, description: descriptionController.text.trim().isEmpty ? null : descriptionController.text.trim());
 
                 if (context.mounted) {
                   Navigator.of(context).pop();

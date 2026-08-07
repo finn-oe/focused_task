@@ -8,10 +8,7 @@ enum TaskPriority {
   final int value;
 
   static TaskPriority fromValue(int value) {
-    return TaskPriority.values.firstWhere(
-      (priority) => priority.value == value,
-      orElse: () => TaskPriority.low,
-    );
+    return TaskPriority.values.firstWhere((priority) => priority.value == value, orElse: () => TaskPriority.low);
   }
 }
 

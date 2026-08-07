@@ -19,13 +19,7 @@ class FocusModeState {
 
   factory FocusModeState.initial() {
     final now = DateTime.now();
-    return FocusModeState(
-      selectedDay: DateTime(now.year, now.month, now.day),
-      now: now,
-      sessionBaseMs: 0,
-      isLoading: false,
-      isPaused: true,
-    );
+    return FocusModeState(selectedDay: DateTime(now.year, now.month, now.day), now: now, sessionBaseMs: 0, isLoading: false, isPaused: true);
   }
 
   final DateTime selectedDay;
@@ -38,9 +32,7 @@ class FocusModeState {
   final String? error;
 
   Duration get totalSessionDuration {
-    final runningMs = isPaused || sessionStartedAt == null
-        ? 0
-        : now.difference(sessionStartedAt!).inMilliseconds;
+    final runningMs = isPaused || sessionStartedAt == null ? 0 : now.difference(sessionStartedAt!).inMilliseconds;
     return Duration(milliseconds: sessionBaseMs + runningMs);
   }
 
@@ -69,9 +61,7 @@ class FocusModeState {
       selectedDay: selectedDay ?? this.selectedDay,
       now: now ?? this.now,
       sessionBaseMs: sessionBaseMs ?? this.sessionBaseMs,
-      sessionStartedAt: clearSessionStartedAt
-          ? null
-          : sessionStartedAt ?? this.sessionStartedAt,
+      sessionStartedAt: clearSessionStartedAt ? null : sessionStartedAt ?? this.sessionStartedAt,
       isLoading: isLoading ?? this.isLoading,
       isPaused: isPaused ?? this.isPaused,
       currentTask: clearCurrentTask ? null : currentTask ?? this.currentTask,
@@ -88,11 +78,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
 
   Future<void> initializeForDay(DateTime day) async {
     final normalized = DateTime(day.year, day.month, day.day);
-    state = state.copyWith(
-      selectedDay: normalized,
-      isLoading: true,
-      clearError: true,
-    );
+    state = state.copyWith(selectedDay: normalized, isLoading: true, clearError: true);
 
     await _loadNextTask();
   }
@@ -101,12 +87,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     final task = await _repository.getNextIncompleteTaskForDay(state.selectedDay);
     if (task == null) {
       _stopTicker();
-      state = state.copyWith(
-        currentTask: null,
-        isLoading: false,
-        isPaused: true,
-        clearSessionStartedAt: true,
-      );
+      state = state.copyWith(currentTask: null, isLoading: false, isPaused: true, clearSessionStartedAt: true);
       return;
     }
 
@@ -118,13 +99,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     }
 
     _startTicker();
-    state = state.copyWith(
-      currentTask: current,
-      isPaused: false,
-      sessionStartedAt: state.sessionStartedAt ?? DateTime.now(),
-      isLoading: false,
-      clearError: true,
-    );
+    state = state.copyWith(currentTask: current, isPaused: false, sessionStartedAt: state.sessionStartedAt ?? DateTime.now(), isLoading: false, clearError: true);
   }
 
   Future<void> pauseSession() async {
@@ -137,17 +112,9 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     await _repository.pauseTaskSession(taskId: task.id, pausedAt: now);
 
     final updatedTask = await _repository.getTaskById(task.id);
-    final runningMs = state.sessionStartedAt == null
-        ? 0
-        : now.difference(state.sessionStartedAt!).inMilliseconds;
+    final runningMs = state.sessionStartedAt == null ? 0 : now.difference(state.sessionStartedAt!).inMilliseconds;
 
-    state = state.copyWith(
-      currentTask: updatedTask,
-      sessionBaseMs: state.sessionBaseMs + runningMs,
-      isPaused: true,
-      clearSessionStartedAt: true,
-      now: now,
-    );
+    state = state.copyWith(currentTask: updatedTask, sessionBaseMs: state.sessionBaseMs + runningMs, isPaused: true, clearSessionStartedAt: true, now: now);
   }
 
   Future<void> resumeSession() async {
@@ -161,12 +128,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     final updatedTask = await _repository.getTaskById(task.id);
 
     _startTicker();
-    state = state.copyWith(
-      currentTask: updatedTask,
-      isPaused: false,
-      sessionStartedAt: now,
-      now: now,
-    );
+    state = state.copyWith(currentTask: updatedTask, isPaused: false, sessionStartedAt: now, now: now);
   }
 
   Future<void> completeCurrentTask() async {
@@ -175,10 +137,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
       return;
     }
 
-    await _repository.completeTask(
-      taskId: task.id,
-      completedAt: DateTime.now(),
-    );
+    await _repository.completeTask(taskId: task.id, completedAt: DateTime.now());
 
     await _loadNextTask();
   }
@@ -186,19 +145,10 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
   Future<void> exitFocus() async {
     await pauseSession();
     _stopTicker();
-    state = state.copyWith(
-      clearCurrentTask: true,
-      isPaused: true,
-      clearSessionStartedAt: true,
-      sessionBaseMs: 0,
-      now: DateTime.now(),
-    );
+    state = state.copyWith(clearCurrentTask: true, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, now: DateTime.now());
   }
 
-  Future<void> recoverOrDiscardSessions({
-    required bool recover,
-    required List<TaskEntity> sessions,
-  }) async {
+  Future<void> recoverOrDiscardSessions({required bool recover, required List<TaskEntity> sessions}) async {
     final now = DateTime.now();
     for (final session in sessions) {
       if (recover) {

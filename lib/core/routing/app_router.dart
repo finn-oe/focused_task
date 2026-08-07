@@ -9,18 +9,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/plan',
     routes: [
-      GoRoute(
-        path: '/plan',
-        builder: (context, state) => const PlanScreen(),
-      ),
-      GoRoute(
-        path: '/focus',
-        builder: (context, state) => const FocusScreen(),
-      ),
-      GoRoute(
-        path: '/pause',
-        builder: (context, state) => const PauseScreen(),
-      ),
+      GoRoute(path: '/plan', builder: (context, state) => const PlanScreen()),
+      GoRoute(path: '/focus', builder: (context, state) => const FocusScreen()),
+      GoRoute(path: '/pause', builder: (context, state) => const PauseScreen()),
     ],
   );
 });
