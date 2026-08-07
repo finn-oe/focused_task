@@ -12,7 +12,12 @@ import 'package:focused_task/main.dart';
 
 void main() {
   testWidgets('App boots into plan mode shell', (WidgetTester tester) async {
-    await tester.pumpWidget(ProviderScope(overrides: [taskRepositoryProvider.overrideWithValue(_FakeTaskRepository())], child: const MaterialApp(home: PlanScreen())));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [taskRepositoryProvider.overrideWithValue(_FakeTaskRepository())],
+        child: const MaterialApp(home: PlanScreen()),
+      ),
+    );
     await tester.pump();
 
     expect(find.text('Plan Mode'), findsOneWidget);

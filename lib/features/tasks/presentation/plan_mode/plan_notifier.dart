@@ -92,9 +92,7 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
   }
 
   Future<void> toggleTaskCompletion(TaskEntity task) async {
-    final updatedTasks = state.tasks
-        .map((candidate) => candidate.id == task.id ? candidate.copyWith(isCompleted: !task.isCompleted) : candidate)
-        .toList(growable: false);
+    final updatedTasks = state.tasks.map((candidate) => candidate.id == task.id ? candidate.copyWith(isCompleted: !task.isCompleted) : candidate).toList(growable: false);
     state = state.copyWith(tasks: updatedTasks);
 
     await _repository.setTaskCompletion(taskId: task.id, isCompleted: !task.isCompleted);

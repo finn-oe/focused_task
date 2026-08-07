@@ -34,25 +34,15 @@ class TaskListItem extends ConsumerWidget {
                 border: Border.all(color: isCompleted ? colorScheme.primary : colorScheme.outline),
                 color: isCompleted ? colorScheme.primary : Colors.transparent,
               ),
-              child: isCompleted
-                  ? const Icon(Icons.check, size: 18, color: Colors.white)
-                  : Icon(Icons.circle_outlined, size: 18, color: colorScheme.outline),
+              child: isCompleted ? const Icon(Icons.check, size: 18, color: Colors.white) : Icon(Icons.circle_outlined, size: 18, color: colorScheme.outline),
             ),
           ),
         ),
         title: Text(
           task.title,
-          style: isCompleted
-              ? TextStyle(
-                  decoration: TextDecoration.lineThrough,
-                  color: colorScheme.onSurfaceVariant,
-                )
-              : null,
+          style: isCompleted ? TextStyle(decoration: TextDecoration.lineThrough, color: colorScheme.onSurfaceVariant) : null,
         ),
-        subtitle: Text(
-          task.description ?? 'No description',
-          style: isCompleted ? TextStyle(color: colorScheme.onSurfaceVariant) : null,
-        ),
+        subtitle: Text(task.description ?? 'No description', style: isCompleted ? TextStyle(color: colorScheme.onSurfaceVariant) : null),
         trailing: Icon(Icons.drag_handle, color: isCompleted ? colorScheme.onSurfaceVariant : null),
       ),
     );
