@@ -22,4 +22,6 @@ abstract class ITaskRepository {
   Future<void> discardUnfinishedSession({required int taskId});
 
   Future<List<TaskEntity>> getRecoverableSessions();
+
+  Future<int> deleteCompletedTasksOlderThanDays(int days);
 }

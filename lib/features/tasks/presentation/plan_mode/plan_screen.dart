@@ -73,6 +73,11 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
         title: const Text('Plan Mode'),
         actions: [
           IconButton(
+            tooltip: 'Settings',
+            onPressed: () => context.push('/settings'),
+            icon: const Icon(Icons.settings_outlined),
+          ),
+          IconButton(
             tooltip: 'Pick Day',
             onPressed: () async {
               final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: state.selectedDay);

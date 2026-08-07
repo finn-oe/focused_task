@@ -18,6 +18,9 @@ void main() {
 
 class _FakeTaskRepository implements ITaskRepository {
   @override
+  Future<int> deleteCompletedTasksOlderThanDays(int days) async => 0;
+
+  @override
   Future<void> completeTask({required int taskId, required DateTime completedAt}) async {}
 
   @override

@@ -74,6 +74,13 @@ class TaskRepositoryImpl implements ITaskRepository {
     return tasks.map(_toEntity).toList(growable: false);
   }
 
+  @override
+  Future<int> deleteCompletedTasksOlderThanDays(int days) {
+    final safeDays = days < 1 ? 1 : days;
+    final cutoff = _dateOnly(DateTime.now()).subtract(Duration(days: safeDays));
+    return _database.deleteCompletedTasksBefore(cutoff);
+  }
+
   TaskEntity _toEntity(Task task) {
     return TaskEntity(
       id: task.id,

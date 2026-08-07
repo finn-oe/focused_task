@@ -101,6 +101,16 @@ class AppDatabase extends _$AppDatabase {
       ..where((task) => task.isCompleted.equals(false));
     return query.get();
   }
+
+  Future<int> deleteCompletedTasksBefore(DateTime cutoffDay) {
+    final cutoff = _startOfDay(cutoffDay);
+    final query = delete(tasks)
+      ..where((task) =>
+          task.isCompleted.equals(true) &
+          task.latestStart.isNull() &
+          task.assignedDate.isSmallerThanValue(cutoff));
+    return query.go();
+  }
 }
 
 LazyDatabase _openConnection() {
