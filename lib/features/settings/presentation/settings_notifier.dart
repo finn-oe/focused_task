@@ -18,11 +18,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final themeModeRaw = prefs.getString(_themeModeKey);
     final retentionDays = prefs.getInt(_retentionDaysKey) ?? 30;
 
-    state = state.copyWith(
-      themeMode: _parseThemeMode(themeModeRaw),
-      retentionDays: retentionDays < 1 ? 1 : retentionDays,
-      isLoading: false,
-    );
+    state = state.copyWith(themeMode: _parseThemeMode(themeModeRaw), retentionDays: retentionDays < 1 ? 1 : retentionDays, isLoading: false);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
@@ -42,19 +38,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(isCleaning: true, clearCleanupMessage: true);
 
     try {
-      final deleted = await _repository.deleteCompletedTasksOlderThanDays(
-        state.retentionDays,
-      );
-      state = state.copyWith(
-        isCleaning: false,
-        lastCleanupMessage: 'Deleted $deleted entries.',
-      );
+      final deleted = await _repository.deleteCompletedTasksOlderThanDays(state.retentionDays);
+      state = state.copyWith(isCleaning: false, lastCleanupMessage: 'Deleted $deleted entries.');
       return deleted;
     } catch (_) {
-      state = state.copyWith(
-        isCleaning: false,
-        lastCleanupMessage: 'Cleanup failed. Please try again.',
-      );
+      state = state.copyWith(isCleaning: false, lastCleanupMessage: 'Cleanup failed. Please try again.');
       rethrow;
     }
   }

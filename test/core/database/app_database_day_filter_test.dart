@@ -33,43 +33,16 @@ void main() {
 
     test('retention cleanup only deletes completed old tasks', () async {
       final now = DateTime.now();
-      final fortyDaysAgo = DateTime(now.year, now.month, now.day).subtract(
-        const Duration(days: 40),
-      );
-      final tenDaysAgo = DateTime(now.year, now.month, now.day).subtract(
-        const Duration(days: 10),
-      );
+      final fortyDaysAgo = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 40));
+      final tenDaysAgo = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 10));
 
-      await database.createTask(
-        TasksCompanion.insert(
-          title: 'old completed',
-          assignedDate: fortyDaysAgo,
-          sortOrder: 'a0',
-          isCompleted: const drift.Value(true),
-        ),
-      );
+      await database.createTask(TasksCompanion.insert(title: 'old completed', assignedDate: fortyDaysAgo, sortOrder: 'a0', isCompleted: const drift.Value(true)));
 
-      await database.createTask(
-        TasksCompanion.insert(
-          title: 'old incomplete',
-          assignedDate: fortyDaysAgo,
-          sortOrder: 'a1',
-          isCompleted: const drift.Value(false),
-        ),
-      );
+      await database.createTask(TasksCompanion.insert(title: 'old incomplete', assignedDate: fortyDaysAgo, sortOrder: 'a1', isCompleted: const drift.Value(false)));
 
-      await database.createTask(
-        TasksCompanion.insert(
-          title: 'recent completed',
-          assignedDate: tenDaysAgo,
-          sortOrder: 'a2',
-          isCompleted: const drift.Value(true),
-        ),
-      );
+      await database.createTask(TasksCompanion.insert(title: 'recent completed', assignedDate: tenDaysAgo, sortOrder: 'a2', isCompleted: const drift.Value(true)));
 
-      final cutoff = DateTime(now.year, now.month, now.day).subtract(
-        const Duration(days: 30),
-      );
+      final cutoff = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 30));
       final deleted = await database.deleteCompletedTasksBefore(cutoff);
 
       expect(deleted, 1);
@@ -85,9 +58,7 @@ void main() {
 
     test('retention cleanup never deletes running or recoverable sessions', () async {
       final now = DateTime.now();
-      final fortyDaysAgo = DateTime(now.year, now.month, now.day).subtract(
-        const Duration(days: 40),
-      );
+      final fortyDaysAgo = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 40));
 
       await database.createTask(
         TasksCompanion.insert(
@@ -99,9 +70,7 @@ void main() {
         ),
       );
 
-      final cutoff = DateTime(now.year, now.month, now.day).subtract(
-        const Duration(days: 30),
-      );
+      final cutoff = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 30));
       final deleted = await database.deleteCompletedTasksBefore(cutoff);
       expect(deleted, 0);
 

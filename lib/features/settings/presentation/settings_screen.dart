@@ -22,21 +22,9 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 SegmentedButton<ThemeMode>(
                   segments: const [
-                    ButtonSegment(
-                      value: ThemeMode.system,
-                      label: Text('System'),
-                      icon: Icon(Icons.settings_suggest),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.light,
-                      label: Text('Light'),
-                      icon: Icon(Icons.light_mode),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.dark,
-                      label: Text('Dark'),
-                      icon: Icon(Icons.dark_mode),
-                    ),
+                    ButtonSegment(value: ThemeMode.system, label: Text('System'), icon: Icon(Icons.settings_suggest)),
+                    ButtonSegment(value: ThemeMode.light, label: Text('Light'), icon: Icon(Icons.light_mode)),
+                    ButtonSegment(value: ThemeMode.dark, label: Text('Dark'), icon: Icon(Icons.dark_mode)),
                   ],
                   selected: {state.themeMode},
                   onSelectionChanged: (selection) async {
@@ -47,31 +35,17 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 24),
                 Text('Data Retention', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
-                Text(
-                  'Automatically delete completed tasks older than the selected number of days.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+                Text('Automatically delete completed tasks older than the selected number of days.', style: Theme.of(context).textTheme.bodyMedium),
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(
-                        'Retention period: ${state.retentionDays} days',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
+                    Expanded(child: Text('Retention period: ${state.retentionDays} days', style: Theme.of(context).textTheme.titleMedium)),
                     IconButton(
                       tooltip: 'Decrease',
-                      onPressed: state.retentionDays <= 1
-                          ? null
-                          : () => notifier.setRetentionDays(state.retentionDays - 1),
+                      onPressed: state.retentionDays <= 1 ? null : () => notifier.setRetentionDays(state.retentionDays - 1),
                       icon: const Icon(Icons.remove_circle_outline),
                     ),
-                    IconButton(
-                      tooltip: 'Increase',
-                      onPressed: () => notifier.setRetentionDays(state.retentionDays + 1),
-                      icon: const Icon(Icons.add_circle_outline),
-                    ),
+                    IconButton(tooltip: 'Increase', onPressed: () => notifier.setRetentionDays(state.retentionDays + 1), icon: const Icon(Icons.add_circle_outline)),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -81,33 +55,13 @@ class SettingsScreen extends ConsumerWidget {
                       : () async {
                           await notifier.cleanNow();
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  ref
-                                          .read(settingsNotifierProvider)
-                                          .lastCleanupMessage ??
-                                      'Cleanup complete.',
-                                ),
-                              ),
-                            );
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ref.read(settingsNotifierProvider).lastCleanupMessage ?? 'Cleanup complete.')));
                           }
                         },
-                  icon: state.isCleaning
-                      ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.cleaning_services),
+                  icon: state.isCleaning ? const SizedBox.square(dimension: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.cleaning_services),
                   label: const Text('Clean now'),
                 ),
-                if (state.lastCleanupMessage != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    state.lastCleanupMessage!,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
+                if (state.lastCleanupMessage != null) ...[const SizedBox(height: 12), Text(state.lastCleanupMessage!, style: Theme.of(context).textTheme.bodyMedium)],
               ],
             ),
     );

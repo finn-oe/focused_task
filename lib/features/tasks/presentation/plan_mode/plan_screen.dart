@@ -72,11 +72,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
       appBar: AppBar(
         title: const Text('Plan Mode'),
         actions: [
-          IconButton(
-            tooltip: 'Settings',
-            onPressed: () => context.push('/settings'),
-            icon: const Icon(Icons.settings_outlined),
-          ),
+          IconButton(tooltip: 'Settings', onPressed: () => context.push('/settings'), icon: const Icon(Icons.settings_outlined)),
           IconButton(
             tooltip: 'Pick Day',
             onPressed: () async {

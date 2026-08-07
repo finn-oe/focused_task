@@ -104,11 +104,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<int> deleteCompletedTasksBefore(DateTime cutoffDay) {
     final cutoff = _startOfDay(cutoffDay);
-    final query = delete(tasks)
-      ..where((task) =>
-          task.isCompleted.equals(true) &
-          task.latestStart.isNull() &
-          task.assignedDate.isSmallerThanValue(cutoff));
+    final query = delete(tasks)..where((task) => task.isCompleted.equals(true) & task.latestStart.isNull() & task.assignedDate.isSmallerThanValue(cutoff));
     return query.go();
   }
 }
