@@ -1,18 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
-class TaskListItem extends StatelessWidget {
+class TaskListItem extends ConsumerWidget {
   const TaskListItem({super.key, required this.task});
 
   final TaskEntity task;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(planModeNotifierProvider.notifier);
+    final isCompleted = task.isCompleted;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       key: ValueKey(task.id),
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: ListTile(title: Text(task.title), subtitle: Text(task.description ?? 'No description'), trailing: const Icon(Icons.drag_handle)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: Semantics(
+          label: isCompleted ? 'Mark task as incomplete' : 'Mark task as complete',
+          button: true,
+          child: GestureDetector(
+            onTap: () => notifier.toggleTaskCompletion(task),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: isCompleted ? colorScheme.primary : colorScheme.outline),
+                color: isCompleted ? colorScheme.primary : Colors.transparent,
+              ),
+              child: isCompleted
+                  ? const Icon(Icons.check, size: 18, color: Colors.white)
+                  : Icon(Icons.circle_outlined, size: 18, color: colorScheme.outline),
+            ),
+          ),
+        ),
+        title: Text(
+          task.title,
+          style: isCompleted
+              ? TextStyle(
+                  decoration: TextDecoration.lineThrough,
+                  color: colorScheme.onSurfaceVariant,
+                )
+              : null,
+        ),
+        subtitle: Text(
+          task.description ?? 'No description',
+          style: isCompleted ? TextStyle(color: colorScheme.onSurfaceVariant) : null,
+        ),
+        trailing: Icon(Icons.drag_handle, color: isCompleted ? colorScheme.onSurfaceVariant : null),
+      ),
     );
   }
 }

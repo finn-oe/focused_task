@@ -13,6 +13,8 @@ abstract class ITaskRepository {
 
   Future<void> updateTaskOrder({required int taskId, required String sortOrder});
 
+  Future<void> setTaskCompletion({required int taskId, required bool isCompleted});
+
   Future<void> startTaskSession({required int taskId, required DateTime startedAt});
 
   Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt});

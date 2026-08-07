@@ -49,6 +49,11 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
+  Future<void> setTaskCompletion({required int taskId, required bool isCompleted}) {
+    return _database.setTaskCompletion(taskId: taskId, isCompleted: isCompleted);
+  }
+
+  @override
   Future<void> startTaskSession({required int taskId, required DateTime startedAt}) {
     return _database.startTaskSession(taskId: taskId, startedAt: startedAt);
   }

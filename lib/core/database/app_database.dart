@@ -69,6 +69,10 @@ class AppDatabase extends _$AppDatabase {
     await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(sortOrder: Value(sortOrder)));
   }
 
+  Future<void> setTaskCompletion({required int taskId, required bool isCompleted}) async {
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(isCompleted: Value(isCompleted)));
+  }
+
   Future<void> startTaskSession({required int taskId, required DateTime startedAt}) async {
     await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(latestStart: Value(startedAt)));
   }
