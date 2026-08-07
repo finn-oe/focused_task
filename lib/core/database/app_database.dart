@@ -11,7 +11,7 @@ part 'app_database.g.dart';
 
 @DriftDatabase(tables: [Tasks])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
   int get schemaVersion => 1;
@@ -24,25 +24,24 @@ class AppDatabase extends _$AppDatabase {
     return _startOfDay(day).add(const Duration(days: 1));
   }
 
-  Stream<List<Task>> watchTasksForDay(DateTime day) {
+  Expression<bool> _isInDay(Tasks table, DateTime day) {
     final start = _startOfDay(day);
     final end = _endOfDay(day);
+    return table.assignedDate.isBiggerOrEqualValue(start) &
+        table.assignedDate.isSmallerThanValue(end);
+  }
 
+  Stream<List<Task>> watchTasksForDay(DateTime day) {
     final query = select(tasks)
-      ..where((task) => task.assignedDate.isBiggerOrEqualValue(start))
-      ..where((task) => task.assignedDate.isSmallerThanValue(end))
+      ..where((task) => _isInDay(task, day))
       ..orderBy([(task) => OrderingTerm.asc(task.sortOrder)]);
 
     return query.watch();
   }
 
   Future<List<Task>> getTasksForDay(DateTime day) {
-    final start = _startOfDay(day);
-    final end = _endOfDay(day);
-
     final query = select(tasks)
-      ..where((task) => task.assignedDate.isBiggerOrEqualValue(start))
-      ..where((task) => task.assignedDate.isSmallerThanValue(end))
+      ..where((task) => _isInDay(task, day))
       ..orderBy([(task) => OrderingTerm.asc(task.sortOrder)]);
 
     return query.get();
@@ -54,13 +53,8 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<Task?> getNextIncompleteTaskForDay(DateTime day) {
-    final start = _startOfDay(day);
-    final end = _endOfDay(day);
-
     final query = select(tasks)
-      ..where((task) => task.assignedDate.isBiggerOrEqualValue(start))
-      ..where((task) => task.assignedDate.isSmallerThanValue(end))
-      ..where((task) => task.isCompleted.equals(false))
+      ..where((task) => _isInDay(task, day) & task.isCompleted.equals(false))
       ..orderBy([(task) => OrderingTerm.asc(task.sortOrder)])
       ..limit(1);
 
@@ -68,7 +62,10 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> createTask(TasksCompanion companion) async {
-    await into(tasks).insert(companion);
+    final normalizedAssignedDate = _startOfDay(companion.assignedDate.value);
+    await into(tasks).insert(
+      companion.copyWith(assignedDate: Value(normalizedAssignedDate)),
+    );
   }
 
   Future<void> updateTaskOrder({required int taskId, required String sortOrder}) async {

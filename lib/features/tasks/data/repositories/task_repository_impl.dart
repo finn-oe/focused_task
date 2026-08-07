@@ -9,6 +9,10 @@ class TaskRepositoryImpl implements ITaskRepository {
 
   final AppDatabase _database;
 
+  DateTime _dateOnly(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
+  }
+
   @override
   Stream<List<TaskEntity>> watchTasksForDay(DateTime day) {
     return _database.watchTasksForDay(day).map((tasks) => tasks.map(_toEntity).toList(growable: false));
@@ -35,7 +39,7 @@ class TaskRepositoryImpl implements ITaskRepository {
   @override
   Future<void> createTask({required String title, String? description, required DateTime assignedDate, required String sortOrder, TaskPriority priority = TaskPriority.low}) {
     return _database.createTask(
-      TasksCompanion.insert(title: title, description: Value(description), assignedDate: assignedDate, sortOrder: sortOrder, priority: Value(priority.value)),
+      TasksCompanion.insert(title: title, description: Value(description), assignedDate: _dateOnly(assignedDate), sortOrder: sortOrder, priority: Value(priority.value)),
     );
   }
 
