@@ -1,30 +1,79 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 import 'package:focused_task/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('App boots into plan mode shell', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          taskRepositoryProvider.overrideWithValue(_FakeTaskRepository()),
+        ],
+        child: const FocusedTaskApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Plan Mode'), findsOneWidget);
+    expect(find.text('Add Task'), findsOneWidget);
   });
+}
+
+class _FakeTaskRepository implements ITaskRepository {
+  @override
+  Future<void> completeTask({
+    required int taskId,
+    required DateTime completedAt,
+  }) async {}
+
+  @override
+  Future<void> createTask({
+    required String title,
+    String? description,
+    required DateTime assignedDate,
+    required String sortOrder,
+    TaskPriority priority = TaskPriority.low,
+  }) async {}
+
+  @override
+  Future<void> discardUnfinishedSession({required int taskId}) async {}
+
+  @override
+  Future<TaskEntity?> getNextIncompleteTaskForDay(DateTime day) async => null;
+
+  @override
+  Future<List<TaskEntity>> getRecoverableSessions() async => const [];
+
+  @override
+  Future<TaskEntity?> getTaskById(int id) async => null;
+
+  @override
+  Future<List<TaskEntity>> getTasksForDay(DateTime day) async => const [];
+
+  @override
+  Future<void> pauseTaskSession({
+    required int taskId,
+    required DateTime pausedAt,
+  }) async {}
+
+  @override
+  Future<void> startTaskSession({
+    required int taskId,
+    required DateTime startedAt,
+  }) async {}
+
+  @override
+  Future<void> updateTaskOrder({
+    required int taskId,
+    required String sortOrder,
+  }) async {}
+
+  @override
+  Stream<List<TaskEntity>> watchTasksForDay(DateTime day) {
+    return Stream.value(const <TaskEntity>[]);
+  }
 }
