@@ -27,8 +27,7 @@ class AppDatabase extends _$AppDatabase {
   Expression<bool> _isInDay(Tasks table, DateTime day) {
     final start = _startOfDay(day);
     final end = _endOfDay(day);
-    return table.assignedDate.isBiggerOrEqualValue(start) &
-        table.assignedDate.isSmallerThanValue(end);
+    return table.assignedDate.isBiggerOrEqualValue(start) & table.assignedDate.isSmallerThanValue(end);
   }
 
   Stream<List<Task>> watchTasksForDay(DateTime day) {
@@ -63,9 +62,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> createTask(TasksCompanion companion) async {
     final normalizedAssignedDate = _startOfDay(companion.assignedDate.value);
-    await into(tasks).insert(
-      companion.copyWith(assignedDate: Value(normalizedAssignedDate)),
-    );
+    await into(tasks).insert(companion.copyWith(assignedDate: Value(normalizedAssignedDate)));
   }
 
   Future<void> updateTaskOrder({required int taskId, required String sortOrder}) async {
