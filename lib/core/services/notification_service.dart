@@ -57,7 +57,7 @@ class NotificationService {
       presentSound: true,
       presentAlert: true,
       presentBadge: true,
-      sound: 'alarm.mp3',
+      sound: 'alarm_looped.mp3',
       interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
