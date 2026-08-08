@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -7,11 +8,14 @@ class NotificationService {
   static final _notifications = FlutterLocalNotificationsPlugin();
   static const int _alarmId = 8675309;
 
+  static bool get _isMobile => Platform.isAndroid || Platform.isIOS;
+
   static Future<void> init() async {
+    if (!_isMobile) return;
+
     tz.initializeTimeZones();
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // iOS Initialization
     const ios = DarwinInitializationSettings(requestAlertPermission: false, requestBadgePermission: false, requestSoundPermission: false);
 
     const settings = InitializationSettings(android: android, iOS: ios);
@@ -25,15 +29,19 @@ class NotificationService {
   }
 
   static Future<void> requestPermissions() async {
-    // Android Permissions
-    await _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
-    await _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestExactAlarmsPermission();
+    if (!_isMobile) return;
 
-    // iOS Permissions
-    await _notifications.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(alert: true, badge: true, sound: true);
+    if (Platform.isAndroid) {
+      await _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
+      await _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestExactAlarmsPermission();
+    } else if (Platform.isIOS) {
+      await _notifications.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(alert: true, badge: true, sound: true);
+    }
   }
 
   static Future<void> scheduleAlarm({required String taskTitle, required DateTime scheduledDate}) async {
+    if (!_isMobile) return;
+
     final androidDetails = AndroidNotificationDetails(
       'focus_alarm_channel',
       'Focus Alarms',
@@ -41,17 +49,16 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
       sound: const RawResourceAndroidNotificationSound('alarm'),
-      additionalFlags: Int32List.fromList([4]), // Loops on Android
+      additionalFlags: Int32List.fromList([4]),
       fullScreenIntent: true,
     );
 
-    // iOS Details
     const iosDetails = DarwinNotificationDetails(
       presentSound: true,
       presentAlert: true,
       presentBadge: true,
-      sound: 'alarm.mp3', // Must match the exact filename in Xcode
-      interruptionLevel: InterruptionLevel.timeSensitive, // Helps bypass iOS Focus modes
+      sound: 'alarm.mp3',
+      interruptionLevel: InterruptionLevel.timeSensitive,
     );
 
     final details = NotificationDetails(android: androidDetails, iOS: iosDetails);
@@ -68,6 +75,7 @@ class NotificationService {
   }
 
   static Future<void> cancelAlarm() async {
+    if (!_isMobile) return;
     await _notifications.cancel(_alarmId);
   }
 }
