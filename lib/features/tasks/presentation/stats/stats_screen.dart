@@ -104,9 +104,13 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(), // Let the outer ListView handle scrolling
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.5, // Adjust this ratio to make the cards taller or shorter
                 children: [
                   _buildStatCard('Focus time', '${_stats!.totalFocusMinutes} min', Icons.timer_outlined),
                   _buildStatCard('Avg. task duration', '${_stats!.averageTaskDurationMinutes} min', Icons.av_timer),
@@ -123,21 +127,20 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
 
   Widget _buildStatCard(String title, String value, IconData icon) {
     final theme = Theme.of(context);
-    return SizedBox(
-      width: MediaQuery.of(context).size.width / 2 - 24,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: theme.colorScheme.primary),
-              const SizedBox(height: 8),
-              Text(title, style: theme.textTheme.titleSmall),
-              const SizedBox(height: 4),
-              Text(value, style: theme.textTheme.titleLarge),
-            ],
-          ),
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: theme.colorScheme.primary),
+            const SizedBox(height: 8),
+            Text(title, style: theme.textTheme.titleSmall),
+            const SizedBox(height: 4),
+            Text(value, style: theme.textTheme.titleLarge),
+          ],
         ),
       ),
     );

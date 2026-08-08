@@ -18,25 +18,27 @@ class TaskStats {
   factory TaskStats.fromTasks(Iterable<dynamic> tasks, {required int daysInRange}) {
     final taskList = tasks.toList(growable: false);
     final completedTasks = taskList.where((task) => task.isCompleted).toList(growable: false);
-    final tasksWithTime = taskList.where((task) => task.elapsedAt(DateTime.now()).inMilliseconds > 0).toList(growable: false);
-    var totalFocusMinutes = 0;
 
+    final now = DateTime.now();
+
+    final tasksWithTime = taskList.where((task) => task.elapsedAt(now).inMilliseconds > 0).toList(growable: false);
+    int totalMilliseconds = 0;
     for (final task in tasksWithTime) {
-      final int minutes = task.elapsedAt(DateTime.now()).inMilliseconds ~/ 60000;
-      totalFocusMinutes += minutes;
+      totalMilliseconds += task.elapsedAt(now).inMilliseconds as int;
     }
-
+    final totalFocusMinutes = totalMilliseconds ~/ 60000;
     final completedCount = completedTasks.length;
     final totalTaskCount = taskList.length;
-    final averageDuration = tasksWithTime.isEmpty ? 0 : totalFocusMinutes ~/ tasksWithTime.length;
-    final completionScore = totalTaskCount == 0 ? 0 : (completedCount / totalTaskCount) * 100;
+    final averageDuration = tasksWithTime.isEmpty ? 0 : (totalMilliseconds ~/ tasksWithTime.length) ~/ 60000;
+    final minutesPerDay = daysInRange <= 0 ? 0 : (totalMilliseconds ~/ daysInRange) ~/ 60000;
+    final completionScore = totalTaskCount == 0 ? 0.0 : (completedCount / totalTaskCount) * 100;
 
     return TaskStats(
       totalTasks: totalTaskCount,
       completedTasks: completedCount,
       totalFocusMinutes: totalFocusMinutes,
       averageTaskDurationMinutes: averageDuration,
-      focusMinutesPerDay: daysInRange <= 0 ? 0 : totalFocusMinutes ~/ daysInRange,
+      focusMinutesPerDay: minutesPerDay,
       completionScore: double.parse(completionScore.toStringAsFixed(1)),
     );
   }
