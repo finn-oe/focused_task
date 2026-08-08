@@ -25,6 +25,24 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     });
   }
 
+  String _formatSelectedDate(DateTime selectedDay) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final targetDate = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+
+    final difference = targetDate.difference(today).inDays;
+
+    if (difference == 0) {
+      return 'Today';
+    } else if (difference == 1) {
+      return 'Tomorrow';
+    } else if (difference == -1) {
+      return 'Yesterday';
+    } else {
+      return '${selectedDay.year}-${selectedDay.month.toString().padLeft(2, '0')}-${selectedDay.day.toString().padLeft(2, '0')}';
+    }
+  }
+
   Future<void> _handleRecoverableSessions() async {
     if (_recoveryHandled) {
       return;
@@ -94,10 +112,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             color: Theme.of(context).colorScheme.surfaceContainerLow,
-            child: Text(
-              'Selected day: ${state.selectedDay.year}-${state.selectedDay.month.toString().padLeft(2, '0')}-${state.selectedDay.day.toString().padLeft(2, '0')}',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            child: Text('Selected day: ${_formatSelectedDate(state.selectedDay)}', style: Theme.of(context).textTheme.titleMedium),
           ),
           Expanded(
             child: state.isLoading
