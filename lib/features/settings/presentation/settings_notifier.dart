@@ -10,7 +10,6 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   static const String _themeModeKey = 'settings.theme_mode';
   static const String _retentionDaysKey = 'settings.retention_days';
-  static const String _pauseOnInactiveKey = 'settings.pause_on_inactive';
   static const String _pauseOnBackgroundKey = 'settings.pause_on_background';
   static const String _enableWakelockKey = 'settings.enable_wakelock';
 
@@ -20,14 +19,12 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final prefs = await SharedPreferences.getInstance();
     final themeModeRaw = prefs.getString(_themeModeKey);
     final retentionDays = prefs.getInt(_retentionDaysKey) ?? 30;
-    final pauseOnInactive = prefs.getBool(_pauseOnInactiveKey) ?? true;
     final pauseOnBackground = prefs.getBool(_pauseOnBackgroundKey) ?? true;
     final enableWakelock = prefs.getBool(_enableWakelockKey) ?? false;
 
     state = state.copyWith(
       themeMode: _parseThemeMode(themeModeRaw),
       retentionDays: retentionDays < 1 ? 1 : retentionDays,
-      pauseOnInactive: pauseOnInactive,
       pauseOnBackground: pauseOnBackground,
       enableWakelock: enableWakelock,
       isLoading: false,
@@ -45,12 +42,6 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_retentionDaysKey, clamped);
     state = state.copyWith(retentionDays: clamped);
-  }
-
-  Future<void> setPauseOnInactive(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_pauseOnInactiveKey, value);
-    state = state.copyWith(pauseOnInactive: value);
   }
 
   Future<void> setPauseOnBackground(bool value) async {

@@ -4,7 +4,6 @@ class SettingsState {
   const SettingsState({
     required this.themeMode,
     required this.retentionDays,
-    required this.pauseOnInactive,
     required this.pauseOnBackground,
     required this.enableWakelock,
     required this.isLoading,
@@ -13,20 +12,11 @@ class SettingsState {
   });
 
   factory SettingsState.initial() {
-    return const SettingsState(
-      themeMode: ThemeMode.system,
-      retentionDays: 30,
-      pauseOnInactive: true,
-      pauseOnBackground: true,
-      enableWakelock: false,
-      isLoading: true,
-      isCleaning: false,
-    );
+    return const SettingsState(themeMode: ThemeMode.system, retentionDays: 30, pauseOnBackground: true, enableWakelock: false, isLoading: true, isCleaning: false);
   }
 
   final ThemeMode themeMode;
   final int retentionDays;
-  final bool pauseOnInactive;
   final bool pauseOnBackground;
   final bool enableWakelock;
   final bool isLoading;
@@ -36,7 +26,6 @@ class SettingsState {
   SettingsState copyWith({
     ThemeMode? themeMode,
     int? retentionDays,
-    bool? pauseOnInactive,
     bool? pauseOnBackground,
     bool? enableWakelock,
     bool? isLoading,
@@ -47,7 +36,6 @@ class SettingsState {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
       retentionDays: retentionDays ?? this.retentionDays,
-      pauseOnInactive: pauseOnInactive ?? this.pauseOnInactive,
       pauseOnBackground: pauseOnBackground ?? this.pauseOnBackground,
       enableWakelock: enableWakelock ?? this.enableWakelock,
       isLoading: isLoading ?? this.isLoading,

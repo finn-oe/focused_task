@@ -97,7 +97,6 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     final settings = ref.watch(settingsNotifierProvider);
 
     return FocusLifecycleObserver(
-      pauseOnInactive: settings.pauseOnInactive,
       pauseOnBackground: settings.pauseOnBackground,
       onBackground: () async {
         await notifier.pauseSession();

@@ -73,17 +73,9 @@ class SettingsScreen extends ConsumerWidget {
                   contentPadding: EdgeInsets.zero,
                   onChanged: notifier.setEnableWakelock,
                 ),
-
                 SwitchListTile(
-                  title: const Text('Pause when screen dims'),
-                  subtitle: const Text('Pauses the session if the screen locks or a system dialog appears.'),
-                  value: state.pauseOnInactive,
-                  contentPadding: EdgeInsets.zero,
-                  onChanged: notifier.setPauseOnInactive,
-                ),
-                SwitchListTile(
-                  title: const Text('Pause when app is in background'),
-                  subtitle: const Text('Pauses the session if the app is minimized.'),
+                  title: const Text('Pause when minimized or locked'),
+                  subtitle: const Text('Pauses the session if the app is sent to the background or the screen turns off.'),
                   value: state.pauseOnBackground,
                   contentPadding: EdgeInsets.zero,
                   onChanged: notifier.setPauseOnBackground,
