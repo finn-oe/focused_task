@@ -5,41 +5,56 @@ import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
   static final _notifications = FlutterLocalNotificationsPlugin();
-  static const int _alarmId = 8675309; // Fixed ID so we can cancel it easily
+  static const int _alarmId = 8675309;
 
   static Future<void> init() async {
     tz.initializeTimeZones();
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const settings = InitializationSettings(android: android);
+
+    // iOS Initialization
+    const ios = DarwinInitializationSettings(requestAlertPermission: false, requestBadgePermission: false, requestSoundPermission: false);
+
+    const settings = InitializationSettings(android: android, iOS: ios);
 
     await _notifications.initialize(
       settings,
       onDidReceiveNotificationResponse: (response) {
-        // Tapping the notification automatically launches/resumes the app.
-        // We can cancel the looping notification immediately upon tap.
         cancelAlarm();
       },
     );
   }
 
   static Future<void> requestPermissions() async {
+    // Android Permissions
     await _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestNotificationsPermission();
     await _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.requestExactAlarmsPermission();
+
+    // iOS Permissions
+    await _notifications.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(alert: true, badge: true, sound: true);
   }
 
   static Future<void> scheduleAlarm({required String taskTitle, required DateTime scheduledDate}) async {
     final androidDetails = AndroidNotificationDetails(
-      'focus_alarm_channel', // Channel ID
-      'Focus Alarms', // Channel Name
+      'focus_alarm_channel',
+      'Focus Alarms',
       channelDescription: 'Rings when a task timer is up',
       importance: Importance.max,
       priority: Priority.high,
-      sound: const RawResourceAndroidNotificationSound('alarm'), // Refers to res/raw/alarm.mp3
-      additionalFlags: Int32List.fromList([4]), // 4 = FLAG_INSISTENT (Loops sound)
+      sound: const RawResourceAndroidNotificationSound('alarm'),
+      additionalFlags: Int32List.fromList([4]), // Loops on Android
       fullScreenIntent: true,
     );
 
-    final details = NotificationDetails(android: androidDetails);
+    // iOS Details
+    const iosDetails = DarwinNotificationDetails(
+      presentSound: true,
+      presentAlert: true,
+      presentBadge: true,
+      sound: 'alarm.mp3', // Must match the exact filename in Xcode
+      interruptionLevel: InterruptionLevel.timeSensitive, // Helps bypass iOS Focus modes
+    );
+
+    final details = NotificationDetails(android: androidDetails, iOS: iosDetails);
 
     await _notifications.zonedSchedule(
       _alarmId,
