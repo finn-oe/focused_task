@@ -1,11 +1,12 @@
 import 'package:flutter/widgets.dart';
 
 class FocusLifecycleObserver extends StatefulWidget {
-  const FocusLifecycleObserver({super.key, required this.child, required this.onPause, required this.onResume});
+  const FocusLifecycleObserver({super.key, required this.child, required this.onBackground, required this.onResume, required this.pauseOnInactive});
 
   final Widget child;
-  final VoidCallback onPause;
+  final VoidCallback onBackground;
   final VoidCallback onResume;
+  final bool pauseOnInactive;
 
   @override
   State<FocusLifecycleObserver> createState() => _FocusLifecycleObserverState();
@@ -17,7 +18,18 @@ class _FocusLifecycleObserverState extends State<FocusLifecycleObserver> {
   @override
   void initState() {
     super.initState();
-    _listener = AppLifecycleListener(onPause: widget.onPause, onHide: widget.onPause, onDetach: widget.onPause, onResume: widget.onResume, onInactive: widget.onPause);
+    _listener = AppLifecycleListener(
+      onPause: widget.onBackground, // Minimized
+      onHide: widget.onBackground, // Desktop window hidden
+      onDetach: widget.onBackground, // App killing
+      onResume: widget.onResume,
+      onInactive: () {
+        // Screen dimmed or system dialog appeared
+        if (widget.pauseOnInactive) {
+          widget.onBackground();
+        }
+      },
+    );
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/lifecycle_observer.dart';
@@ -21,7 +22,20 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(focusModeNotifierProvider.notifier).initializeForDay(DateTime.now());
+
+      // Check setting and apply Wakelock
+      final settings = ref.read(settingsNotifierProvider);
+      if (settings.enableWakelock) {
+        WakelockPlus.enable();
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    // Always release the wakelock when leaving the focus screen
+    WakelockPlus.disable();
+    super.dispose();
   }
 
   @override
@@ -36,11 +50,17 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 
     final state = ref.watch(focusModeNotifierProvider);
     final notifier = ref.read(focusModeNotifierProvider.notifier);
+    final settings = ref.watch(settingsNotifierProvider); // Watch settings for lifecycle pref
 
     return FocusLifecycleObserver(
-      onPause: () async {
+      pauseOnInactive: settings.pauseOnInactive,
+      onBackground: () async {
         await notifier.pauseSession();
         if (!context.mounted) return;
+
+        // If wakelock was enabled, disable it while paused
+        if (settings.enableWakelock) WakelockPlus.disable();
+
         context.go('/pause');
       },
       onResume: () {},

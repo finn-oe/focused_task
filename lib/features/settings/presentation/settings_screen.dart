@@ -62,6 +62,32 @@ class SettingsScreen extends ConsumerWidget {
                   label: const Text('Clean now'),
                 ),
                 if (state.lastCleanupMessage != null) ...[const SizedBox(height: 12), Text(state.lastCleanupMessage!, style: Theme.of(context).textTheme.bodyMedium)],
+                const SizedBox(height: 24),
+                Text('Focus Mode', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 8),
+
+                SwitchListTile(
+                  title: const Text('Keep screen awake'),
+                  subtitle: const Text('Prevents the screen from turning off during an active focus session.'),
+                  value: state.enableWakelock,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: notifier.setEnableWakelock,
+                ),
+
+                SwitchListTile(
+                  title: const Text('Pause when screen dims'),
+                  subtitle: const Text('Pauses the session if the screen locks or a system dialog appears.'),
+                  value: state.pauseOnInactive,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: notifier.setPauseOnInactive,
+                ),
+                SwitchListTile(
+                  title: const Text('Pause when app is in background'),
+                  subtitle: const Text('Pauses the session if the app is minimized.'),
+                  value: state.pauseOnBackground,
+                  contentPadding: EdgeInsets.zero,
+                  onChanged: notifier.setPauseOnBackground,
+                ),
               ],
             ),
     );
