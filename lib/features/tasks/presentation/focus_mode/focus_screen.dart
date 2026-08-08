@@ -86,10 +86,7 @@ class _FocusBody extends StatelessWidget {
     final task = state.currentTask;
     if (task == null) {
       return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('No unfinished tasks for today.'),
-        ),
+        child: Padding(padding: EdgeInsets.all(24), child: Text('No unfinished tasks for today.')),
       );
     }
 

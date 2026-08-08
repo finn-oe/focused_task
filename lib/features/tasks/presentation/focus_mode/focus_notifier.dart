@@ -91,14 +91,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     final task = await _repository.getNextIncompleteTaskForDay(state.selectedDay);
     if (task == null) {
       _stopTicker();
-      state = state.copyWith(
-        currentTask: null,
-        isLoading: false,
-        isPaused: true,
-        clearSessionStartedAt: true,
-        sessionBaseMs: 0,
-        shouldShowFinishedForToday: true,
-      );
+      state = state.copyWith(currentTask: null, isLoading: false, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, shouldShowFinishedForToday: true);
       return;
     }
 
