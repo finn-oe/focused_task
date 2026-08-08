@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
+import 'package:focused_task/core/services/notification_service.dart';
 
 class FocusModeState {
   const FocusModeState({
@@ -95,6 +96,21 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     await _loadNextTask();
   }
 
+  void _manageBackgroundAlarm(TaskEntity task, DateTime now) {
+    if (task.targetDurationMinutes != null && !state.hasAlarmPlayedForCurrentTask) {
+      final targetMs = task.targetDurationMinutes! * 60 * 1000;
+      final elapsedMs = task.elapsedAt(now).inMilliseconds;
+      final remainingMs = targetMs - elapsedMs;
+
+      if (remainingMs > 0) {
+        NotificationService.scheduleAlarm(
+          taskTitle: task.title,
+          scheduledDate: now.add(Duration(milliseconds: remainingMs)),
+        );
+      }
+    }
+  }
+
   Future<void> _loadNextTask() async {
     final task = await _repository.getNextIncompleteTaskForDay(state.selectedDay);
     if (task == null) {
@@ -129,6 +145,9 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
       shouldShowFinishedForToday: false,
       hasAlarmPlayedForCurrentTask: false,
     );
+
+    // Schedule the OS background alarm since a new task just loaded and started
+    _manageBackgroundAlarm(current, DateTime.now());
   }
 
   Future<void> pauseSession() async {
@@ -136,6 +155,9 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     if (task == null || state.isPaused) {
       return;
     }
+
+    // Cancel the OS background alarm since the timer is no longer running
+    await NotificationService.cancelAlarm();
 
     final now = DateTime.now();
     await _repository.pauseTaskSession(taskId: task.id, pausedAt: now);
@@ -165,6 +187,11 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
 
     _startTicker();
     state = state.copyWith(currentTask: updatedTask, isPaused: false, sessionStartedAt: now, now: now, shouldShowFinishedForToday: false);
+
+    // Re-schedule the OS background alarm with the updated time
+    if (updatedTask != null) {
+      _manageBackgroundAlarm(updatedTask, now);
+    }
   }
 
   Future<void> completeCurrentTask() async {
@@ -173,12 +200,16 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
       return;
     }
 
+    // Cancel any pending alarms for this task
+    await NotificationService.cancelAlarm();
+
     await _repository.completeTask(taskId: task.id, completedAt: DateTime.now());
 
     await _loadNextTask();
   }
 
   Future<void> exitFocus() async {
+    await NotificationService.cancelAlarm();
     await pauseSession();
     _stopTicker();
     state = state.copyWith(clearCurrentTask: true, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, now: DateTime.now(), shouldShowFinishedForToday: false);
@@ -196,6 +227,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
   }
 
   void dismissAlarm() {
+    NotificationService.cancelAlarm();
     state = state.copyWith(shouldShowAlarm: false);
   }
 
@@ -212,6 +244,9 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
 
         if (elapsedMs >= targetMs) {
           triggerAlarm = true;
+          // The app is open and ticking, so cancel the background OS alarm
+          // and let our custom in-app popup take over.
+          NotificationService.cancelAlarm();
         }
       }
 

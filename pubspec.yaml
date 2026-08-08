@@ -44,6 +44,8 @@ dependencies:
   shared_preferences: ^2.5.3
   wakelock_plus: ^1.7.0
   audioplayers: ^6.8.1
+  flutter_local_notifications: ^17.0.1
+  timezone: ^0.9.2
 
 dev_dependencies:
   flutter_test:
