@@ -14,7 +14,21 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 2) {
+          await m.addColumn(tasks, tasks.targetDurationMinutes);
+        }
+      },
+    );
+  }
 
   DateTime _startOfDay(DateTime day) {
     return DateTime(day.year, day.month, day.day);
@@ -73,8 +87,10 @@ class AppDatabase extends _$AppDatabase {
     await into(tasks).insert(companion.copyWith(assignedDate: Value(normalizedAssignedDate)));
   }
 
-  Future<int> updateTaskDetails({required int taskId, required String title, String? description}) {
-    return (update(tasks)..where((t) => t.id.equals(taskId))).write(TasksCompanion(title: Value(title), description: Value(description)));
+  Future<int> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes}) {
+    return (update(
+      tasks,
+    )..where((t) => t.id.equals(taskId))).write(TasksCompanion(title: Value(title), description: Value(description), targetDurationMinutes: Value(targetDurationMinutes)));
   }
 
   Future<void> updateTaskOrder({required int taskId, required String sortOrder}) async {

@@ -16,6 +16,8 @@ class FocusModeState {
     this.currentTask,
     this.error,
     this.shouldShowFinishedForToday = false,
+    this.shouldShowAlarm = false,
+    this.hasAlarmPlayedForCurrentTask = false,
   });
 
   factory FocusModeState.initial() {
@@ -32,6 +34,8 @@ class FocusModeState {
   final TaskEntity? currentTask;
   final String? error;
   final bool shouldShowFinishedForToday;
+  final bool shouldShowAlarm;
+  final bool hasAlarmPlayedForCurrentTask;
 
   Duration get totalSessionDuration {
     final runningMs = isPaused || sessionStartedAt == null ? 0 : now.difference(sessionStartedAt!).inMilliseconds;
@@ -56,6 +60,8 @@ class FocusModeState {
     TaskEntity? currentTask,
     String? error,
     bool? shouldShowFinishedForToday,
+    bool? shouldShowAlarm,
+    bool? hasAlarmPlayedForCurrentTask,
     bool clearCurrentTask = false,
     bool clearSessionStartedAt = false,
     bool clearError = false,
@@ -70,6 +76,8 @@ class FocusModeState {
       currentTask: clearCurrentTask ? null : currentTask ?? this.currentTask,
       error: clearError ? null : error ?? this.error,
       shouldShowFinishedForToday: shouldShowFinishedForToday ?? this.shouldShowFinishedForToday,
+      shouldShowAlarm: shouldShowAlarm ?? this.shouldShowAlarm,
+      hasAlarmPlayedForCurrentTask: hasAlarmPlayedForCurrentTask ?? this.hasAlarmPlayedForCurrentTask,
     );
   }
 }
@@ -91,7 +99,16 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     final task = await _repository.getNextIncompleteTaskForDay(state.selectedDay);
     if (task == null) {
       _stopTicker();
-      state = state.copyWith(currentTask: null, isLoading: false, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, shouldShowFinishedForToday: true);
+      state = state.copyWith(
+        currentTask: null,
+        isLoading: false,
+        isPaused: true,
+        clearSessionStartedAt: true,
+        sessionBaseMs: 0,
+        shouldShowFinishedForToday: true,
+        shouldShowAlarm: false,
+        hasAlarmPlayedForCurrentTask: false,
+      );
       return;
     }
 
@@ -177,9 +194,31 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     }
   }
 
+  void dismissAlarm() {
+    state = state.copyWith(shouldShowAlarm: false);
+  }
+
   void _startTicker() {
     _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
-      state = state.copyWith(now: DateTime.now());
+      final now = DateTime.now();
+      bool triggerAlarm = false;
+
+      // Check if target duration is met
+      final task = state.currentTask;
+      if (task?.targetDurationMinutes != null && !state.hasAlarmPlayedForCurrentTask) {
+        final elapsedMs = task!.elapsedAt(now).inMilliseconds;
+        final targetMs = task.targetDurationMinutes! * 60 * 1000;
+
+        if (elapsedMs >= targetMs) {
+          triggerAlarm = true;
+        }
+      }
+
+      state = state.copyWith(
+        now: now,
+        shouldShowAlarm: triggerAlarm ? true : state.shouldShowAlarm,
+        hasAlarmPlayedForCurrentTask: triggerAlarm ? true : state.hasAlarmPlayedForCurrentTask,
+      );
     });
   }
 

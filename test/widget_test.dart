@@ -38,6 +38,7 @@ void main() {
           priority: TaskPriority.low,
           timeSpent: 0,
           latestStart: null,
+          targetDurationMinutes: null,
         ),
       ],
     );
@@ -90,7 +91,14 @@ class _FakeTaskRepository implements ITaskRepository {
     required DateTime assignedDate,
     required String sortOrder,
     TaskPriority priority = TaskPriority.low,
+    int? targetDurationMinutes,
   }) async {}
+
+  @override
+  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes}) async {}
+
+  @override
+  Future<void> deleteTask(int taskId) async {}
 
   @override
   Future<void> discardUnfinishedSession({required int taskId}) async {}

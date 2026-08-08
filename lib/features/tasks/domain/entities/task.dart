@@ -23,6 +23,7 @@ class TaskEntity {
     required this.timeSpent,
     required this.description,
     required this.latestStart,
+    this.targetDurationMinutes,
   });
 
   final int id;
@@ -34,6 +35,7 @@ class TaskEntity {
   final TaskPriority priority;
   final int timeSpent;
   final DateTime? latestStart;
+  final int? targetDurationMinutes;
 
   bool get isRunning => latestStart != null;
 
@@ -56,6 +58,8 @@ class TaskEntity {
     int? timeSpent,
     DateTime? latestStart,
     bool clearLatestStart = false,
+    bool clearTargetDuration = false,
+    int? targetDurationMinutes,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -67,6 +71,7 @@ class TaskEntity {
       priority: priority ?? this.priority,
       timeSpent: timeSpent ?? this.timeSpent,
       latestStart: clearLatestStart ? null : latestStart ?? this.latestStart,
+      targetDurationMinutes: clearTargetDuration ? null : targetDurationMinutes ?? this.targetDurationMinutes,
     );
   }
 }

@@ -38,15 +38,29 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
-  Future<void> createTask({required String title, String? description, required DateTime assignedDate, required String sortOrder, TaskPriority priority = TaskPriority.low}) {
+  Future<void> createTask({
+    required String title,
+    String? description,
+    required DateTime assignedDate,
+    required String sortOrder,
+    TaskPriority priority = TaskPriority.low,
+    int? targetDurationMinutes,
+  }) {
     return _database.createTask(
-      TasksCompanion.insert(title: title, description: Value(description), assignedDate: _dateOnly(assignedDate), sortOrder: sortOrder, priority: Value(priority.value)),
+      TasksCompanion.insert(
+        title: title,
+        description: Value(description),
+        assignedDate: _dateOnly(assignedDate),
+        sortOrder: sortOrder,
+        priority: Value(priority.value),
+        targetDurationMinutes: Value(targetDurationMinutes),
+      ),
     );
   }
 
   @override
-  Future<void> updateTaskDetails({required int taskId, required String title, String? description}) {
-    return _database.updateTaskDetails(taskId: taskId, title: title, description: description);
+  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes}) {
+    return _database.updateTaskDetails(taskId: taskId, title: title, description: description, targetDurationMinutes: targetDurationMinutes);
   }
 
   @override
@@ -114,6 +128,7 @@ class TaskRepositoryImpl implements ITaskRepository {
       priority: TaskPriority.fromValue(task.priority),
       timeSpent: task.timeSpent,
       latestStart: task.latestStart,
+      targetDurationMinutes: task.targetDurationMinutes,
     );
   }
 }

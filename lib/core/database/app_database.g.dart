@@ -113,6 +113,16 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _targetDurationMinutesMeta =
+      const VerificationMeta('targetDurationMinutes');
+  @override
+  late final GeneratedColumn<int> targetDurationMinutes = GeneratedColumn<int>(
+    'target_duration_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -124,6 +134,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     priority,
     timeSpent,
     latestStart,
+    targetDurationMinutes,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -206,6 +217,15 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         ),
       );
     }
+    if (data.containsKey('target_duration_minutes')) {
+      context.handle(
+        _targetDurationMinutesMeta,
+        targetDurationMinutes.isAcceptableOrUnknown(
+          data['target_duration_minutes']!,
+          _targetDurationMinutesMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -251,6 +271,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}latest_start'],
       ),
+      targetDurationMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}target_duration_minutes'],
+      ),
     );
   }
 
@@ -270,6 +294,7 @@ class Task extends DataClass implements Insertable<Task> {
   final int priority;
   final int timeSpent;
   final DateTime? latestStart;
+  final int? targetDurationMinutes;
   const Task({
     required this.id,
     required this.title,
@@ -280,6 +305,7 @@ class Task extends DataClass implements Insertable<Task> {
     required this.priority,
     required this.timeSpent,
     this.latestStart,
+    this.targetDurationMinutes,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -296,6 +322,9 @@ class Task extends DataClass implements Insertable<Task> {
     map['time_spent'] = Variable<int>(timeSpent);
     if (!nullToAbsent || latestStart != null) {
       map['latest_start'] = Variable<DateTime>(latestStart);
+    }
+    if (!nullToAbsent || targetDurationMinutes != null) {
+      map['target_duration_minutes'] = Variable<int>(targetDurationMinutes);
     }
     return map;
   }
@@ -315,6 +344,9 @@ class Task extends DataClass implements Insertable<Task> {
       latestStart: latestStart == null && nullToAbsent
           ? const Value.absent()
           : Value(latestStart),
+      targetDurationMinutes: targetDurationMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetDurationMinutes),
     );
   }
 
@@ -333,6 +365,9 @@ class Task extends DataClass implements Insertable<Task> {
       priority: serializer.fromJson<int>(json['priority']),
       timeSpent: serializer.fromJson<int>(json['timeSpent']),
       latestStart: serializer.fromJson<DateTime?>(json['latestStart']),
+      targetDurationMinutes: serializer.fromJson<int?>(
+        json['targetDurationMinutes'],
+      ),
     );
   }
   @override
@@ -348,6 +383,7 @@ class Task extends DataClass implements Insertable<Task> {
       'priority': serializer.toJson<int>(priority),
       'timeSpent': serializer.toJson<int>(timeSpent),
       'latestStart': serializer.toJson<DateTime?>(latestStart),
+      'targetDurationMinutes': serializer.toJson<int?>(targetDurationMinutes),
     };
   }
 
@@ -361,6 +397,7 @@ class Task extends DataClass implements Insertable<Task> {
     int? priority,
     int? timeSpent,
     Value<DateTime?> latestStart = const Value.absent(),
+    Value<int?> targetDurationMinutes = const Value.absent(),
   }) => Task(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -371,6 +408,9 @@ class Task extends DataClass implements Insertable<Task> {
     priority: priority ?? this.priority,
     timeSpent: timeSpent ?? this.timeSpent,
     latestStart: latestStart.present ? latestStart.value : this.latestStart,
+    targetDurationMinutes: targetDurationMinutes.present
+        ? targetDurationMinutes.value
+        : this.targetDurationMinutes,
   );
   Task copyWithCompanion(TasksCompanion data) {
     return Task(
@@ -391,6 +431,9 @@ class Task extends DataClass implements Insertable<Task> {
       latestStart: data.latestStart.present
           ? data.latestStart.value
           : this.latestStart,
+      targetDurationMinutes: data.targetDurationMinutes.present
+          ? data.targetDurationMinutes.value
+          : this.targetDurationMinutes,
     );
   }
 
@@ -405,7 +448,8 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('isCompleted: $isCompleted, ')
           ..write('priority: $priority, ')
           ..write('timeSpent: $timeSpent, ')
-          ..write('latestStart: $latestStart')
+          ..write('latestStart: $latestStart, ')
+          ..write('targetDurationMinutes: $targetDurationMinutes')
           ..write(')'))
         .toString();
   }
@@ -421,6 +465,7 @@ class Task extends DataClass implements Insertable<Task> {
     priority,
     timeSpent,
     latestStart,
+    targetDurationMinutes,
   );
   @override
   bool operator ==(Object other) =>
@@ -434,7 +479,8 @@ class Task extends DataClass implements Insertable<Task> {
           other.isCompleted == this.isCompleted &&
           other.priority == this.priority &&
           other.timeSpent == this.timeSpent &&
-          other.latestStart == this.latestStart);
+          other.latestStart == this.latestStart &&
+          other.targetDurationMinutes == this.targetDurationMinutes);
 }
 
 class TasksCompanion extends UpdateCompanion<Task> {
@@ -447,6 +493,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<int> priority;
   final Value<int> timeSpent;
   final Value<DateTime?> latestStart;
+  final Value<int?> targetDurationMinutes;
   const TasksCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -457,6 +504,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.priority = const Value.absent(),
     this.timeSpent = const Value.absent(),
     this.latestStart = const Value.absent(),
+    this.targetDurationMinutes = const Value.absent(),
   });
   TasksCompanion.insert({
     this.id = const Value.absent(),
@@ -468,6 +516,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.priority = const Value.absent(),
     this.timeSpent = const Value.absent(),
     this.latestStart = const Value.absent(),
+    this.targetDurationMinutes = const Value.absent(),
   }) : title = Value(title),
        assignedDate = Value(assignedDate),
        sortOrder = Value(sortOrder);
@@ -481,6 +530,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<int>? priority,
     Expression<int>? timeSpent,
     Expression<DateTime>? latestStart,
+    Expression<int>? targetDurationMinutes,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -492,6 +542,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (priority != null) 'priority': priority,
       if (timeSpent != null) 'time_spent': timeSpent,
       if (latestStart != null) 'latest_start': latestStart,
+      if (targetDurationMinutes != null)
+        'target_duration_minutes': targetDurationMinutes,
     });
   }
 
@@ -505,6 +557,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<int>? priority,
     Value<int>? timeSpent,
     Value<DateTime?>? latestStart,
+    Value<int?>? targetDurationMinutes,
   }) {
     return TasksCompanion(
       id: id ?? this.id,
@@ -516,6 +569,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
       priority: priority ?? this.priority,
       timeSpent: timeSpent ?? this.timeSpent,
       latestStart: latestStart ?? this.latestStart,
+      targetDurationMinutes:
+          targetDurationMinutes ?? this.targetDurationMinutes,
     );
   }
 
@@ -549,6 +604,11 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (latestStart.present) {
       map['latest_start'] = Variable<DateTime>(latestStart.value);
     }
+    if (targetDurationMinutes.present) {
+      map['target_duration_minutes'] = Variable<int>(
+        targetDurationMinutes.value,
+      );
+    }
     return map;
   }
 
@@ -563,7 +623,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('isCompleted: $isCompleted, ')
           ..write('priority: $priority, ')
           ..write('timeSpent: $timeSpent, ')
-          ..write('latestStart: $latestStart')
+          ..write('latestStart: $latestStart, ')
+          ..write('targetDurationMinutes: $targetDurationMinutes')
           ..write(')'))
         .toString();
   }
@@ -591,6 +652,7 @@ typedef $$TasksTableCreateCompanionBuilder =
       Value<int> priority,
       Value<int> timeSpent,
       Value<DateTime?> latestStart,
+      Value<int?> targetDurationMinutes,
     });
 typedef $$TasksTableUpdateCompanionBuilder =
     TasksCompanion Function({
@@ -603,6 +665,7 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<int> priority,
       Value<int> timeSpent,
       Value<DateTime?> latestStart,
+      Value<int?> targetDurationMinutes,
     });
 
 class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
@@ -655,6 +718,11 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<DateTime> get latestStart => $composableBuilder(
     column: $table.latestStart,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get targetDurationMinutes => $composableBuilder(
+    column: $table.targetDurationMinutes,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -712,6 +780,11 @@ class $$TasksTableOrderingComposer
     column: $table.latestStart,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get targetDurationMinutes => $composableBuilder(
+    column: $table.targetDurationMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TasksTableAnnotationComposer
@@ -757,6 +830,11 @@ class $$TasksTableAnnotationComposer
     column: $table.latestStart,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get targetDurationMinutes => $composableBuilder(
+    column: $table.targetDurationMinutes,
+    builder: (column) => column,
+  );
 }
 
 class $$TasksTableTableManager
@@ -796,6 +874,7 @@ class $$TasksTableTableManager
                 Value<int> priority = const Value.absent(),
                 Value<int> timeSpent = const Value.absent(),
                 Value<DateTime?> latestStart = const Value.absent(),
+                Value<int?> targetDurationMinutes = const Value.absent(),
               }) => TasksCompanion(
                 id: id,
                 title: title,
@@ -806,6 +885,7 @@ class $$TasksTableTableManager
                 priority: priority,
                 timeSpent: timeSpent,
                 latestStart: latestStart,
+                targetDurationMinutes: targetDurationMinutes,
               ),
           createCompanionCallback:
               ({
@@ -818,6 +898,7 @@ class $$TasksTableTableManager
                 Value<int> priority = const Value.absent(),
                 Value<int> timeSpent = const Value.absent(),
                 Value<DateTime?> latestStart = const Value.absent(),
+                Value<int?> targetDurationMinutes = const Value.absent(),
               }) => TasksCompanion.insert(
                 id: id,
                 title: title,
@@ -828,6 +909,7 @@ class $$TasksTableTableManager
                 priority: priority,
                 timeSpent: timeSpent,
                 latestStart: latestStart,
+                targetDurationMinutes: targetDurationMinutes,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

@@ -18,4 +18,6 @@ class Tasks extends Table {
   IntColumn get timeSpent => integer().named('time_spent').withDefault(const Constant(0))();
 
   DateTimeColumn get latestStart => dateTime().named('latest_start').nullable()();
+
+  IntColumn get targetDurationMinutes => integer().nullable()();
 }

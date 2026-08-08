@@ -10,9 +10,16 @@ abstract class ITaskRepository {
 
   Future<TaskEntity?> getNextIncompleteTaskForDay(DateTime day);
 
-  Future<void> createTask({required String title, String? description, required DateTime assignedDate, required String sortOrder, TaskPriority priority = TaskPriority.low});
+  Future<void> createTask({
+    required String title,
+    String? description,
+    required DateTime assignedDate,
+    required String sortOrder,
+    TaskPriority priority = TaskPriority.low,
+    int? targetDurationMinutes,
+  });
 
-  Future<void> updateTaskDetails({required int taskId, required String title, String? description});
+  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes});
 
   Future<void> updateTaskOrder({required int taskId, required String sortOrder});
 

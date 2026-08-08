@@ -66,15 +66,15 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
     _bind(normalized);
   }
 
-  Future<void> addTask({required String title, String? description}) async {
+  Future<void> addTask({required String title, String? description, int? targetDurationMinutes}) async {
     final lastSort = state.tasks.isEmpty ? null : state.tasks.last.sortOrder;
     final nextSort = FractionalIndexer.between(lastSort, null);
 
-    await _repository.createTask(title: title, description: description, assignedDate: state.selectedDay, sortOrder: nextSort);
+    await _repository.createTask(title: title, description: description, assignedDate: state.selectedDay, sortOrder: nextSort, targetDurationMinutes: targetDurationMinutes);
   }
 
-  Future<void> updateTask({required int id, required String title, String? description}) async {
-    await _repository.updateTaskDetails(taskId: id, title: title, description: description);
+  Future<void> updateTask({required int id, required String title, String? description, int? targetDurationMinutes}) async {
+    await _repository.updateTaskDetails(taskId: id, title: title, description: description, targetDurationMinutes: targetDurationMinutes);
   }
 
   Future<void> deleteTask(int id) async {

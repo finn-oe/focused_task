@@ -22,6 +22,7 @@ class TaskFormModal extends ConsumerStatefulWidget {
 class _TaskFormModalState extends ConsumerState<TaskFormModal> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
+  int? _targetDurationMinutes;
 
   bool get _isEditMode => widget.task != null;
 
@@ -30,6 +31,7 @@ class _TaskFormModalState extends ConsumerState<TaskFormModal> {
     super.initState();
     _titleController = TextEditingController(text: widget.task?.title ?? '');
     _descriptionController = TextEditingController(text: widget.task?.description ?? '');
+    _targetDurationMinutes = widget.task?.targetDurationMinutes;
   }
 
   @override
@@ -58,6 +60,32 @@ class _TaskFormModalState extends ConsumerState<TaskFormModal> {
             controller: _descriptionController,
             decoration: const InputDecoration(labelText: 'Description'),
           ),
+          const SizedBox(height: 16),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Target Duration (Optional)'),
+            subtitle: Text(_targetDurationMinutes == null ? 'No limit' : '${_targetDurationMinutes! ~/ 60}h ${_targetDurationMinutes! % 60}m'),
+            trailing: IconButton(
+              icon: const Icon(Icons.timer_outlined),
+              onPressed: () async {
+                final initialTime = TimeOfDay(hour: (_targetDurationMinutes ?? 0) ~/ 60, minute: (_targetDurationMinutes ?? 0) % 60);
+
+                final selectedTime = await showTimePicker(
+                  context: context,
+                  initialTime: initialTime,
+                  // Force 24-hour mode so it reads purely as hours/minutes, not AM/PM
+                  builder: (context, child) => MediaQuery(data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true), child: child!),
+                );
+
+                if (selectedTime != null) {
+                  setState(() {
+                    final totalMins = selectedTime.hour * 60 + selectedTime.minute;
+                    _targetDurationMinutes = totalMins == 0 ? null : totalMins;
+                  });
+                }
+              },
+            ),
+          ),
         ],
       ),
       actions: [
@@ -81,9 +109,9 @@ class _TaskFormModalState extends ConsumerState<TaskFormModal> {
             if (title.isEmpty) return;
 
             if (_isEditMode) {
-              await notifier.updateTask(id: widget.task!.id, title: title, description: parsedDesc);
+              await notifier.updateTask(id: widget.task!.id, title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes);
             } else {
-              await notifier.addTask(title: title, description: parsedDesc);
+              await notifier.addTask(title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes);
             }
 
             if (context.mounted) Navigator.of(context).pop();
