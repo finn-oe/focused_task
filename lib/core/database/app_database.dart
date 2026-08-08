@@ -73,6 +73,10 @@ class AppDatabase extends _$AppDatabase {
     await into(tasks).insert(companion.copyWith(assignedDate: Value(normalizedAssignedDate)));
   }
 
+  Future<int> updateTaskDetails({required int taskId, required String title, String? description}) {
+    return (update(tasks)..where((t) => t.id.equals(taskId))).write(TasksCompanion(title: Value(title), description: Value(description)));
+  }
+
   Future<void> updateTaskOrder({required int taskId, required String sortOrder}) async {
     await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(sortOrder: Value(sortOrder)));
   }
@@ -112,6 +116,10 @@ class AppDatabase extends _$AppDatabase {
       ..where((task) => task.latestStart.isNotNull())
       ..where((task) => task.isCompleted.equals(false));
     return query.get();
+  }
+
+  Future<int> deleteTask(int taskId) {
+    return (delete(tasks)..where((t) => t.id.equals(taskId))).go();
   }
 
   Future<int> deleteCompletedTasksBefore(DateTime cutoffDay) {

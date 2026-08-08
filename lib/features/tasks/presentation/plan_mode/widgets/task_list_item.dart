@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form_modal.dart';
 
 class TaskListItem extends ConsumerWidget {
   const TaskListItem({super.key, required this.task});
@@ -43,7 +44,17 @@ class TaskListItem extends ConsumerWidget {
           style: isCompleted ? TextStyle(decoration: TextDecoration.lineThrough, color: colorScheme.onSurfaceVariant) : null,
         ),
         subtitle: Text(task.description ?? 'No description', style: isCompleted ? TextStyle(color: colorScheme.onSurfaceVariant) : null),
-        trailing: Icon(Icons.drag_handle, color: isCompleted ? colorScheme.onSurfaceVariant : null),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              color: isCompleted ? colorScheme.onSurfaceVariant : null,
+              onPressed: () => TaskFormModal.show(context, task: task),
+            ),
+            Icon(Icons.drag_handle, color: isCompleted ? colorScheme.onSurfaceVariant : null),
+          ],
+        ),
       ),
     );
   }

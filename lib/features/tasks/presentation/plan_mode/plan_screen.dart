@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form_modal.dart';
 
 class PlanScreen extends ConsumerStatefulWidget {
   const PlanScreen({super.key});
@@ -124,52 +125,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(onPressed: () => _showAddTaskDialog(context, notifier), icon: const Icon(Icons.add), label: const Text('Add Task')),
-    );
-  }
-
-  Future<void> _showAddTaskDialog(BuildContext context, PlanModeNotifier notifier) async {
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-
-    await showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add task'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Title'),
-              ),
-              TextField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () async {
-                final title = titleController.text.trim();
-                if (title.isEmpty) {
-                  return;
-                }
-
-                await notifier.addTask(title: title, description: descriptionController.text.trim().isEmpty ? null : descriptionController.text.trim());
-
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+      floatingActionButton: FloatingActionButton.extended(onPressed: () => TaskFormModal.show(context), icon: const Icon(Icons.add), label: const Text('Add Task')),
     );
   }
 

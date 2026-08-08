@@ -73,6 +73,14 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
     await _repository.createTask(title: title, description: description, assignedDate: state.selectedDay, sortOrder: nextSort);
   }
 
+  Future<void> updateTask({required int id, required String title, String? description}) async {
+    await _repository.updateTaskDetails(taskId: id, title: title, description: description);
+  }
+
+  Future<void> deleteTask(int id) async {
+    await _repository.deleteTask(id);
+  }
+
   Future<void> reorderTask(int oldIndex, int newIndex) async {
     if (state.tasks.isEmpty) {
       return;

@@ -45,6 +45,11 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
+  Future<void> updateTaskDetails({required int taskId, required String title, String? description}) {
+    return _database.updateTaskDetails(taskId: taskId, title: title, description: description);
+  }
+
+  @override
   Future<void> updateTaskOrder({required int taskId, required String sortOrder}) {
     return _database.updateTaskOrder(taskId: taskId, sortOrder: sortOrder);
   }
@@ -84,6 +89,11 @@ class TaskRepositoryImpl implements ITaskRepository {
   Future<List<TaskEntity>> getRecoverableSessions() async {
     final tasks = await _database.getRecoverableSessions();
     return tasks.map(_toEntity).toList(growable: false);
+  }
+
+  @override
+  Future<void> deleteTask(int taskId) {
+    return _database.deleteTask(taskId);
   }
 
   @override

@@ -12,6 +12,8 @@ abstract class ITaskRepository {
 
   Future<void> createTask({required String title, String? description, required DateTime assignedDate, required String sortOrder, TaskPriority priority = TaskPriority.low});
 
+  Future<void> updateTaskDetails({required int taskId, required String title, String? description});
+
   Future<void> updateTaskOrder({required int taskId, required String sortOrder});
 
   Future<void> setTaskCompletion({required int taskId, required bool isCompleted});
@@ -23,6 +25,8 @@ abstract class ITaskRepository {
   Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt});
 
   Future<void> completeTask({required int taskId, required DateTime completedAt});
+
+  Future<void> deleteTask(int taskId);
 
   Future<void> discardUnfinishedSession({required int taskId});
 
