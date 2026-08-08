@@ -127,6 +127,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
       isLoading: false,
       clearError: true,
       shouldShowFinishedForToday: false,
+      hasAlarmPlayedForCurrentTask: false,
     );
   }
 

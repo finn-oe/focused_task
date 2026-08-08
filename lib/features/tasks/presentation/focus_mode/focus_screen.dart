@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:just_audio/just_audio.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/lifecycle_observer.dart';
@@ -25,7 +24,6 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(focusModeNotifierProvider.notifier).initializeForDay(DateTime.now());
 
-      // Check setting and apply Wakelock
       final settings = ref.read(settingsNotifierProvider);
       if (settings.enableWakelock) {
         WakelockPlus.enable();
@@ -33,22 +31,17 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     });
   }
 
-  final AudioPlayer _audioPlayer = AudioPlayer();
-
   @override
   void dispose() {
-    _audioPlayer.dispose();
     WakelockPlus.disable();
     super.dispose();
   }
 
   void _showAlarmDialog() async {
     try {
-      await _audioPlayer.setAsset('assets/sounds/alarm.mp3');
-      await _audioPlayer.setLoopMode(LoopMode.one);
-      await _audioPlayer.play();
+      SystemSound.play(SystemSoundType.alert);
     } catch (e) {
-      debugPrint('Audio playback failed: $e');
+      debugPrint('System sound failed: $e');
     }
 
     if (!mounted) return;
@@ -64,12 +57,6 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         );
       },
     );
-
-    try {
-      await _audioPlayer.stop();
-    } catch (e) {
-      debugPrint('Error stopping audio: $e');
-    }
 
     ref.read(focusModeNotifierProvider.notifier).dismissAlarm();
   }
@@ -89,15 +76,15 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 
     final state = ref.watch(focusModeNotifierProvider);
     final notifier = ref.read(focusModeNotifierProvider.notifier);
-    final settings = ref.watch(settingsNotifierProvider); // Watch settings for lifecycle pref
+    final settings = ref.watch(settingsNotifierProvider);
 
     return FocusLifecycleObserver(
       pauseOnInactive: settings.pauseOnInactive,
+      pauseOnBackground: settings.pauseOnBackground,
       onBackground: () async {
         await notifier.pauseSession();
         if (!context.mounted) return;
 
-        // If wakelock was enabled, disable it while paused
         if (settings.enableWakelock) WakelockPlus.disable();
 
         context.go('/pause');
