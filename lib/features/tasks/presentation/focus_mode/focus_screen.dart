@@ -26,6 +26,14 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<FocusModeState>(focusModeNotifierProvider, (previous, next) {
+      if (!mounted) return;
+      if (previous?.shouldShowFinishedForToday != true && next.shouldShowFinishedForToday && !next.isLoading) {
+        ref.read(focusModeNotifierProvider.notifier).clearFinishedForToday();
+        context.go('/finished-for-today');
+      }
+    });
+
     final state = ref.watch(focusModeNotifierProvider);
     final notifier = ref.read(focusModeNotifierProvider.notifier);
 
@@ -54,11 +62,6 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
                 state: state,
                 onComplete: () async {
                   await notifier.completeCurrentTask();
-                  final latest = ref.read(focusModeNotifierProvider);
-                  if (!context.mounted) return;
-                  if (latest.currentTask == null) {
-                    context.go('/plan');
-                  }
                 },
                 onExit: () async {
                   await notifier.exitFocus();
@@ -83,7 +86,10 @@ class _FocusBody extends StatelessWidget {
     final task = state.currentTask;
     if (task == null) {
       return const Center(
-        child: Padding(padding: EdgeInsets.all(24), child: Text('No unfinished tasks for today.')),
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text('No unfinished tasks for today.'),
+        ),
       );
     }
 

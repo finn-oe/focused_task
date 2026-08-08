@@ -46,6 +46,14 @@ class AppDatabase extends _$AppDatabase {
     return query.get();
   }
 
+  Future<List<Task>> getTasksInRange({required DateTime start, required DateTime end}) {
+    final query = select(tasks)
+      ..where((task) => task.assignedDate.isBiggerOrEqualValue(_startOfDay(start)) & task.assignedDate.isSmallerThanValue(_endOfDay(end)))
+      ..orderBy([(task) => OrderingTerm.asc(task.sortOrder)]);
+
+    return query.get();
+  }
+
   Future<Task?> getTaskById(int taskId) {
     final query = select(tasks)..where((task) => task.id.equals(taskId));
     return query.getSingleOrNull();

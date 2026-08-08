@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_screen.dart';
 import 'package:focused_task/main.dart';
@@ -108,6 +109,11 @@ class _FakeTaskRepository implements ITaskRepository {
 
   @override
   Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt}) async {}
+
+  @override
+  Future<TaskStats> getTaskStats({required DateTime start, required DateTime end}) async {
+    return const TaskStats(totalTasks: 0, completedTasks: 0, totalFocusMinutes: 0, averageTaskDurationMinutes: 0, focusMinutesPerDay: 0, completionScore: 0);
+  }
 
   @override
   Future<void> startTaskSession({required int taskId, required DateTime startedAt}) async {}

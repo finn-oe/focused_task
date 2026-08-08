@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import 'package:focused_task/core/database/app_database.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
 class TaskRepositoryImpl implements ITaskRepository {
@@ -51,6 +52,12 @@ class TaskRepositoryImpl implements ITaskRepository {
   @override
   Future<void> setTaskCompletion({required int taskId, required bool isCompleted}) {
     return _database.setTaskCompletion(taskId: taskId, isCompleted: isCompleted);
+  }
+
+  @override
+  Future<TaskStats> getTaskStats({required DateTime start, required DateTime end}) async {
+    final tasks = await _database.getTasksInRange(start: start, end: end);
+    return TaskStats.fromTasks(tasks.map(_toEntity), daysInRange: start.difference(end).abs().inDays == 0 ? 1 : start.difference(end).abs().inDays + 1);
   }
 
   @override

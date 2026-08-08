@@ -15,6 +15,7 @@ class FocusModeState {
     this.sessionStartedAt,
     this.currentTask,
     this.error,
+    this.shouldShowFinishedForToday = false,
   });
 
   factory FocusModeState.initial() {
@@ -30,6 +31,7 @@ class FocusModeState {
   final bool isPaused;
   final TaskEntity? currentTask;
   final String? error;
+  final bool shouldShowFinishedForToday;
 
   Duration get totalSessionDuration {
     final runningMs = isPaused || sessionStartedAt == null ? 0 : now.difference(sessionStartedAt!).inMilliseconds;
@@ -53,6 +55,7 @@ class FocusModeState {
     bool? isPaused,
     TaskEntity? currentTask,
     String? error,
+    bool? shouldShowFinishedForToday,
     bool clearCurrentTask = false,
     bool clearSessionStartedAt = false,
     bool clearError = false,
@@ -66,6 +69,7 @@ class FocusModeState {
       isPaused: isPaused ?? this.isPaused,
       currentTask: clearCurrentTask ? null : currentTask ?? this.currentTask,
       error: clearError ? null : error ?? this.error,
+      shouldShowFinishedForToday: shouldShowFinishedForToday ?? this.shouldShowFinishedForToday,
     );
   }
 }
@@ -87,7 +91,14 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     final task = await _repository.getNextIncompleteTaskForDay(state.selectedDay);
     if (task == null) {
       _stopTicker();
-      state = state.copyWith(currentTask: null, isLoading: false, isPaused: true, clearSessionStartedAt: true);
+      state = state.copyWith(
+        currentTask: null,
+        isLoading: false,
+        isPaused: true,
+        clearSessionStartedAt: true,
+        sessionBaseMs: 0,
+        shouldShowFinishedForToday: true,
+      );
       return;
     }
 
@@ -99,7 +110,14 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     }
 
     _startTicker();
-    state = state.copyWith(currentTask: current, isPaused: false, sessionStartedAt: state.sessionStartedAt ?? DateTime.now(), isLoading: false, clearError: true);
+    state = state.copyWith(
+      currentTask: current,
+      isPaused: false,
+      sessionStartedAt: state.sessionStartedAt ?? DateTime.now(),
+      isLoading: false,
+      clearError: true,
+      shouldShowFinishedForToday: false,
+    );
   }
 
   Future<void> pauseSession() async {
@@ -114,7 +132,14 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     final updatedTask = await _repository.getTaskById(task.id);
     final runningMs = state.sessionStartedAt == null ? 0 : now.difference(state.sessionStartedAt!).inMilliseconds;
 
-    state = state.copyWith(currentTask: updatedTask, sessionBaseMs: state.sessionBaseMs + runningMs, isPaused: true, clearSessionStartedAt: true, now: now);
+    state = state.copyWith(
+      currentTask: updatedTask,
+      sessionBaseMs: state.sessionBaseMs + runningMs,
+      isPaused: true,
+      clearSessionStartedAt: true,
+      now: now,
+      shouldShowFinishedForToday: false,
+    );
   }
 
   Future<void> resumeSession() async {
@@ -128,7 +153,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     final updatedTask = await _repository.getTaskById(task.id);
 
     _startTicker();
-    state = state.copyWith(currentTask: updatedTask, isPaused: false, sessionStartedAt: now, now: now);
+    state = state.copyWith(currentTask: updatedTask, isPaused: false, sessionStartedAt: now, now: now, shouldShowFinishedForToday: false);
   }
 
   Future<void> completeCurrentTask() async {
@@ -145,7 +170,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
   Future<void> exitFocus() async {
     await pauseSession();
     _stopTicker();
-    state = state.copyWith(clearCurrentTask: true, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, now: DateTime.now());
+    state = state.copyWith(clearCurrentTask: true, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, now: DateTime.now(), shouldShowFinishedForToday: false);
   }
 
   Future<void> recoverOrDiscardSessions({required bool recover, required List<TaskEntity> sessions}) async {
@@ -168,6 +193,10 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
   void _stopTicker() {
     _ticker?.cancel();
     _ticker = null;
+  }
+
+  void clearFinishedForToday() {
+    state = state.copyWith(shouldShowFinishedForToday: false);
   }
 
   void disposeNotifier() {

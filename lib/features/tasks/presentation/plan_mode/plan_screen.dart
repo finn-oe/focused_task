@@ -83,6 +83,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             },
             icon: const Icon(Icons.calendar_today_outlined),
           ),
+          IconButton(tooltip: 'Statistics', onPressed: () => context.push('/stats'), icon: const Icon(Icons.insights_outlined)),
           IconButton(tooltip: 'Start Focus', onPressed: () => context.go('/focus'), icon: const Icon(Icons.play_arrow)),
         ],
       ),

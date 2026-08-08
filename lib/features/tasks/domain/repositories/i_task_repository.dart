@@ -1,4 +1,5 @@
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 
 abstract class ITaskRepository {
   Stream<List<TaskEntity>> watchTasksForDay(DateTime day);
@@ -14,6 +15,8 @@ abstract class ITaskRepository {
   Future<void> updateTaskOrder({required int taskId, required String sortOrder});
 
   Future<void> setTaskCompletion({required int taskId, required bool isCompleted});
+
+  Future<TaskStats> getTaskStats({required DateTime start, required DateTime end});
 
   Future<void> startTaskSession({required int taskId, required DateTime startedAt});
 
