@@ -19,10 +19,13 @@ class AlarmService {
 
   /// Schedules an alarm for the given [scheduledDate].
   static Future<void> scheduleAlarm({required String taskTitle, required DateTime scheduledDate}) async {
+    final now = DateTime.now();
+    final safeDate = scheduledDate.isBefore(now) ? now.add(const Duration(milliseconds: 500)) : scheduledDate;
+
     if (_isMobile) {
       final alarmSettings = AlarmSettings(
         id: _alarmId,
-        dateTime: scheduledDate,
+        dateTime: safeDate,
         assetAudioPath: 'assets/sounds/alarm_looped.mp3',
         loopAudio: true,
         vibrate: true,
@@ -35,7 +38,7 @@ class AlarmService {
 
       await Alarm.set(alarmSettings: alarmSettings);
     } else if (_isDesktop) {
-      final delay = scheduledDate.difference(DateTime.now());
+      final delay = safeDate.difference(DateTime.now());
       if (delay.isNegative) return;
 
       Future.delayed(delay, () async {
