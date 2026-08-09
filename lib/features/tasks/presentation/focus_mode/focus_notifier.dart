@@ -102,12 +102,10 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
       final elapsedMs = task.elapsedAt(now).inMilliseconds;
       final remainingMs = targetMs - elapsedMs;
 
-      if (remainingMs > 0) {
-        AlarmService.scheduleAlarm(
-          taskTitle: task.title,
-          scheduledDate: now.add(Duration(milliseconds: remainingMs)),
-        );
-      }
+      AlarmService.scheduleAlarm(
+        taskTitle: task.title,
+        scheduledDate: now.add(Duration(milliseconds: remainingMs)),
+      );
     }
   }
 
