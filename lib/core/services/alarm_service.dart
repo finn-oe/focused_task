@@ -8,7 +8,7 @@ class AlarmService {
   static const int _alarmId = 8675309;
 
   static bool get _isMobile => Platform.isAndroid || Platform.isIOS;
-  static bool get _isWindows => Platform.isWindows;
+  static bool get _isDesktop => Platform.isWindows || Platform.isMacOS || Platform.isLinux;
 
   /// Initialize the required plugins based on platform.
   static Future<void> init() async {
@@ -34,7 +34,7 @@ class AlarmService {
       );
 
       await Alarm.set(alarmSettings: alarmSettings);
-    } else if (_isWindows) {
+    } else if (_isDesktop) {
       final delay = scheduledDate.difference(DateTime.now());
       if (delay.isNegative) return;
 
@@ -49,7 +49,7 @@ class AlarmService {
   static Future<void> cancelAlarm() async {
     if (_isMobile) {
       await Alarm.stop(_alarmId);
-    } else if (_isWindows) {
+    } else if (_isDesktop) {
       await _windowsPlayer.stop();
     }
   }
