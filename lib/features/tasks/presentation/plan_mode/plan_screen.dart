@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
-import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form_modal.dart';
 

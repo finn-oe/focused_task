@@ -9,7 +9,6 @@ import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_screen.dart';
-import 'package:focused_task/main.dart';
 
 void main() {
   testWidgets('App boots into plan mode shell', (WidgetTester tester) async {
