@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:audioplayers/audioplayers.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/lifecycle_observer.dart';
@@ -38,25 +37,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   }
 
   void _showAlarmDialog() async {
-    final localPlayer = AudioPlayer();
+    // 1. The alarm is already ringing via the AlarmService native audio!
 
-    // Listen for when the audio file finishes playing and trigger it again manually
-    final subscription = localPlayer.onPlayerComplete.listen((_) {
-      localPlayer.play(AssetSource('sounds/alarm.mp3'));
-    });
-
-    try {
-      await localPlayer.play(AssetSource('sounds/alarm.mp3'));
-    } catch (e) {
-      debugPrint('Custom audio playback failed: $e');
-    }
-
-    if (!mounted) {
-      await subscription.cancel();
-      await localPlayer.dispose();
-      return;
-    }
-
+    // 2. Just show the dialog
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -69,13 +52,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       },
     );
 
-    // Clean up subscription and player when dialog is closed
-    try {
-      await subscription.cancel();
-      await localPlayer.stop();
-      await localPlayer.dispose();
-    } catch (_) {}
-
+    // 3. When dialog closes, tell the Notifier.
+    // This will call AlarmService.cancelAlarm() which stops the native audio.
     ref.read(focusModeNotifierProvider.notifier).dismissAlarm();
   }
 

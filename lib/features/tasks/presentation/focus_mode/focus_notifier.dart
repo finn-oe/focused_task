@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
-import 'package:focused_task/core/services/notification_service.dart';
+import 'package:focused_task/core/services/alarm_service.dart'; // Updated import
 
 class FocusModeState {
   const FocusModeState({
@@ -103,7 +103,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
       final remainingMs = targetMs - elapsedMs;
 
       if (remainingMs > 0) {
-        NotificationService.scheduleAlarm(
+        AlarmService.scheduleAlarm(
           taskTitle: task.title,
           scheduledDate: now.add(Duration(milliseconds: remainingMs)),
         );
@@ -157,7 +157,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     }
 
     // Cancel the OS background alarm since the timer is no longer running
-    await NotificationService.cancelAlarm();
+    await AlarmService.cancelAlarm();
 
     final now = DateTime.now();
     await _repository.pauseTaskSession(taskId: task.id, pausedAt: now);
@@ -201,7 +201,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     }
 
     // Cancel any pending alarms for this task
-    await NotificationService.cancelAlarm();
+    await AlarmService.cancelAlarm();
 
     await _repository.completeTask(taskId: task.id, completedAt: DateTime.now());
 
@@ -209,7 +209,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
   }
 
   Future<void> exitFocus() async {
-    await NotificationService.cancelAlarm();
+    await AlarmService.cancelAlarm();
     await pauseSession();
     _stopTicker();
     state = state.copyWith(clearCurrentTask: true, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, now: DateTime.now(), shouldShowFinishedForToday: false);
@@ -227,7 +227,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
   }
 
   void dismissAlarm() {
-    NotificationService.cancelAlarm();
+    AlarmService.cancelAlarm();
     state = state.copyWith(shouldShowAlarm: false);
   }
 
@@ -244,9 +244,8 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
 
         if (elapsedMs >= targetMs) {
           triggerAlarm = true;
-          // The app is open and ticking, so cancel the background OS alarm
-          // and let our custom in-app popup take over.
-          NotificationService.cancelAlarm();
+          // Notice we DO NOT cancel the alarm here anymore.
+          // We want the alarm service to physically ring the phone!
         }
       }
 

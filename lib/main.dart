@@ -4,12 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/core/ui/themes/app_themes.dart';
-import 'package:focused_task/core/services/notification_service.dart';
+import 'package:focused_task/core/services/alarm_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService.init();
-  await NotificationService.requestPermissions();
+  await AlarmService.init();
   runApp(const ProviderScope(child: FocusedTaskApp()));
 }
 
