@@ -108,6 +108,5 @@ flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/icon/app_icon.png" # Fallback for all platforms
-  min_sdk_android: 21
   adaptive_icon_background: "#212121" # Can be a hex color OR an image path like "assets/icon/background.png"
   adaptive_icon_foreground: "assets/icon/app_icon_transparent.png"
