@@ -37,9 +37,6 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   }
 
   void _showAlarmDialog() async {
-    // 1. The alarm is already ringing via the AlarmService native audio!
-
-    // 2. Just show the dialog
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -52,8 +49,6 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       },
     );
 
-    // 3. When dialog closes, tell the Notifier.
-    // This will call AlarmService.cancelAlarm() which stops the native audio.
     ref.read(focusModeNotifierProvider.notifier).dismissAlarm();
   }
 
@@ -79,9 +74,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       onBackground: () async {
         await notifier.pauseSession();
         if (!context.mounted) return;
-
         if (settings.enableWakelock) WakelockPlus.disable();
-
         context.go('/pause');
       },
       onResume: () {},
@@ -115,7 +108,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   }
 }
 
-class _FocusBody extends StatelessWidget {
+// Changed to ConsumerWidget to access the notifier for checkbox toggles
+class _FocusBody extends ConsumerWidget {
   const _FocusBody({required this.state, required this.onComplete, required this.onExit});
 
   final FocusModeState state;
@@ -123,13 +117,20 @@ class _FocusBody extends StatelessWidget {
   final VoidCallback onExit;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final task = state.currentTask;
     if (task == null) {
       return const Center(
         child: Padding(padding: EdgeInsets.all(24), child: Text('No unfinished tasks for today.')),
       );
     }
+
+    // Progress Calculations
+    final hasTodos = task.todos.isNotEmpty;
+    final totalTodos = task.todos.length;
+    final completedTodos = task.todos.where((t) => t.isCompleted).length;
+    final progress = hasTodos ? (completedTodos / totalTodos) : 0.0;
+    final percentage = hasTodos ? (progress * 100).toInt() : 0;
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -146,18 +147,69 @@ class _FocusBody extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
+
           Expanded(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(task.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineLarge),
-                  const SizedBox(height: 12),
-                  Text(task.description ?? 'No description', textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
+            child: Column(
+              children: [
+                // --- Progress Bar ---
+                if (hasTodos) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: LinearProgressIndicator(value: progress, minHeight: 8, borderRadius: BorderRadius.circular(8)),
+                      ),
+                      const SizedBox(width: 12),
+                      Text('$percentage%', style: Theme.of(context).textTheme.titleSmall),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
                 ],
-              ),
+
+                // --- Task Header ---
+                Text(task.title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineLarge),
+                if (task.description != null && task.description!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(task.description!, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyLarge),
+                ],
+                const SizedBox(height: 24),
+
+                // --- Scrollable Sub-tasks List ---
+                if (hasTodos)
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerLow, borderRadius: BorderRadius.circular(16)),
+                      child: ListView.builder(
+                        itemCount: task.todos.length,
+                        itemBuilder: (context, index) {
+                          final todo = task.todos[index];
+                          return CheckboxListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            title: Text(
+                              todo.title,
+                              style: TextStyle(
+                                decoration: todo.isCompleted ? TextDecoration.lineThrough : null,
+                                color: todo.isCompleted ? Theme.of(context).colorScheme.onSurfaceVariant : null,
+                              ),
+                            ),
+                            value: todo.isCompleted,
+                            onChanged: (val) {
+                              if (val != null) {
+                                // Call the notifier to update the state & DB
+                                ref.read(focusModeNotifierProvider.notifier).toggleTodoCompletion(todo.id!);
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                else
+                  const Spacer(), // Pushes buttons to the bottom if no todos
+              ],
             ),
           ),
+
+          const SizedBox(height: 16),
           FilledButton(onPressed: onComplete, child: const Text('Complete Task')),
           const SizedBox(height: 8),
           OutlinedButton(onPressed: onExit, child: const Text('Exit Focus')),

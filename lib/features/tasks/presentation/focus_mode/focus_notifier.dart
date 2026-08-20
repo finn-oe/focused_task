@@ -224,6 +224,22 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     }
   }
 
+  Future<void> toggleTodoCompletion(int todoId) async {
+    final task = state.currentTask;
+    if (task == null) return;
+
+    final updatedTodos = task.todos.map((todo) {
+      if (todo.id == todoId) {
+        return todo.copyWith(isCompleted: !todo.isCompleted);
+      }
+      return todo;
+    }).toList();
+
+    state = state.copyWith(currentTask: task.copyWith(todos: updatedTodos));
+
+    await _repository.replaceTaskTodos(task.id, updatedTodos);
+  }
+
   void dismissAlarm() {
     AlarmService.cancelAlarm();
     state = state.copyWith(shouldShowAlarm: false);
