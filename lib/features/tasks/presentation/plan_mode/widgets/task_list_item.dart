@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form_modal.dart';
+import 'package:focused_task/core/utils/duration_extensions.dart'; // Add this import
 
 class TaskListItem extends ConsumerWidget {
   const TaskListItem({super.key, required this.task, required this.index});
@@ -48,6 +49,15 @@ class TaskListItem extends ConsumerWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // NEW: Show time spent in red if the task is completed
+            if (isCompleted && task.timeSpent > 0)
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Text(
+                  Duration(milliseconds: task.timeSpent).toFormattedString(),
+                  style: const TextStyle(color: Color.fromARGB(255, 0, 168, 8), fontWeight: FontWeight.w500),
+                ),
+              ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               color: isCompleted ? colorScheme.onSurfaceVariant : null,

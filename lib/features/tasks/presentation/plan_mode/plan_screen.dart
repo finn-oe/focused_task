@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form_modal.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
-import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form_modal.dart';
+import 'package:focused_task/core/utils/duration_extensions.dart';
 
 class PlanScreen extends ConsumerStatefulWidget {
   const PlanScreen({super.key});
@@ -64,7 +65,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
           title: const Text('Recover unfinished session?'),
           content: Text(
             'We found ${sessions.length} unfinished focus session(s). '
-            'Recover ${_formatDuration(total)} of tracked time?',
+            'Recover ${total.toFormattedString()} of tracked time?',
           ),
           actions: [
             TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Discard')),
@@ -137,11 +138,5 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(onPressed: () => TaskFormModal.show(context), icon: const Icon(Icons.add), label: const Text('Add Task')),
     );
-  }
-
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours.toString().padLeft(2, '0');
-    final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
-    return '$hours:$minutes';
   }
 }
