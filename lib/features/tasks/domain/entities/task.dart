@@ -12,6 +12,19 @@ enum TaskPriority {
   }
 }
 
+class TaskTodoEntity {
+  const TaskTodoEntity({this.id, required this.title, required this.isCompleted, required this.sortOrder});
+
+  final int? id;
+  final String title;
+  final bool isCompleted;
+  final String sortOrder;
+
+  TaskTodoEntity copyWith({int? id, String? title, bool? isCompleted, String? sortOrder}) {
+    return TaskTodoEntity(id: id ?? this.id, title: title ?? this.title, isCompleted: isCompleted ?? this.isCompleted, sortOrder: sortOrder ?? this.sortOrder);
+  }
+}
+
 class TaskEntity {
   const TaskEntity({
     required this.id,
@@ -24,6 +37,7 @@ class TaskEntity {
     required this.description,
     required this.latestStart,
     this.targetDurationMinutes,
+    required this.todos,
   });
 
   final int id;
@@ -36,6 +50,7 @@ class TaskEntity {
   final int timeSpent;
   final DateTime? latestStart;
   final int? targetDurationMinutes;
+  final List<TaskTodoEntity> todos;
 
   bool get isRunning => latestStart != null;
 
@@ -60,6 +75,7 @@ class TaskEntity {
     bool clearLatestStart = false,
     bool clearTargetDuration = false,
     int? targetDurationMinutes,
+    List<TaskTodoEntity>? todos,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -72,6 +88,7 @@ class TaskEntity {
       timeSpent: timeSpent ?? this.timeSpent,
       latestStart: clearLatestStart ? null : latestStart ?? this.latestStart,
       targetDurationMinutes: clearTargetDuration ? null : targetDurationMinutes ?? this.targetDurationMinutes,
+      todos: todos ?? this.todos,
     );
   }
 }

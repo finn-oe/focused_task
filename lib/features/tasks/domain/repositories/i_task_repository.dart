@@ -10,7 +10,7 @@ abstract class ITaskRepository {
 
   Future<TaskEntity?> getNextIncompleteTaskForDay(DateTime day);
 
-  Future<void> createTask({
+  Future<int> createTask({
     required String title,
     String? description,
     required DateTime assignedDate,
@@ -40,4 +40,6 @@ abstract class ITaskRepository {
   Future<List<TaskEntity>> getRecoverableSessions();
 
   Future<int> deleteCompletedTasksOlderThanDays(int days);
+
+  Future<void> replaceTaskTodos(int taskId, List<TaskTodoEntity> newTodos);
 }

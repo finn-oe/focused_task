@@ -27,18 +27,18 @@ class TaskRepositoryImpl implements ITaskRepository {
 
   @override
   Future<TaskEntity?> getTaskById(int id) async {
-    final task = await _database.getTaskById(id);
-    return task == null ? null : _toEntity(task);
+    final data = await _database.getTaskById(id);
+    return data == null ? null : _toEntity(data);
   }
 
   @override
   Future<TaskEntity?> getNextIncompleteTaskForDay(DateTime day) async {
     final task = await _database.getNextIncompleteTaskForDay(day);
-    return task == null ? null : _toEntity(task);
+    return task == null ? null : _taskOnlyToEntity(task);
   }
 
   @override
-  Future<void> createTask({
+  Future<int> createTask({
     required String title,
     String? description,
     required DateTime assignedDate,
@@ -76,7 +76,7 @@ class TaskRepositoryImpl implements ITaskRepository {
   @override
   Future<TaskStats> getTaskStats({required DateTime start, required DateTime end}) async {
     final tasks = await _database.getTasksInRange(start: start, end: end);
-    return TaskStats.fromTasks(tasks.map(_toEntity), daysInRange: start.difference(end).abs().inDays == 0 ? 1 : start.difference(end).abs().inDays + 1);
+    return TaskStats.fromTasks(tasks.map(_taskOnlyToEntity), daysInRange: start.difference(end).abs().inDays == 0 ? 1 : start.difference(end).abs().inDays + 1);
   }
 
   @override
@@ -102,7 +102,7 @@ class TaskRepositoryImpl implements ITaskRepository {
   @override
   Future<List<TaskEntity>> getRecoverableSessions() async {
     final tasks = await _database.getRecoverableSessions();
-    return tasks.map(_toEntity).toList(growable: false);
+    return tasks.map(_taskOnlyToEntity).toList(growable: false);
   }
 
   @override
@@ -117,7 +117,26 @@ class TaskRepositoryImpl implements ITaskRepository {
     return _database.deleteCompletedTasksBefore(cutoff);
   }
 
-  TaskEntity _toEntity(Task task) {
+  @override
+  Future<void> replaceTaskTodos(int taskId, List<TaskTodoEntity> newTodos) async {
+    final driftTodos = newTodos
+        .map(
+          (t) => TaskTodo(
+            id: t.id ?? 0, // Ignored by Drift on insert if auto-increment is used correctly with companions
+            taskId: taskId,
+            title: t.title,
+            isCompleted: t.isCompleted,
+            sortOrder: t.sortOrder,
+          ),
+        )
+        .toList();
+
+    await _database.replaceTaskTodos(taskId, driftTodos);
+  }
+
+  // Maps a joined Task + Todos object
+  TaskEntity _toEntity(TaskWithTodos data) {
+    final task = data.task;
     return TaskEntity(
       id: task.id,
       title: task.title,
@@ -129,6 +148,11 @@ class TaskRepositoryImpl implements ITaskRepository {
       timeSpent: task.timeSpent,
       latestStart: task.latestStart,
       targetDurationMinutes: task.targetDurationMinutes,
+      todos: data.todos.map((todo) => TaskTodoEntity(id: todo.id, title: todo.title, isCompleted: todo.isCompleted, sortOrder: todo.sortOrder)).toList(growable: false),
     );
+  }
+
+  TaskEntity _taskOnlyToEntity(Task task) {
+    return _toEntity(TaskWithTodos(task, []));
   }
 }
