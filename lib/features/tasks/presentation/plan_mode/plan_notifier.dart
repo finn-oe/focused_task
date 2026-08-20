@@ -85,14 +85,15 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
     if (state.tasks.isEmpty) {
       return;
     }
-
-    final adjustedNewIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
     final tasks = [...state.tasks];
     final movedTask = tasks.removeAt(oldIndex);
-    tasks.insert(adjustedNewIndex, movedTask);
+    tasks.insert(newIndex, movedTask);
 
-    final before = adjustedNewIndex > 0 ? tasks[adjustedNewIndex - 1] : null;
-    final after = adjustedNewIndex < tasks.length - 1 ? tasks[adjustedNewIndex + 1] : null;
+    // Optimistic UI update so it doesn't snap back
+    state = state.copyWith(tasks: tasks);
+
+    final before = newIndex > 0 ? tasks[newIndex - 1] : null;
+    final after = newIndex < tasks.length - 1 ? tasks[newIndex + 1] : null;
 
     final nextSort = FractionalIndexer.between(before?.sortOrder, after?.sortOrder);
 
