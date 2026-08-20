@@ -81,6 +81,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Focus Mode'),
+          scrolledUnderElevation: 0.0,
+          surfaceTintColor: Colors.transparent,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           leading: IconButton(
             onPressed: () async {
               await notifier.exitFocus();
@@ -108,7 +111,6 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   }
 }
 
-// Changed to ConsumerWidget to access the notifier for checkbox toggles
 class _FocusBody extends ConsumerWidget {
   const _FocusBody({required this.state, required this.onComplete, required this.onExit});
 
@@ -125,7 +127,6 @@ class _FocusBody extends ConsumerWidget {
       );
     }
 
-    // Progress Calculations
     final hasTodos = task.todos.isNotEmpty;
     final totalTodos = task.todos.length;
     final completedTodos = task.todos.where((t) => t.isCompleted).length;
@@ -173,11 +174,10 @@ class _FocusBody extends ConsumerWidget {
                 ],
                 const SizedBox(height: 24),
 
-                // --- Scrollable Sub-tasks List ---
                 if (hasTodos)
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerLow, borderRadius: BorderRadius.circular(16)),
+                    child: Material(
+                      color: Colors.transparent,
                       child: ListView.builder(
                         itemCount: task.todos.length,
                         itemBuilder: (context, index) {
@@ -194,7 +194,6 @@ class _FocusBody extends ConsumerWidget {
                             value: todo.isCompleted,
                             onChanged: (val) {
                               if (val != null) {
-                                // Call the notifier to update the state & DB
                                 ref.read(focusModeNotifierProvider.notifier).toggleTodoCompletion(todo.id!);
                               }
                             },
@@ -204,7 +203,7 @@ class _FocusBody extends ConsumerWidget {
                     ),
                   )
                 else
-                  const Spacer(), // Pushes buttons to the bottom if no todos
+                  const Spacer(),
               ],
             ),
           ),
