@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form_modal.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
@@ -136,7 +135,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(onPressed: () => TaskFormModal.show(context), icon: const Icon(Icons.add), label: const Text('Add Task')),
+      floatingActionButton: FloatingActionButton.extended(onPressed: () => context.push('/task-form'), icon: const Icon(Icons.add), label: const Text('Add Task')),
     );
   }
 }
