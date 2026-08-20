@@ -18,6 +18,11 @@ class TaskListItem extends ConsumerWidget {
     final isCompleted = task.isCompleted;
     final colorScheme = Theme.of(context).colorScheme;
 
+    final totalTodos = task.todos.length;
+    final completedTodos = task.todos.where((t) => t.isCompleted).length;
+
+    final shouldShowProgress = totalTodos > 0 && task.timeSpent > 0 && !task.isCompleted;
+
     return Card(
       key: ValueKey(task.id),
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -49,7 +54,15 @@ class TaskListItem extends ConsumerWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // NEW: Show time spent in red if the task is completed
+            if (shouldShowProgress)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(color: colorScheme.secondaryContainer, borderRadius: BorderRadius.circular(12)),
+                child: Text(
+                  '$completedTodos/$totalTodos',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 0, 168, 8)),
+                ),
+              ),
             if (isCompleted && task.timeSpent > 0)
               Padding(
                 padding: const EdgeInsets.only(right: 8.0),

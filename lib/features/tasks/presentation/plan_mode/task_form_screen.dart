@@ -20,12 +20,15 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
 
   bool get _isEditMode => widget.task != null;
 
+  List<TaskTodoEntity> _todos = [];
+
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task?.title ?? '');
     _descriptionController = TextEditingController(text: widget.task?.description ?? '');
     _targetDurationMinutes = widget.task?.targetDurationMinutes;
+    _todos = widget.task?.todos.toList() ?? [];
   }
 
   @override
@@ -33,6 +36,34 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _showTodoDialog({int? editIndex}) async {
+    final isEdit = editIndex != null;
+
+    // Use our new custom dialog widget that safely manages its own controller
+    final newTitle = await showDialog<String>(
+      context: context,
+      builder: (context) => _TodoInputDialog(initialTitle: isEdit ? _todos[editIndex].title : null),
+    );
+
+    if (!mounted) return; // Always check mounted after an async gap
+
+    if (newTitle != null && newTitle.trim().isNotEmpty) {
+      setState(() {
+        if (isEdit) {
+          _todos[editIndex] = _todos[editIndex].copyWith(title: newTitle.trim());
+        } else {
+          _todos.add(
+            TaskTodoEntity(
+              title: newTitle.trim(),
+              isCompleted: false,
+              sortOrder: '', // Will be assigned on save
+            ),
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -43,7 +74,6 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditMode ? 'Edit Task' : 'Add Task'),
-        // Optional: Move delete to an icon in the AppBar instead of the bottom
         actions: [
           if (_isEditMode)
             IconButton(
@@ -70,9 +100,68 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
             TextField(
               controller: _descriptionController,
               decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
-              maxLines: 4, // More space since it's a full screen!
+              maxLines: 4,
               minLines: 2,
             ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Sub-tasks', style: theme.textTheme.titleMedium),
+                IconButton(onPressed: () => _showTodoDialog(), icon: const Icon(Icons.add), tooltip: 'Add Sub-task'),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // --- Sub-tasks List ---
+            if (_todos.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+                child: Text('No sub-tasks added.', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+              )
+            else
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _todos.length,
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (oldIndex < newIndex) newIndex -= 1;
+                    final item = _todos.removeAt(oldIndex);
+                    _todos.insert(newIndex, item);
+                  });
+                },
+                itemBuilder: (context, index) {
+                  final todo = _todos[index];
+                  return ListTile(
+                    key: ValueKey(todo.id ?? 'new_${todo.title}_$index'),
+                    contentPadding: EdgeInsets.zero,
+                    leading: Checkbox(
+                      value: todo.isCompleted,
+                      onChanged: (val) => setState(() => _todos[index] = todo.copyWith(isCompleted: val)),
+                    ),
+                    title: Text(todo.title),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, size: 20),
+                          onPressed: () => _showTodoDialog(editIndex: index),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                          onPressed: () => setState(() => _todos.removeAt(index)),
+                        ),
+                        ReorderableDragStartListener(
+                          index: index,
+                          child: const Padding(padding: EdgeInsets.only(right: 8.0, left: 8.0), child: Icon(Icons.drag_handle)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+
             const SizedBox(height: 16),
             Card(
               elevation: 0,
@@ -113,10 +202,14 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
 
               if (title.isEmpty) return;
 
+              final sortedTodos = _todos.asMap().entries.map((entry) {
+                return entry.value.copyWith(sortOrder: entry.key.toString().padLeft(5, '0'));
+              }).toList();
+
               if (_isEditMode) {
-                await notifier.updateTask(id: widget.task!.id, title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes);
+                await notifier.updateTask(id: widget.task!.id, title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes, todos: sortedTodos);
               } else {
-                await notifier.addTask(title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes);
+                await notifier.addTask(title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes, todos: sortedTodos);
               }
 
               if (context.mounted) context.pop();
@@ -125,6 +218,49 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _TodoInputDialog extends StatefulWidget {
+  const _TodoInputDialog({this.initialTitle});
+
+  final String? initialTitle;
+
+  @override
+  State<_TodoInputDialog> createState() => _TodoInputDialogState();
+}
+
+class _TodoInputDialogState extends State<_TodoInputDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialTitle ?? '');
+  }
+
+  @override
+  void dispose() {
+    // The controller is safely disposed *after* the dialog fully unmounts
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.initialTitle != null ? 'Edit sub-task' : 'Add sub-task'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+        onSubmitted: (val) => Navigator.of(context).pop(val),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.of(context).pop(_controller.text), child: const Text('Save')),
+      ],
     );
   }
 }
