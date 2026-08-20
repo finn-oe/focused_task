@@ -124,11 +124,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                     buildDefaultDragHandles: false,
                     itemBuilder: (context, index) {
                       final task = state.tasks[index];
-                      return ReorderableDragStartListener(
-                        key: ValueKey(task.id),
-                        index: index,
-                        child: TaskListItem(task: task),
-                      );
+                      return TaskListItem(key: ValueKey(task.id), task: task, index: index);
                     },
                   ),
           ),

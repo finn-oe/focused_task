@@ -6,9 +6,10 @@ import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form_modal.dart';
 
 class TaskListItem extends ConsumerWidget {
-  const TaskListItem({super.key, required this.task});
+  const TaskListItem({super.key, required this.task, required this.index});
 
   final TaskEntity task;
+  final int index;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,7 +53,10 @@ class TaskListItem extends ConsumerWidget {
               color: isCompleted ? colorScheme.onSurfaceVariant : null,
               onPressed: () => TaskFormModal.show(context, task: task),
             ),
-            Icon(Icons.drag_handle, color: isCompleted ? colorScheme.onSurfaceVariant : null),
+            ReorderableDragStartListener(
+              index: index,
+              child: Icon(Icons.drag_handle, color: isCompleted ? colorScheme.onSurfaceVariant : null),
+            ),
           ],
         ),
       ),
