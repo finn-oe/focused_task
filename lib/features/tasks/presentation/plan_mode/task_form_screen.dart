@@ -40,27 +40,19 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
 
   Future<void> _showTodoDialog({int? editIndex}) async {
     final isEdit = editIndex != null;
-
-    // Use our new custom dialog widget that safely manages its own controller
     final newTitle = await showDialog<String>(
       context: context,
       builder: (context) => _TodoInputDialog(initialTitle: isEdit ? _todos[editIndex].title : null),
     );
 
-    if (!mounted) return; // Always check mounted after an async gap
+    if (!mounted) return;
 
     if (newTitle != null && newTitle.trim().isNotEmpty) {
       setState(() {
         if (isEdit) {
           _todos[editIndex] = _todos[editIndex].copyWith(title: newTitle.trim());
         } else {
-          _todos.add(
-            TaskTodoEntity(
-              title: newTitle.trim(),
-              isCompleted: false,
-              sortOrder: '', // Will be assigned on save
-            ),
-          );
+          _todos.add(TaskTodoEntity(title: newTitle.trim(), isCompleted: false, sortOrder: ''));
         }
       });
     }
@@ -70,6 +62,8 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final notifier = ref.read(planModeNotifierProvider.notifier);
+
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       appBar: AppBar(
@@ -113,53 +107,53 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
             ),
             const SizedBox(height: 8),
 
-            // --- Sub-tasks List ---
             if (_todos.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
                 child: Text('No sub-tasks added.', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
               )
             else
-              ReorderableListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _todos.length,
-                onReorder: (oldIndex, newIndex) {
-                  setState(() {
-                    if (oldIndex < newIndex) newIndex -= 1;
-                    final item = _todos.removeAt(oldIndex);
-                    _todos.insert(newIndex, item);
-                  });
-                },
-                itemBuilder: (context, index) {
-                  final todo = _todos[index];
-                  return ListTile(
-                    key: ValueKey(todo.id ?? 'new_${todo.title}_$index'),
-                    contentPadding: EdgeInsets.zero,
-                    leading: Checkbox(
-                      value: todo.isCompleted,
-                      onChanged: (val) => setState(() => _todos[index] = todo.copyWith(isCompleted: val)),
-                    ),
-                    title: Text(todo.title),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, size: 20),
-                          onPressed: () => _showTodoDialog(editIndex: index),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, size: 20, color: Colors.red),
-                          onPressed: () => setState(() => _todos.removeAt(index)),
-                        ),
-                        ReorderableDragStartListener(
-                          index: index,
-                          child: const Padding(padding: EdgeInsets.only(right: 8.0, left: 8.0), child: Icon(Icons.drag_handle)),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: screenHeight * 0.4),
+                child: ReorderableListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _todos.length,
+                  onReorderItem: (oldIndex, newIndex) {
+                    setState(() {
+                      final item = _todos.removeAt(oldIndex);
+                      _todos.insert(newIndex, item);
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final todo = _todos[index];
+                    return ListTile(
+                      key: ValueKey(todo.id ?? 'new_${todo.title}_$index'),
+                      contentPadding: EdgeInsets.zero,
+                      leading: Checkbox(
+                        value: todo.isCompleted,
+                        onChanged: (val) => setState(() => _todos[index] = todo.copyWith(isCompleted: val)),
+                      ),
+                      title: Text(todo.title),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 20),
+                            onPressed: () => _showTodoDialog(editIndex: index),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                            onPressed: () => setState(() => _todos.removeAt(index)),
+                          ),
+                          ReorderableDragStartListener(
+                            index: index,
+                            child: const Padding(padding: EdgeInsets.only(right: 8.0, left: 8.0), child: Icon(Icons.drag_handle)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
 
             const SizedBox(height: 16),
@@ -242,7 +236,6 @@ class _TodoInputDialogState extends State<_TodoInputDialog> {
 
   @override
   void dispose() {
-    // The controller is safely disposed *after* the dialog fully unmounts
     _controller.dispose();
     super.dispose();
   }
