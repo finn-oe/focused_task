@@ -81,6 +81,15 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     await ref.read(focusModeNotifierProvider.notifier).recoverOrDiscardSessions(recover: recover, sessions: sessions);
   }
 
+  Future<void> _pickDay() async {
+    final state = ref.read(planModeNotifierProvider);
+    final notifier = ref.read(planModeNotifierProvider.notifier);
+    final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: state.selectedDay);
+    if (selected != null) {
+      await notifier.setSelectedDay(selected);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(planModeNotifierProvider);
@@ -91,27 +100,23 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
         title: const Text('Plan Mode'),
         actions: [
           IconButton(tooltip: 'Settings', onPressed: () => context.push('/settings'), icon: const Icon(Icons.settings_outlined)),
-          IconButton(
-            tooltip: 'Pick Day',
-            onPressed: () async {
-              final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: state.selectedDay);
-              if (selected != null) {
-                await notifier.setSelectedDay(selected);
-              }
-            },
-            icon: const Icon(Icons.calendar_today_outlined),
-          ),
+          IconButton(tooltip: 'Pick Day', onPressed: _pickDay, icon: const Icon(Icons.calendar_today_outlined)),
           IconButton(tooltip: 'Statistics', onPressed: () => context.push('/stats'), icon: const Icon(Icons.insights_outlined)),
           IconButton(tooltip: 'Start Focus', onPressed: () => context.go('/focus'), icon: const Icon(Icons.play_arrow)),
         ],
       ),
       body: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
+          Material(
             color: Theme.of(context).colorScheme.surfaceContainerLow,
-            child: Text('Selected day: ${_formatSelectedDate(state.selectedDay)}', style: Theme.of(context).textTheme.titleMedium),
+            child: InkWell(
+              onTap: _pickDay,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                child: Text('Selected day: ${_formatSelectedDate(state.selectedDay)}', style: Theme.of(context).textTheme.titleMedium),
+              ),
+            ),
           ),
           Expanded(
             child: state.isLoading
