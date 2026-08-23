@@ -59,8 +59,8 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
-  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes}) {
-    return _database.updateTaskDetails(taskId: taskId, title: title, description: description, targetDurationMinutes: targetDurationMinutes);
+  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes, DateTime? assignedDate}) {
+    return _database.updateTaskDetails(taskId: taskId, title: title, description: description, targetDurationMinutes: targetDurationMinutes, assignedDate: assignedDate);
   }
 
   @override
@@ -119,17 +119,7 @@ class TaskRepositoryImpl implements ITaskRepository {
 
   @override
   Future<void> replaceTaskTodos(int taskId, List<TaskTodoEntity> newTodos) async {
-    final driftTodos = newTodos
-        .map(
-          (t) => TaskTodo(
-            id: t.id ?? 0, // Ignored by Drift on insert if auto-increment is used correctly with companions
-            taskId: taskId,
-            title: t.title,
-            isCompleted: t.isCompleted,
-            sortOrder: t.sortOrder,
-          ),
-        )
-        .toList();
+    final driftTodos = newTodos.map((t) => TaskTodo(id: t.id ?? 0, taskId: taskId, title: t.title, isCompleted: t.isCompleted, sortOrder: t.sortOrder)).toList();
 
     await _database.replaceTaskTodos(taskId, driftTodos);
   }

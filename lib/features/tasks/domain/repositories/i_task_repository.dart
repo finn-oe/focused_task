@@ -19,7 +19,7 @@ abstract class ITaskRepository {
     int? targetDurationMinutes,
   });
 
-  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes});
+  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes, DateTime? assignedDate});
 
   Future<void> updateTaskOrder({required int taskId, required String sortOrder});
 

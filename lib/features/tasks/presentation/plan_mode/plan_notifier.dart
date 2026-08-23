@@ -66,14 +66,14 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
     _bind(normalized);
   }
 
-  Future<void> addTask({required String title, String? description, int? targetDurationMinutes, required List<TaskTodoEntity> todos}) async {
+  Future<void> addTask({required String title, String? description, int? targetDurationMinutes, required List<TaskTodoEntity> todos, required DateTime assignedDate}) async {
     final lastSort = state.tasks.isEmpty ? null : state.tasks.last.sortOrder;
     final nextSort = FractionalIndexer.between(lastSort, null);
 
     final taskId = await _repository.createTask(
       title: title,
       description: description,
-      assignedDate: state.selectedDay,
+      assignedDate: assignedDate,
       sortOrder: nextSort,
       targetDurationMinutes: targetDurationMinutes,
     );
@@ -82,8 +82,15 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
     }
   }
 
-  Future<void> updateTask({required int id, required String title, String? description, int? targetDurationMinutes, required List<TaskTodoEntity> todos}) async {
-    await _repository.updateTaskDetails(taskId: id, title: title, description: description, targetDurationMinutes: targetDurationMinutes);
+  Future<void> updateTask({
+    required int id,
+    required String title,
+    String? description,
+    int? targetDurationMinutes,
+    required List<TaskTodoEntity> todos,
+    required DateTime assignedDate,
+  }) async {
+    await _repository.updateTaskDetails(taskId: id, title: title, description: description, targetDurationMinutes: targetDurationMinutes, assignedDate: assignedDate);
     if (todos.isNotEmpty) {
       await _repository.replaceTaskTodos(id, todos);
     } else {

@@ -22,6 +22,8 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
 
   List<TaskTodoEntity> _todos = [];
 
+  late DateTime _selectedDate;
+
   @override
   void initState() {
     super.initState();
@@ -29,6 +31,8 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
     _descriptionController = TextEditingController(text: widget.task?.description ?? '');
     _targetDurationMinutes = widget.task?.targetDurationMinutes;
     _todos = widget.task?.todos.toList() ?? [];
+
+    _selectedDate = widget.task?.assignedDate ?? DateTime.now();
   }
 
   @override
@@ -69,6 +73,16 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
       appBar: AppBar(
         title: Text(_isEditMode ? 'Edit Task' : 'Add Task'),
         actions: [
+          IconButton(
+            tooltip: 'Change Date',
+            icon: const Icon(Icons.calendar_today_outlined),
+            onPressed: () async {
+              final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: _selectedDate);
+              if (selected != null && mounted) {
+                setState(() => _selectedDate = selected);
+              }
+            },
+          ),
           if (_isEditMode)
             IconButton(
               icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
@@ -201,9 +215,16 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
               }).toList();
 
               if (_isEditMode) {
-                await notifier.updateTask(id: widget.task!.id, title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes, todos: sortedTodos);
+                await notifier.updateTask(
+                  id: widget.task!.id,
+                  title: title,
+                  description: parsedDesc,
+                  targetDurationMinutes: _targetDurationMinutes,
+                  assignedDate: _selectedDate,
+                  todos: sortedTodos,
+                );
               } else {
-                await notifier.addTask(title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes, todos: sortedTodos);
+                await notifier.addTask(title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes, assignedDate: _selectedDate, todos: sortedTodos);
               }
 
               if (context.mounted) context.pop();
