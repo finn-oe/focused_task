@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
-import 'package:go_router/go_router.dart';
 
 class TaskListItem extends ConsumerWidget {
   const TaskListItem({super.key, required this.task, required this.index});
@@ -22,6 +22,11 @@ class TaskListItem extends ConsumerWidget {
     final completedTodos = task.todos.where((t) => t.isCompleted).length;
 
     final shouldShowProgress = totalTodos > 0 && task.timeSpent > 0 && !task.isCompleted;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final taskDate = DateTime(task.assignedDate.year, task.assignedDate.month, task.assignedDate.day);
+    final isPast = taskDate.isBefore(today);
 
     return Card(
       key: ValueKey(task.id),
@@ -60,7 +65,7 @@ class TaskListItem extends ConsumerWidget {
                 decoration: BoxDecoration(color: colorScheme.secondaryContainer, borderRadius: BorderRadius.circular(12)),
                 child: Text(
                   '$completedTodos/$totalTodos',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 0, 168, 8)),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 0, 168, 8)),
                 ),
               ),
             if (isCompleted && task.timeSpent > 0)
@@ -71,11 +76,31 @@ class TaskListItem extends ConsumerWidget {
                   style: const TextStyle(color: Color.fromARGB(255, 0, 168, 8), fontWeight: FontWeight.w500),
                 ),
               ),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              color: isCompleted ? colorScheme.onSurfaceVariant : null,
-              onPressed: () => context.push('/task-form', extra: task),
-            ),
+
+            if (isPast)
+              IconButton(
+                tooltip: 'Move to Today',
+                icon: const Icon(Icons.today_outlined),
+                color: isCompleted ? colorScheme.onSurfaceVariant : null,
+                onPressed: () async {
+                  await notifier.updateTask(
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    targetDurationMinutes: task.targetDurationMinutes,
+                    todos: task.todos,
+                    assignedDate: today,
+                  );
+                },
+              )
+            else
+              IconButton(
+                tooltip: 'Edit Task',
+                icon: const Icon(Icons.edit_outlined),
+                color: isCompleted ? colorScheme.onSurfaceVariant : null,
+                onPressed: () => context.push('/task-form', extra: task),
+              ),
+
             ReorderableDragStartListener(
               index: index,
               child: Icon(Icons.drag_handle, color: isCompleted ? colorScheme.onSurfaceVariant : null),
