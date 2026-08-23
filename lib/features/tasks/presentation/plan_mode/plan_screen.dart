@@ -95,6 +95,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     final state = ref.watch(planModeNotifierProvider);
     final notifier = ref.read(planModeNotifierProvider.notifier);
 
+    final now = DateTime.now();
+    final totalTimeSpentMs = state.tasks.fold<int>(0, (sum, task) => sum + task.elapsedAt(now).inMilliseconds);
+    final totalDuration = Duration(milliseconds: totalTimeSpentMs);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Plan Mode'),
@@ -114,7 +118,24 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
-                child: Text('Selected day: ${_formatSelectedDate(state.selectedDay)}', style: Theme.of(context).textTheme.titleMedium),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Selected day: ${_formatSelectedDate(state.selectedDay)}', style: Theme.of(context).textTheme.titleMedium),
+                    if (totalTimeSpentMs > 0)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.timer_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            totalDuration.toFormattedString(),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
