@@ -32,7 +32,19 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
     _targetDurationMinutes = widget.task?.targetDurationMinutes;
     _todos = widget.task?.todos.toList() ?? [];
 
-    _selectedDate = widget.task?.assignedDate ?? DateTime.now();
+    if (widget.task != null) {
+      _selectedDate = widget.task!.assignedDate;
+    } else {
+      final planSelectedDay = ref.read(planModeNotifierProvider).selectedDay;
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      if (planSelectedDay.isBefore(today)) {
+        _selectedDate = now;
+      } else {
+        _selectedDate = planSelectedDay;
+      }
+    }
   }
 
   @override
