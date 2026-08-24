@@ -82,6 +82,25 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
     }
   }
 
+  Future<void> duplicateTaskToDate({required TaskEntity task, required DateTime date, required bool keepTodoCompletion, required bool subtractTimeSpent}) async {
+    int? newTargetDuration = task.targetDurationMinutes;
+    if (subtractTimeSpent && newTargetDuration != null && task.timeSpent > 0) {
+      final timeSpentMinutes = Duration(milliseconds: task.timeSpent).inMinutes;
+      newTargetDuration = newTargetDuration - timeSpentMinutes;
+      if (newTargetDuration < 0) {
+        newTargetDuration = 0;
+      }
+    }
+    final newTodos = task.todos.map((todo) {
+      if (keepTodoCompletion) {
+        return todo;
+      }
+      return todo.copyWith(isCompleted: false);
+    }).toList();
+
+    await addTask(title: task.title, description: task.description, targetDurationMinutes: newTargetDuration, todos: newTodos, assignedDate: date);
+  }
+
   Future<void> updateTask({
     required int id,
     required String title,

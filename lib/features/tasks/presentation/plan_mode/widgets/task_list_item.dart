@@ -12,6 +12,62 @@ class TaskListItem extends ConsumerWidget {
   final TaskEntity task;
   final int index;
 
+  Future<void> _showCopyToTodayDialog(BuildContext context, WidgetRef ref, DateTime today) async {
+    bool keepTodoCompletion = false;
+    bool subtractTimeSpent = true;
+
+    final hasTodos = task.todos.isNotEmpty;
+    final hasTargetDuration = task.targetDurationMinutes != null;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Move to Today'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Create a copy of this task for today?'),
+                  const SizedBox(height: 16),
+
+                  if (hasTodos)
+                    SwitchListTile(
+                      title: const Text('Keep completed to-dos'),
+                      subtitle: const Text('If off, all to-dos will be reset'),
+                      value: keepTodoCompletion,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) => setState(() => keepTodoCompletion = value),
+                    ),
+
+                  if (hasTargetDuration)
+                    SwitchListTile(
+                      title: const Text('Subtract time spent'),
+                      subtitle: const Text('Reduces the new target duration by the time already tracked'),
+                      value: subtractTimeSpent,
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (value) => setState(() => subtractTimeSpent = value),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+                FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Copy')),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true) {
+      final notifier = ref.read(planModeNotifierProvider.notifier);
+      await notifier.duplicateTaskToDate(task: task, date: today, keepTodoCompletion: keepTodoCompletion, subtractTimeSpent: subtractTimeSpent);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(planModeNotifierProvider.notifier);
@@ -79,19 +135,10 @@ class TaskListItem extends ConsumerWidget {
 
             if (isPast)
               IconButton(
-                tooltip: 'Move to Today',
+                tooltip: 'Copy to Today',
                 icon: const Icon(Icons.today_outlined),
                 color: isCompleted ? colorScheme.onSurfaceVariant : null,
-                onPressed: () async {
-                  await notifier.updateTask(
-                    id: task.id,
-                    title: task.title,
-                    description: task.description,
-                    targetDurationMinutes: task.targetDurationMinutes,
-                    todos: task.todos,
-                    assignedDate: today,
-                  );
-                },
+                onPressed: () => _showCopyToTodayDialog(context, ref, today),
               )
             else
               IconButton(
