@@ -73,6 +73,29 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
       appBar: AppBar(
         title: Text(_isEditMode ? 'Edit Task' : 'Add Task'),
         actions: [
+          if (_isEditMode)
+            IconButton(
+              tooltip: 'Duplicate Task',
+              icon: const Icon(Icons.copy_outlined),
+              onPressed: () async {
+                final title = _titleController.text.trim();
+                if (title.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot duplicate a task without a title')));
+                  return;
+                }
+
+                final description = _descriptionController.text.trim();
+                final parsedDesc = description.isEmpty ? null : description;
+
+                final resetSortedTodos = _todos.asMap().entries.map((entry) {
+                  return entry.value.copyWith(isCompleted: false, sortOrder: entry.key.toString().padLeft(5, '0'));
+                }).toList();
+
+                await notifier.addTask(title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes, assignedDate: _selectedDate, todos: resetSortedTodos);
+
+                if (context.mounted) context.pop();
+              },
+            ),
           IconButton(
             tooltip: 'Change Date',
             icon: const Icon(Icons.calendar_today_outlined),
