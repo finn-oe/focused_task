@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:focused_task/core/database/app_database.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
+import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
@@ -27,8 +28,11 @@ final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('sharedPreferencesProvider must be overridden with an instance loaded before runApp.');
 });
 
+/// System notifications. Overridden in `main()` with an initialized instance; uninitialized it does nothing.
+final notificationServiceProvider = Provider<NotificationService>((ref) => createNotificationService());
+
 /// Target-duration alarm. Overridden in `main()` with an initialized instance, and with fakes in tests.
-final targetAlarmProvider = Provider<TargetAlarm>((ref) => createTargetAlarm());
+final targetAlarmProvider = Provider<TargetAlarm>((ref) => createTargetAlarm(notifications: ref.watch(notificationServiceProvider)));
 
 final taskRepositoryProvider = Provider<ITaskRepository>((ref) {
   return TaskRepositoryImpl(ref.watch(appDatabaseProvider));

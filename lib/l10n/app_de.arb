@@ -125,5 +125,22 @@
   "settingsKeepScreenAwake": "Bildschirm anlassen",
   "settingsKeepScreenAwakeHint": "Verhindert, dass sich der Bildschirm während einer Fokus-Sitzung ausschaltet.",
   "settingsPauseOnBackground": "Pausieren, wenn minimiert oder gesperrt",
-  "settingsPauseOnBackgroundHint": "Pausiert die Sitzung, wenn die App in den Hintergrund geht oder der Bildschirm ausgeht."
+  "settingsPauseOnBackgroundHint": "Pausiert die Sitzung, wenn die App in den Hintergrund geht oder der Bildschirm ausgeht.",
+  "planTitle": "Planen",
+  "planSettingsTooltip": "Einstellungen",
+  "planStatisticsTooltip": "Statistik",
+  "planStartFocusTooltip": "Fokus starten",
+  "planSelectedDay": "Ausgewählter Tag: {day}",
+  "settingsNotifications": "Benachrichtigungen",
+  "settingsNotificationsDenied": "Benachrichtigungen sind für Focused Task ausgeschaltet. Erlaube sie in den Systemeinstellungen, um bei Ablauf der Zieldauer benachrichtigt zu werden.",
+  "settingsNotificationsAskAgain": "Erneut fragen",
+  "settingsNotificationsTest": "Testbenachrichtigung",
+  "settingsNotificationsTestHint": "Kommt nach 10 Sekunden – du kannst die App solange verlassen.",
+  "settingsNotificationsTestButton": "Senden",
+  "settingsNotificationsTestScheduled": "Testbenachrichtigung geplant.",
+  "notificationTestBody": "Benachrichtigungen funktionieren.",
+  "notificationOpenAction": "Öffnen",
+  "notificationChannelFocusAlarm": "Fokus-Alarm",
+  "notificationChannelReminders": "Erinnerungen",
+  "notificationChannelBreaks": "Pausen"
 }

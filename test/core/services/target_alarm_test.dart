@@ -10,12 +10,20 @@ void main() {
   group('TimerTargetAlarm', () {
     late int rings;
     late int stops;
+    late List<AlarmNotification> rungWith;
     late TimerTargetAlarm alarm;
 
     setUp(() {
       rings = 0;
       stops = 0;
-      alarm = TimerTargetAlarm(ring: () async => rings++, stop: () async => stops++);
+      rungWith = [];
+      alarm = TimerTargetAlarm(
+        ring: (notification) async {
+          rings++;
+          rungWith.add(notification);
+        },
+        stop: () async => stops++,
+      );
     });
 
     test('rings at the scheduled time', () {
@@ -26,6 +34,7 @@ void main() {
         expect(rings, 0);
         async.elapse(const Duration(seconds: 1));
         expect(rings, 1);
+        expect(rungWith.single.body, 'Task', reason: 'desktop/web show the notification texts when ringing');
       });
     });
 

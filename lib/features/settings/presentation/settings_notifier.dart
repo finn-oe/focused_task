@@ -1,15 +1,19 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/features/settings/presentation/settings_state.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
 class SettingsNotifier extends Notifier<SettingsState> {
   static const String _themeModeKey = 'settings.theme_mode';
   static const String _localeKey = 'settings.locale';
+  static const String _notificationsAskedKey = 'settings.notifications_asked';
+  static const String _notificationsDeniedKey = 'settings.notifications_denied';
   static const String _autoCleanupEnabledKey = 'settings.auto_cleanup_enabled';
   static const String _retentionDaysKey = 'settings.retention_days';
   static const String _pauseOnBackgroundKey = 'settings.pause_on_background';
@@ -17,11 +21,13 @@ class SettingsNotifier extends Notifier<SettingsState> {
 
   late SharedPreferences _prefs;
   late ITaskRepository _repository;
+  late NotificationService _notifications;
 
   @override
   SettingsState build() {
     _prefs = ref.watch(sharedPreferencesProvider);
     _repository = ref.watch(taskRepositoryProvider);
+    _notifications = ref.watch(notificationServiceProvider);
 
     final prefs = _prefs;
     final themeModeRaw = prefs.getString(_themeModeKey);
@@ -38,6 +44,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       pauseOnBackground: pauseOnBackground,
       enableWakelock: enableWakelock,
       isCleaning: false,
+      notificationsDenied: prefs.getBool(_notificationsDeniedKey) ?? false,
     );
   }
 
@@ -55,6 +62,30 @@ class SettingsNotifier extends Notifier<SettingsState> {
       await _prefs.setString(_localeKey, locale.toLanguageTag());
       state = state.copyWith(locale: locale);
     }
+  }
+
+  /// Asks for notification permission the first time a feature needs it (e.g. entering focus mode). Never asks twice;
+  /// after a refusal the settings offer to ask again.
+  Future<void> ensureNotificationPermission() async {
+    if (_prefs.getBool(_notificationsAskedKey) ?? false) return;
+    await _prefs.setBool(_notificationsAskedKey, true);
+    await requestNotificationPermission();
+  }
+
+  /// Asks for notification permission now and remembers whether it was refused.
+  Future<bool> requestNotificationPermission() async {
+    final granted = await _notifications.requestPermission();
+    await _prefs.setBool(_notificationsDeniedKey, !granted);
+    state = state.copyWith(notificationsDenied: !granted);
+    return granted;
+  }
+
+  /// Schedules a notification in [delay], so the user can check that notifications arrive in the background.
+  Future<void> sendTestNotification({Duration delay = const Duration(seconds: 10)}) async {
+    if (!await requestNotificationPermission()) return;
+    final l10n = ref.read(appLocalizationsProvider);
+    final notification = AppNotification(id: NotificationIds.test, channel: NotificationChannel.reminders, title: l10n.appTitle, body: l10n.notificationTestBody);
+    await _notifications.schedule(notification, clock.now().add(delay));
   }
 
   Future<void> setAutoCleanupEnabled(bool value) async {

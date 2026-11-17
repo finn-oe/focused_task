@@ -15,7 +15,8 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.techreload.taskfocus"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_local_notifications needs at least API 37 to compile against (targetSdk stays the Flutter default).
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

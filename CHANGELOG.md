@@ -3,6 +3,15 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.6.0] - 2026-11-17
+
+### Added
+- System notification "Time is up" on Windows, macOS, Linux and the web when a task reaches its target. (#35)
+- Settings → Notifications: a hint (with "Ask again") if notifications were refused, and a test notification. (#35)
+
+### Changed
+- Notification permission is asked the first time you enter focus mode instead of never. (#35)
+- Android: compiles against API 37 (required by the notification plugin); the target API level is unchanged. (#35)
 ## [1.5.0] - 2026-11-17
 
 ### Added

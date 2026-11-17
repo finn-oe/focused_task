@@ -42,7 +42,8 @@ Rules that follow from this:
 | Routing | `go_router` (`lib/core/routing/app_router.dart`): `StatefulShellRoute` for Plan / Calendar / Statistics / Settings (adaptive `AppShell` in `lib/core/ui/app_shell.dart`), full-screen routes for focus and the task form. Use the `AppRoutes` constants; state that belongs in the URL goes there (e.g. `/plan?date=YYYY-MM-DD`). |
 | Persistence | Drift / SQLite (`lib/core/database/`), `shared_preferences` for settings (loaded in `main()`, exposed via `sharedPreferencesProvider`) |
 | Ordering | Fractional indexing (`lib/core/utils/fractional_indexer.dart`) |
-| Alarms | `TargetAlarm` in `lib/core/services/target_alarm.dart`: `alarm` (mobile), timer + `audioplayers` (desktop/web) |
+| Alarms | `TargetAlarm` in `lib/core/services/target_alarm.dart`: `alarm` (mobile), timer + `audioplayers` + notification (desktop/web) |
+| Notifications | `NotificationService` in `lib/core/services/notification_service.dart` (`flutter_local_notifications`; web/Linux schedule in-app). Ids live in `NotificationIds`. Ask for permission when a feature first needs it (`SettingsNotifier.ensureNotificationPermission()`), never on app start. |
 
 ## Architecture
 
@@ -91,7 +92,7 @@ Rules:
 
 - `flutter test` must pass before every commit.
 - Repository/database logic: test against `AppDatabase(NativeDatabase.memory())`.
-- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `fakePreferences()`, `buildTask()`); extend them when the interface grows. `FakeTaskRepository` also implements `IFocusSessionRepository`: override `taskRepositoryProvider` **and** `focusSessionRepositoryProvider` with the same instance.
+- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `FakeNotificationService`, `fakePreferences()`, `buildTask()`); extend them when the interface grows. `FakeTaskRepository` also implements `IFocusSessionRepository`: override `taskRepositoryProvider` **and** `focusSessionRepositoryProvider` with the same instance.
 - Notifiers: `ProviderContainer(overrides: [...])` (or `ProviderContainer.test`). Widgets: `ProviderScope(overrides: [...])` with fakes. Anything that reads settings needs `sharedPreferencesProvider.overrideWithValue(await fakePreferences())`.
 - Every bug fix comes with a regression test.
 

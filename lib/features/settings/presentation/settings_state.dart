@@ -19,6 +19,7 @@ class SettingsState {
     required this.pauseOnBackground,
     required this.enableWakelock,
     required this.isCleaning,
+    this.notificationsDenied = false,
     this.locale,
     this.lastCleanup,
   });
@@ -37,6 +38,9 @@ class SettingsState {
   final bool isCleaning;
   final CleanupResult? lastCleanup;
 
+  /// The user declined notifications when asked; the settings show a hint.
+  final bool notificationsDenied;
+
   SettingsState copyWith({
     ThemeMode? themeMode,
     Locale? locale,
@@ -48,6 +52,7 @@ class SettingsState {
     bool? isCleaning,
     CleanupResult? lastCleanup,
     bool clearLastCleanup = false,
+    bool? notificationsDenied,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -58,6 +63,7 @@ class SettingsState {
       enableWakelock: enableWakelock ?? this.enableWakelock,
       isCleaning: isCleaning ?? this.isCleaning,
       lastCleanup: clearLastCleanup ? null : lastCleanup ?? this.lastCleanup,
+      notificationsDenied: notificationsDenied ?? this.notificationsDenied,
     );
   }
 }

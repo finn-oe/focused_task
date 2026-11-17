@@ -435,4 +435,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsPauseOnBackgroundHint => 'Pauses the session if the app is sent to the background or the screen turns off.';
+
+  @override
+  String get planTitle => 'Plan Mode';
+
+  @override
+  String get planSettingsTooltip => 'Settings';
+
+  @override
+  String get planStatisticsTooltip => 'Statistics';
+
+  @override
+  String get planStartFocusTooltip => 'Start Focus';
+
+  @override
+  String planSelectedDay(String day) {
+    return 'Selected day: $day';
+  }
+
+  @override
+  String get settingsNotifications => 'Notifications';
+
+  @override
+  String get settingsNotificationsDenied => 'Notifications are turned off for Focused Task. Allow them in your system settings to be alerted when a task’s time is up.';
+
+  @override
+  String get settingsNotificationsAskAgain => 'Ask again';
+
+  @override
+  String get settingsNotificationsTest => 'Test notification';
+
+  @override
+  String get settingsNotificationsTestHint => 'Arrives after 10 seconds – you can leave the app in the meantime.';
+
+  @override
+  String get settingsNotificationsTestButton => 'Send';
+
+  @override
+  String get settingsNotificationsTestScheduled => 'Test notification scheduled.';
+
+  @override
+  String get notificationTestBody => 'Notifications work.';
+
+  @override
+  String get notificationOpenAction => 'Open';
+
+  @override
+  String get notificationChannelFocusAlarm => 'Focus alarm';
+
+  @override
+  String get notificationChannelReminders => 'Reminders';
+
+  @override
+  String get notificationChannelBreaks => 'Breaks';
 }

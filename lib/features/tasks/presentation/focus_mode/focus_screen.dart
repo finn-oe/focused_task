@@ -28,6 +28,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       if (settings.enableWakelock) {
         WakelockPlus.enable();
       }
+      // Focus mode is the first feature that needs notifications (target alarm), so ask here, once.
+      ref.read(settingsNotifierProvider.notifier).ensureNotificationPermission();
     });
   }
 

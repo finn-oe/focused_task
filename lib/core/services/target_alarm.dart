@@ -5,6 +5,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:focused_task/core/services/notification_service.dart';
+
 /// Localized texts of the alarm's system notification (Android / iOS).
 class AlarmNotification {
   const AlarmNotification({required this.title, required this.body, required this.stopButton});
@@ -28,11 +30,13 @@ abstract interface class TargetAlarm {
 }
 
 /// Picks the implementation for the current platform without touching `dart:io`, so it also works on web.
-TargetAlarm createTargetAlarm() {
+///
+/// On Android/iOS the OS alarm brings its own notification; elsewhere [notifications] shows one when the alarm rings.
+TargetAlarm createTargetAlarm({required NotificationService notifications}) {
   if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)) {
     return NativeTargetAlarm();
   }
-  return TimerTargetAlarm.withPlayer(AudioPlayer());
+  return TimerTargetAlarm.withPlayer(AudioPlayer(), notifications: notifications);
 }
 
 /// Android / iOS: uses the OS alarm so it rings even when the app is suspended.
@@ -66,22 +70,26 @@ class NativeTargetAlarm implements TargetAlarm {
   Future<void> cancel() => Alarm.stop(_alarmId);
 }
 
-/// Desktop / web: a cancellable in-process timer that plays a looping sound.
+/// Desktop / web: a cancellable in-process timer that plays a looping sound and shows a system notification.
 class TimerTargetAlarm implements TargetAlarm {
   TimerTargetAlarm({required this._ring, required this._stop});
 
-  /// Plays the looping alarm sound with [player].
-  factory TimerTargetAlarm.withPlayer(AudioPlayer player) {
+  /// Plays the looping alarm sound with [player] and shows the notification through [notifications].
+  factory TimerTargetAlarm.withPlayer(AudioPlayer player, {required NotificationService notifications}) {
     return TimerTargetAlarm(
-      ring: () async {
+      ring: (notification) async {
+        unawaited(notifications.show(AppNotification(id: NotificationIds.focusAlarm, channel: NotificationChannel.focusAlarm, title: notification.title, body: notification.body)));
         await player.setReleaseMode(ReleaseMode.loop);
         await player.play(AssetSource('sounds/alarm_looped.mp3'));
       },
-      stop: player.stop,
+      stop: () async {
+        await notifications.cancel(NotificationIds.focusAlarm);
+        await player.stop();
+      },
     );
   }
 
-  final Future<void> Function() _ring;
+  final Future<void> Function(AlarmNotification notification) _ring;
   final Future<void> Function() _stop;
   Timer? _timer;
 
@@ -94,7 +102,7 @@ class TimerTargetAlarm implements TargetAlarm {
   Future<void> schedule({required AlarmNotification notification, required DateTime at}) async {
     _timer?.cancel();
     final delay = at.difference(clock.now());
-    _timer = Timer(delay.isNegative ? Duration.zero : delay, _ring);
+    _timer = Timer(delay.isNegative ? Duration.zero : delay, () => _ring(notification));
   }
 
   @override
