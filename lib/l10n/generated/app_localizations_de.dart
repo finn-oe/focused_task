@@ -436,4 +436,58 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsPauseOnBackgroundHint => 'Pausiert die Sitzung, wenn die App in den Hintergrund geht oder der Bildschirm ausgeht.';
+
+  @override
+  String get planTitle => 'Planen';
+
+  @override
+  String get planSettingsTooltip => 'Einstellungen';
+
+  @override
+  String get planStatisticsTooltip => 'Statistik';
+
+  @override
+  String get planStartFocusTooltip => 'Fokus starten';
+
+  @override
+  String planSelectedDay(String day) {
+    return 'Ausgewählter Tag: $day';
+  }
+
+  @override
+  String get settingsNotifications => 'Benachrichtigungen';
+
+  @override
+  String get settingsNotificationsDenied =>
+      'Benachrichtigungen sind für Focused Task ausgeschaltet. Erlaube sie in den Systemeinstellungen, um bei Ablauf der Zieldauer benachrichtigt zu werden.';
+
+  @override
+  String get settingsNotificationsAskAgain => 'Erneut fragen';
+
+  @override
+  String get settingsNotificationsTest => 'Testbenachrichtigung';
+
+  @override
+  String get settingsNotificationsTestHint => 'Kommt nach 10 Sekunden – du kannst die App solange verlassen.';
+
+  @override
+  String get settingsNotificationsTestButton => 'Senden';
+
+  @override
+  String get settingsNotificationsTestScheduled => 'Testbenachrichtigung geplant.';
+
+  @override
+  String get notificationTestBody => 'Benachrichtigungen funktionieren.';
+
+  @override
+  String get notificationOpenAction => 'Öffnen';
+
+  @override
+  String get notificationChannelFocusAlarm => 'Fokus-Alarm';
+
+  @override
+  String get notificationChannelReminders => 'Erinnerungen';
+
+  @override
+  String get notificationChannelBreaks => 'Pausen';
 }

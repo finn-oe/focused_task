@@ -20,7 +20,9 @@ compared to reality – so you can get a little more dedicated every day.
   Reorder by drag & drop, mark as done, duplicate, or copy unfinished tasks from past days to today.
 - **Focus mode** – works through today's open tasks in order. Shows the time spent on the current task
   (or the time remaining until the target), the overall session time, and the sub-task progress.
-- **Target alarm** – rings when a task's target duration is reached (native alarm on Android/iOS, sound on desktop).
+- **Target alarm** – rings when a task's target duration is reached (native alarm on Android/iOS, sound and system
+  notification on desktop and web). Notification permission is asked the first time you enter focus mode; Settings
+  has a test notification.
 - **Distraction guard** – optionally pauses the session when the app is minimised or the screen is locked,
   and can keep the screen awake while focusing.
 - **Session log** – every focus interval is recorded, so time counts on the day you actually worked (also across midnight).

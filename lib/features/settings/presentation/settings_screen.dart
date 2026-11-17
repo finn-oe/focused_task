@@ -119,6 +119,8 @@ class SettingsScreen extends ConsumerWidget {
             contentPadding: EdgeInsets.zero,
             onChanged: notifier.setPauseOnBackground,
           ),
+          const SizedBox(height: 24),
+          const _NotificationsSection(),
         ],
       ),
     );
@@ -144,4 +146,47 @@ Future<bool> _confirmCleanup(BuildContext context, {required int count, required
     ),
   );
   return confirmed ?? false;
+}
+
+/// Hint when notifications were refused, and a test notification to check they arrive.
+class _NotificationsSection extends ConsumerWidget {
+  const _NotificationsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final denied = ref.watch(settingsNotifierProvider.select((settings) => settings.notificationsDenied));
+    final notifier = ref.read(settingsNotifierProvider.notifier);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.settingsNotifications, style: theme.textTheme.titleLarge),
+        const SizedBox(height: 8),
+        if (denied)
+          Card(
+            elevation: 0,
+            color: theme.colorScheme.errorContainer,
+            child: ListTile(
+              leading: Icon(Icons.notifications_off_outlined, color: theme.colorScheme.onErrorContainer),
+              title: Text(l10n.settingsNotificationsDenied, style: TextStyle(color: theme.colorScheme.onErrorContainer)),
+              trailing: TextButton(onPressed: notifier.requestNotificationPermission, child: Text(l10n.settingsNotificationsAskAgain)),
+            ),
+          ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.settingsNotificationsTest),
+          subtitle: Text(l10n.settingsNotificationsTestHint),
+          trailing: OutlinedButton(
+            onPressed: () async {
+              await notifier.sendTestNotification();
+              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.settingsNotificationsTestScheduled)));
+            },
+            child: Text(l10n.settingsNotificationsTestButton),
+          ),
+        ),
+      ],
+    );
+  }
 }

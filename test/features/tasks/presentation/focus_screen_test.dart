@@ -9,6 +9,7 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_screen.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/pause_screen.dart';
 
+import '../../../helpers/fake_notification_service.dart';
 import '../../../helpers/fake_preferences.dart';
 import '../../../helpers/fake_target_alarm.dart';
 import '../../../helpers/fake_task_repository.dart';
@@ -30,6 +31,7 @@ Widget _app(FakeTaskRepository repository, SharedPreferences preferences, {Strin
       focusSessionRepositoryProvider.overrideWithValue(repository),
       targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
       sharedPreferencesProvider.overrideWithValue(preferences),
+      notificationServiceProvider.overrideWithValue(FakeNotificationService()),
     ],
     child: localizedRouterApp(routerConfig: router),
   );

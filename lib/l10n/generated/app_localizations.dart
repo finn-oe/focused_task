@@ -847,6 +847,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pauses the session if the app is sent to the background or the screen turns off.'**
   String get settingsPauseOnBackgroundHint;
+
+  /// No description provided for @planTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan Mode'**
+  String get planTitle;
+
+  /// No description provided for @planSettingsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get planSettingsTooltip;
+
+  /// No description provided for @planStatisticsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get planStatisticsTooltip;
+
+  /// No description provided for @planStartFocusTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Focus'**
+  String get planStartFocusTooltip;
+
+  /// No description provided for @planSelectedDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected day: {day}'**
+  String planSelectedDay(String day);
+
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// No description provided for @settingsNotificationsDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are turned off for Focused Task. Allow them in your system settings to be alerted when a task’s time is up.'**
+  String get settingsNotificationsDenied;
+
+  /// No description provided for @settingsNotificationsAskAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask again'**
+  String get settingsNotificationsAskAgain;
+
+  /// No description provided for @settingsNotificationsTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test notification'**
+  String get settingsNotificationsTest;
+
+  /// No description provided for @settingsNotificationsTestHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrives after 10 seconds – you can leave the app in the meantime.'**
+  String get settingsNotificationsTestHint;
+
+  /// No description provided for @settingsNotificationsTestButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get settingsNotificationsTestButton;
+
+  /// No description provided for @settingsNotificationsTestScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Test notification scheduled.'**
+  String get settingsNotificationsTestScheduled;
+
+  /// No description provided for @notificationTestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications work.'**
+  String get notificationTestBody;
+
+  /// No description provided for @notificationOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get notificationOpenAction;
+
+  /// No description provided for @notificationChannelFocusAlarm.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus alarm'**
+  String get notificationChannelFocusAlarm;
+
+  /// No description provided for @notificationChannelReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get notificationChannelReminders;
+
+  /// No description provided for @notificationChannelBreaks.
+  ///
+  /// In en, this message translates to:
+  /// **'Breaks'**
+  String get notificationChannelBreaks;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
