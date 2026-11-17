@@ -529,4 +529,58 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get taskFormDiscard => 'Discard';
+
+  @override
+  String get focusSkip => 'Skip';
+
+  @override
+  String get focusUpNext => 'Up next';
+
+  @override
+  String get taskFocusTooltip => 'Focus on this task';
+
+  @override
+  String get planFocusStart => 'Start';
+
+  @override
+  String get planFocusAheadTitle => 'Work ahead?';
+
+  @override
+  String get planFocusAheadTomorrow => 'Work on tomorrow’s tasks now?';
+
+  @override
+  String planFocusAheadDate(String date) {
+    return 'Work on the tasks of $date now?';
+  }
+
+  @override
+  String get planFocusMoveTitle => 'Move to today?';
+
+  @override
+  String planFocusMoveMessage(int count, String date) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'The $count open tasks of $date move to today, then focus starts.',
+      one: 'The open task of $date moves to today, then focus starts.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planFocusYesterdayTitle => 'Nothing open today';
+
+  @override
+  String planFocusYesterdayMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tasks from yesterday are still open. Move them to today and focus on them?',
+      one: '1 task from yesterday is still open. Move it to today and focus on it?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planFocusMoveAndStart => 'Move and start';
 }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_screen.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/pause_screen.dart';
 
@@ -20,7 +21,10 @@ Widget _app(FakeTaskRepository repository, SharedPreferences preferences, {Strin
   final router = GoRouter(
     initialLocation: initialLocation,
     routes: [
-      GoRoute(path: '/focus', builder: (_, _) => const FocusScreen()),
+      GoRoute(
+        path: '/focus',
+        builder: (_, _) => FocusScreen(request: FocusRequest(DateTime.now())),
+      ),
       GoRoute(path: '/pause', builder: (_, _) => const PauseScreen()),
       GoRoute(path: '/plan', builder: (_, _) => const Text('plan screen')),
     ],

@@ -1027,6 +1027,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard'**
   String get taskFormDiscard;
+
+  /// No description provided for @focusSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get focusSkip;
+
+  /// No description provided for @focusUpNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Up next'**
+  String get focusUpNext;
+
+  /// No description provided for @taskFocusTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus on this task'**
+  String get taskFocusTooltip;
+
+  /// No description provided for @planFocusStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get planFocusStart;
+
+  /// No description provided for @planFocusAheadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Work ahead?'**
+  String get planFocusAheadTitle;
+
+  /// No description provided for @planFocusAheadTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Work on tomorrow’s tasks now?'**
+  String get planFocusAheadTomorrow;
+
+  /// No description provided for @planFocusAheadDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Work on the tasks of {date} now?'**
+  String planFocusAheadDate(String date);
+
+  /// No description provided for @planFocusMoveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to today?'**
+  String get planFocusMoveTitle;
+
+  /// No description provided for @planFocusMoveMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{The open task of {date} moves to today, then focus starts.} other{The {count} open tasks of {date} move to today, then focus starts.}}'**
+  String planFocusMoveMessage(int count, String date);
+
+  /// No description provided for @planFocusYesterdayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing open today'**
+  String get planFocusYesterdayTitle;
+
+  /// No description provided for @planFocusYesterdayMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 task from yesterday is still open. Move it to today and focus on it?} other{{count} tasks from yesterday are still open. Move them to today and focus on them?}}'**
+  String planFocusYesterdayMessage(int count);
+
+  /// No description provided for @planFocusMoveAndStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Move and start'**
+  String get planFocusMoveAndStart;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -531,4 +531,58 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get taskFormDiscard => 'Verwerfen';
+
+  @override
+  String get focusSkip => 'Überspringen';
+
+  @override
+  String get focusUpNext => 'Als Nächstes';
+
+  @override
+  String get taskFocusTooltip => 'An dieser Aufgabe arbeiten';
+
+  @override
+  String get planFocusStart => 'Starten';
+
+  @override
+  String get planFocusAheadTitle => 'Vorarbeiten?';
+
+  @override
+  String get planFocusAheadTomorrow => 'Jetzt schon an den Aufgaben von morgen arbeiten?';
+
+  @override
+  String planFocusAheadDate(String date) {
+    return 'Jetzt an den Aufgaben vom $date arbeiten?';
+  }
+
+  @override
+  String get planFocusMoveTitle => 'Nach heute verschieben?';
+
+  @override
+  String planFocusMoveMessage(int count, String date) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Die $count offenen Aufgaben vom $date werden nach heute verschoben, dann startet der Fokus.',
+      one: 'Die offene Aufgabe vom $date wird nach heute verschoben, dann startet der Fokus.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planFocusYesterdayTitle => 'Heute ist nichts offen';
+
+  @override
+  String planFocusYesterdayMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Aufgaben von gestern sind noch offen. Nach heute verschieben und daran arbeiten?',
+      one: '1 Aufgabe von gestern ist noch offen. Nach heute verschieben und daran arbeiten?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planFocusMoveAndStart => 'Verschieben und starten';
 }

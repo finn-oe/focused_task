@@ -97,16 +97,6 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
   Future<TaskEntity?> getTaskById(int id) async => _tasks.containsKey(id) ? task(id) : null;
 
   @override
-  Future<TaskEntity?> getNextIncompleteTaskForDay(DateTime day) async {
-    for (final task in _forDay(day)) {
-      if (!task.isCompleted) {
-        return task;
-      }
-    }
-    return null;
-  }
-
-  @override
   Future<int> createTask({
     required String title,
     String? description,

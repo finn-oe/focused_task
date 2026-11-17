@@ -7,6 +7,7 @@ import 'package:focused_task/features/calendar/presentation/calendar_screen.dart
 import 'package:focused_task/features/settings/presentation/settings_screen.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/finished_for_today_screen.dart';
+import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_screen.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/pause_screen.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_screen.dart';
@@ -26,6 +27,15 @@ abstract final class AppRoutes {
 
   /// Query parameter of [plan] with the shown day (`YYYY-MM-DD`); missing = today.
   static const dateParameter = 'date';
+
+  /// Query parameters of [focus]: the day (`YYYY-MM-DD`, missing = today) and the task to start with.
+  static const dayParameter = 'day';
+  static const taskParameter = 'task';
+
+  /// Location of focus mode for [request].
+  static String focusFor(FocusRequest request) {
+    return Uri(path: focus, queryParameters: {dayParameter: request.day.isoDate, if (request.startTaskId != null) taskParameter: '${request.startTaskId}'}).toString();
+  }
 
   /// Location of the plan for [day]; today has no date parameter.
   static String planFor(DateTime day, {required DateTime today}) {
@@ -61,7 +71,14 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.plan}) {
           ),
         ],
       ),
-      GoRoute(path: AppRoutes.focus, builder: (context, state) => const FocusScreen()),
+      GoRoute(
+        path: AppRoutes.focus,
+        builder: (context, state) {
+          final parameters = state.uri.queryParameters;
+          final day = tryParseIsoDate(parameters[AppRoutes.dayParameter]) ?? DateTime.now();
+          return FocusScreen(request: FocusRequest(day, startTaskId: int.tryParse(parameters[AppRoutes.taskParameter] ?? '')));
+        },
+      ),
       GoRoute(path: AppRoutes.finishedForToday, builder: (context, state) => const FinishedForTodayScreen()),
       GoRoute(path: AppRoutes.pause, builder: (context, state) => const PauseScreen()),
       GoRoute(

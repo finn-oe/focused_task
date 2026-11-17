@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart' show Locale;
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
@@ -154,6 +155,97 @@ void main() {
 
         expect(notifier.state.totalSessionDuration, const Duration(minutes: 15));
         expect(notifier.state.currentTaskDuration, const Duration(minutes: 15));
+      });
+    });
+  });
+
+  group('FocusModeNotifier queue', () {
+    List<TaskEntity> threeTasks() => [
+      buildTask(id: 1, title: 'First', assignedDate: _today, sortOrder: 'a0'),
+      buildTask(id: 2, title: 'Second', assignedDate: _today, sortOrder: 'a1'),
+      buildTask(id: 3, title: 'Third', assignedDate: _today, sortOrder: 'a2'),
+    ];
+    List<int> queueIds(FocusModeNotifier notifier) => notifier.state.queue.map((task) => task.id).toList();
+
+    test('starts with the requested task and keeps the plan order after it', () {
+      _runFocus(threeTasks(), (async, notifier, repository, alarm) {
+        notifier.start(FocusRequest(_today, startTaskId: 2));
+        async.flushMicrotasks();
+
+        expect(notifier.state.currentTask?.title, 'Second');
+        expect(queueIds(notifier), [2, 3, 1]);
+        expect(notifier.state.upNext?.title, 'Third');
+        expect(repository.task(2).isRunning, isTrue);
+      });
+    });
+
+    test('skip moves the task to the end and keeps its time', () {
+      _runFocus(threeTasks(), (async, notifier, repository, alarm) {
+        notifier.start(FocusRequest(_today));
+        async.flushMicrotasks();
+        async.elapse(const Duration(minutes: 10));
+
+        notifier.skipCurrentTask();
+        async.flushMicrotasks();
+
+        expect(notifier.state.currentTask?.title, 'Second');
+        expect(queueIds(notifier), [2, 3, 1]);
+        expect(Duration(milliseconds: repository.task(1).timeSpent), const Duration(minutes: 10));
+        expect(repository.sessions.first.endReason, EndReason.skipped);
+        expect(repository.task(1).isCompleted, isFalse);
+      });
+    });
+
+    test('completing the last task of the queue finishes for today', () {
+      _runFocus(threeTasks(), (async, notifier, repository, alarm) {
+        notifier.start(FocusRequest(_today, startTaskId: 3));
+        async.flushMicrotasks();
+        for (var i = 0; i < 3; i++) {
+          notifier.completeCurrentTask();
+          async.flushMicrotasks();
+        }
+
+        expect(notifier.state.shouldShowFinishedForToday, isTrue);
+        expect(repository.tasks.every((task) => task.isCompleted), isTrue);
+      });
+    });
+
+    test('re-entering with the same request (after a pause) keeps the queue', () {
+      _runFocus(threeTasks(), (async, notifier, repository, alarm) {
+        final request = FocusRequest(_today);
+        notifier.start(request);
+        async.flushMicrotasks();
+        notifier.skipCurrentTask();
+        async.flushMicrotasks();
+
+        notifier.start(request);
+        async.flushMicrotasks();
+
+        expect(queueIds(notifier), [2, 3, 1]);
+      });
+    });
+
+    test('focuses on another day when asked to', () {
+      final tomorrow = _today.addDays(1);
+      _runFocus([buildTask(id: 1, title: 'Today', assignedDate: _today), buildTask(id: 2, title: 'Tomorrow', assignedDate: tomorrow)], (async, notifier, repository, alarm) {
+        notifier.start(FocusRequest(tomorrow));
+        async.flushMicrotasks();
+
+        expect(notifier.state.currentTask?.title, 'Tomorrow');
+        expect(notifier.state.upNext, isNull);
+      });
+    });
+
+    test('a quick sub-task is added to the current task', () {
+      _runFocus([buildTask(assignedDate: _today)], (async, notifier, repository, alarm) {
+        notifier.start(FocusRequest(_today));
+        async.flushMicrotasks();
+
+        notifier.addSubTask('  Check numbers ');
+        async.flushMicrotasks();
+
+        expect(notifier.state.currentTask?.todos.map((todo) => todo.title), ['Check numbers']);
+        expect(repository.task(1).todos, hasLength(1));
       });
     });
   });

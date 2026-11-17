@@ -10,6 +10,9 @@ import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
+import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
+
+export 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 
 /// How to close sessions that were left open (e.g. the app was killed while focusing).
 enum SessionRecovery {
@@ -32,6 +35,8 @@ class FocusModeState {
     required this.isPaused,
     this.sessionStartedAt,
     this.currentTask,
+    this.request,
+    this.queue = const [],
     this.error,
     this.shouldShowFinishedForToday = false,
     this.shouldShowAlarm = false,
@@ -50,6 +55,15 @@ class FocusModeState {
   final bool isLoading;
   final bool isPaused;
   final TaskEntity? currentTask;
+
+  /// What the session works on (day and first task).
+  final FocusRequest? request;
+
+  /// Open tasks still to do in this session; the current task first. Only for this session, the plan is unchanged.
+  final List<TaskEntity> queue;
+
+  /// The task after the current one, if any.
+  TaskEntity? get upNext => queue.length > 1 ? queue[1] : null;
   final String? error;
   final bool shouldShowFinishedForToday;
   final bool shouldShowAlarm;
@@ -78,6 +92,8 @@ class FocusModeState {
     bool? isLoading,
     bool? isPaused,
     TaskEntity? currentTask,
+    FocusRequest? request,
+    List<TaskEntity>? queue,
     String? error,
     bool? shouldShowFinishedForToday,
     bool? shouldShowAlarm,
@@ -94,6 +110,8 @@ class FocusModeState {
       isLoading: isLoading ?? this.isLoading,
       isPaused: isPaused ?? this.isPaused,
       currentTask: clearCurrentTask ? null : currentTask ?? this.currentTask,
+      request: request ?? this.request,
+      queue: queue ?? this.queue,
       error: clearError ? null : error ?? this.error,
       shouldShowFinishedForToday: shouldShowFinishedForToday ?? this.shouldShowFinishedForToday,
       shouldShowAlarm: shouldShowAlarm ?? this.shouldShowAlarm,
@@ -124,10 +142,52 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     return FocusModeState.initial();
   }
 
-  Future<void> initializeForDay(DateTime day) async {
-    state = state.copyWith(selectedDay: day.dateOnly, isLoading: true, clearError: true);
+  /// Focus on the open tasks of today.
+  Future<void> initializeForDay(DateTime day) => start(FocusRequest(day));
 
-    await _loadNextTask();
+  /// Starts (or continues) focus for [request]: the open tasks of its day in plan order, rotated so the requested
+  /// task comes first. Re-entering with the same request (e.g. after a pause) keeps the current queue.
+  Future<void> start(FocusRequest request) async {
+    if (state.request == request && state.currentTask != null) {
+      return;
+    }
+    state = state.copyWith(request: request, selectedDay: request.day, isLoading: true, clearError: true);
+
+    final open = (await _repository.getTasksForDay(request.day)).where((task) => !task.isCompleted).toList();
+    final startIndex = open.indexWhere((task) => task.id == request.startTaskId);
+    final queue = startIndex <= 0 ? open : [...open.sublist(startIndex), ...open.sublist(0, startIndex)];
+    state = state.copyWith(queue: queue);
+
+    await _loadCurrentTask();
+  }
+
+  /// Puts the current task at the end of the queue. Its tracked time stays; the session ends as "skipped".
+  Future<void> skipCurrentTask() async {
+    final task = state.currentTask;
+    if (task == null) return;
+
+    await _alarm.cancel();
+    final sessionId = _sessionId;
+    _sessionId = null;
+    if (sessionId != null) {
+      await _sessions.end(sessionId, clock.now(), EndReason.skipped);
+    }
+    final skipped = await _repository.getTaskById(task.id) ?? task;
+    state = state.copyWith(queue: [...state.queue.skip(1), skipped]);
+
+    await _loadCurrentTask();
+  }
+
+  /// Adds a sub-task to the current task.
+  Future<void> addSubTask(String title) async {
+    final task = state.currentTask;
+    final trimmed = title.trim();
+    if (task == null || trimmed.isEmpty) return;
+
+    final todos = [...task.todos, TaskTodoEntity(title: trimmed, isCompleted: false, sortOrder: task.todos.length.toString().padLeft(5, '0'))];
+    await _repository.replaceTaskTodos(task.id, todos);
+    final updated = await _repository.getTaskById(task.id);
+    if (updated != null) state = state.copyWith(currentTask: updated);
   }
 
   /// Time left until [task] reaches its target, or `null` if it has no target.
@@ -151,8 +211,8 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     await _alarm.schedule(notification: notification, at: now.add(remaining));
   }
 
-  Future<void> _loadNextTask() async {
-    final task = await _repository.getNextIncompleteTaskForDay(state.selectedDay);
+  Future<void> _loadCurrentTask() async {
+    final task = state.queue.firstOrNull;
     if (task == null) {
       _stopTicker();
       state = state.copyWith(
@@ -172,6 +232,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     final open = await _sessions.openSession();
     _sessionId = open != null && open.taskId == task.id ? open.id : (await _sessions.start(taskId: task.id, at: clock.now())).id;
     final current = (await _repository.getTaskById(task.id)) ?? task;
+    state = state.copyWith(queue: [current, ...state.queue.skip(1)]);
 
     final now = clock.now();
     final remaining = _remainingUntilTarget(current, now);
@@ -248,15 +309,24 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     await _alarm.cancel();
     _sessionId = null;
     await _repository.completeTask(taskId: task.id, completedAt: clock.now());
+    state = state.copyWith(queue: state.queue.skip(1).toList());
 
-    await _loadNextTask();
+    await _loadCurrentTask();
   }
 
   Future<void> exitFocus() async {
     await pauseSession(reason: EndReason.exited);
     await _alarm.cancel();
     _stopTicker();
-    state = state.copyWith(clearCurrentTask: true, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, now: clock.now(), shouldShowFinishedForToday: false);
+    state = state.copyWith(
+      clearCurrentTask: true,
+      queue: const [],
+      isPaused: true,
+      clearSessionStartedAt: true,
+      sessionBaseMs: 0,
+      now: clock.now(),
+      shouldShowFinishedForToday: false,
+    );
   }
 
   /// Sessions that were left running, e.g. because the app was killed while focusing.

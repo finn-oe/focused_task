@@ -162,15 +162,6 @@ class AppDatabase extends _$AppDatabase {
     return TaskWithTodos(task, todos, await _openSessionOf(taskId));
   }
 
-  Future<Task?> getNextIncompleteTaskForDay(DateTime day) {
-    final query = select(tasks)
-      ..where((task) => _isInDay(task, day) & task.isCompleted.equals(false))
-      ..orderBy([(task) => OrderingTerm.asc(task.sortOrder)])
-      ..limit(1);
-
-    return query.getSingleOrNull();
-  }
-
   Future<int> createTask(TasksCompanion companion) async {
     final normalizedAssignedDate = companion.assignedDate.value.dateOnly;
     return into(tasks).insert(companion.copyWith(assignedDate: Value(normalizedAssignedDate)));

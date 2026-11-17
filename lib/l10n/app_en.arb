@@ -174,5 +174,20 @@
   "taskFormDiscardTitle": "Discard changes?",
   "taskFormDiscardMessage": "Your changes to this task will be lost.",
   "taskFormKeepEditing": "Keep editing",
-  "taskFormDiscard": "Discard"
+  "taskFormDiscard": "Discard",
+  "focusSkip": "Skip",
+  "focusUpNext": "Up next",
+  "taskFocusTooltip": "Focus on this task",
+  "planFocusStart": "Start",
+  "planFocusAheadTitle": "Work ahead?",
+  "planFocusAheadTomorrow": "Work on tomorrow’s tasks now?",
+  "planFocusAheadDate": "Work on the tasks of {date} now?",
+  "@planFocusAheadDate": {"placeholders": {"date": {"type": "String"}}},
+  "planFocusMoveTitle": "Move to today?",
+  "planFocusMoveMessage": "{count, plural, =1{The open task of {date} moves to today, then focus starts.} other{The {count} open tasks of {date} move to today, then focus starts.}}",
+  "@planFocusMoveMessage": {"placeholders": {"count": {"type": "int"}, "date": {"type": "String"}}},
+  "planFocusYesterdayTitle": "Nothing open today",
+  "planFocusYesterdayMessage": "{count, plural, =1{1 task from yesterday is still open. Move it to today and focus on it?} other{{count} tasks from yesterday are still open. Move them to today and focus on them?}}",
+  "@planFocusYesterdayMessage": {"placeholders": {"count": {"type": "int"}}},
+  "planFocusMoveAndStart": "Move and start"
 }
