@@ -29,3 +29,20 @@ extension CalendarDate on DateTime {
     return DateTime.utc(other.year, other.month, other.day).difference(DateTime.utc(year, month, day)).inDays;
   }
 }
+
+/// Inclusive range of calendar dates (first and last day, both at local midnight).
+class DateRange {
+  DateRange(DateTime start, DateTime end) : start = start.dateOnly, end = end.dateOnly;
+
+  final DateTime start;
+  final DateTime end;
+
+  @override
+  bool operator ==(Object other) => other is DateRange && other.start == start && other.end == end;
+
+  @override
+  int get hashCode => Object.hash(start, end);
+
+  @override
+  String toString() => 'DateRange($start – $end)';
+}

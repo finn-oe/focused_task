@@ -37,10 +37,10 @@ Rules that follow from this:
 
 | Concern | Choice |
 |---|---|
-| UI | Flutter, Material 3 (`lib/core/ui/themes/`) |
-| State | `flutter_riverpod` (providers in `lib/core/providers/app_providers.dart`) |
+| UI | Flutter, Material 3 via `package:material_ui` (`lib/core/ui/themes/`) |
+| State | `flutter_riverpod` 3, `Notifier`/`NotifierProvider` only (providers in `lib/core/providers/app_providers.dart`) |
 | Routing | `go_router` (`lib/core/routing/app_router.dart`) |
-| Persistence | Drift / SQLite (`lib/core/database/`), `shared_preferences` for settings |
+| Persistence | Drift / SQLite (`lib/core/database/`), `shared_preferences` for settings (loaded in `main()`, exposed via `sharedPreferencesProvider`) |
 | Ordering | Fractional indexing (`lib/core/utils/fractional_indexer.dart`) |
 | Alarms | `TargetAlarm` in `lib/core/services/target_alarm.dart`: `alarm` (mobile), timer + `audioplayers` (desktop/web) |
 
@@ -62,6 +62,7 @@ Rules:
 - **Dependency direction:** `presentation → domain ← data`. Presentation code depends on repository *interfaces* (`ITaskRepository`), never on `AppDatabase` or Drift row classes.
 - **Domain is pure Dart.** Entities are immutable, have `copyWith`, and contain no Flutter or Drift imports.
 - **Business logic lives in notifiers/domain**, not in widgets. Widgets render state and forward user intent.
+- **Notifiers** extend `Notifier` and get their dependencies with `ref.watch(...)` in `build()`, never via constructors. Widgets never read `taskRepositoryProvider` directly; data a screen loads goes through a provider (e.g. `taskStatsProvider`) or a notifier method.
 - **Time is injected.** Use `clock.now()` from `package:clock` instead of `DateTime.now()` in logic, so tests can control time with `fakeAsync` / `withClock`.
 - **Dates:** a task's day is a calendar date. Compute day boundaries with `DateTime(y, m, d + 1)`, never `+ Duration(days: 1)` (breaks on DST switches).
 - **Database changes** require bumping `schemaVersion`, a migration step in `AppDatabase.migration`, and a migration test. Regenerate code with `dart run build_runner build --delete-conflicting-outputs`; commit the generated `*.g.dart`.
@@ -80,13 +81,15 @@ Rules:
 
 - `flutter test` must pass before every commit.
 - Repository/database logic: test against `AppDatabase(NativeDatabase.memory())`.
-- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `buildTask()`); extend them when the interface grows.
-- Widgets: `ProviderScope(overrides: [...])` with fakes.
+- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `fakePreferences()`, `buildTask()`); extend them when the interface grows.
+- Notifiers: `ProviderContainer(overrides: [...])` (or `ProviderContainer.test`). Widgets: `ProviderScope(overrides: [...])` with fakes. Anything that reads settings needs `sharedPreferencesProvider.overrideWithValue(await fakePreferences())`.
 - Every bug fix comes with a regression test.
 
 ## Toolchain
 
-Flutter **3.44.6** (stable, Dart 3.12), pinned in `.github/workflows/ci.yml` (`FLUTTER_VERSION`). Use the same version locally. Upgrading Flutter (and moving from `package:flutter/material.dart` to `package:material_ui`, deprecated since 3.47) is part of #18.
+Flutter **3.50.0** (stable, Dart 3.14), pinned in `.github/workflows/ci.yml` (`FLUTTER_VERSION`). Use the same version locally.
+
+Import Material widgets from `package:material_ui/material_ui.dart`; `package:flutter/material.dart` is deprecated since Flutter 3.47.
 
 ## Common commands
 
@@ -106,3 +109,23 @@ flutter run -d windows   # or chrome, macos, linux, android, ios
 - Branch `issue-<number>-<slug>` from `main`, one issue per PR, `Fixes #<number>` in the PR body, tick the box in #38 after merging.
 - Never develop two database schema changes at the same time (each bumps `schemaVersion`).
 - Update `README.md` / `docs/` when behaviour or architecture changes.
+- Merge a PR only when CI is green (the `Build web` job may fail until #30). **Every merge is a release** (see below).
+
+## Releases
+
+Every merged PR ships as a new version: a Git tag, a GitHub Release and a signed Android build. Until #37 automates this, do it by hand:
+
+1. **In the PR** (before merging):
+   - Bump `version` in `pubspec.yaml` with SemVer: new feature → minor (`1.1.0` → `1.2.0`), fix / tech debt / docs → patch (`1.2.0` → `1.2.1`), incompatible data or behaviour change → major. **Always increase the build number** after `+` by one: it is the Android `versionCode` and must grow, or updates won't install.
+   - Add a section `## [x.y.z] - YYYY-MM-DD` at the top of `CHANGELOG.md` (Keep a Changelog: *Added*, *Changed*, *Fixed*, *Removed*) with user-facing changes and the issue number.
+2. **After merging** (on an up-to-date `main`):
+   ```bash
+   git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z
+   flutter build apk --release
+   flutter build appbundle --release
+   cp build/app/outputs/flutter-apk/app-release.apk focused_task-X.Y.Z.apk
+   cp build/app/outputs/bundle/release/app-release.aab focused_task-X.Y.Z.aab
+   gh release create vX.Y.Z focused_task-X.Y.Z.apk focused_task-X.Y.Z.aab --title "vX.Y.Z" --notes "<the CHANGELOG section>"
+   ```
+   Release builds are signed with `android/key.properties` + keystore, which exist only on the owner's machine. **Never** commit, print or generate them; if they are missing, stop and ask. Delete the copied `.apk`/`.aab` afterwards (`*.apk`/`*.aab` must not be committed).
+3. Tick the issue in #38.

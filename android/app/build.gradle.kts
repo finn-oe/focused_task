@@ -14,7 +14,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.focused_task"
+    namespace = "com.techreload.taskfocus"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

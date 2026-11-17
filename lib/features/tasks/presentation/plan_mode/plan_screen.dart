@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -46,8 +46,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     }
 
     _recoveryHandled = true;
-    final repository = ref.read(taskRepositoryProvider);
-    final sessions = await repository.getRecoverableSessions();
+    final focus = ref.read(focusModeNotifierProvider.notifier);
+    final sessions = await focus.loadRecoverableSessions();
     if (!mounted || sessions.isEmpty) {
       return;
     }
@@ -57,7 +57,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
       return;
     }
 
-    await ref.read(focusModeNotifierProvider.notifier).recoverSessions(recovery: recovery, sessions: sessions);
+    await focus.recoverSessions(recovery: recovery, sessions: sessions);
   }
 
   Future<void> _pickDay() async {

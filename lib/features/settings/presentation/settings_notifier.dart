@@ -1,48 +1,50 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/settings/presentation/settings_state.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
-class SettingsNotifier extends StateNotifier<SettingsState> {
-  SettingsNotifier(this._repository) : super(SettingsState.initial());
-
+class SettingsNotifier extends Notifier<SettingsState> {
   static const String _themeModeKey = 'settings.theme_mode';
   static const String _autoCleanupEnabledKey = 'settings.auto_cleanup_enabled';
   static const String _retentionDaysKey = 'settings.retention_days';
   static const String _pauseOnBackgroundKey = 'settings.pause_on_background';
   static const String _enableWakelockKey = 'settings.enable_wakelock';
 
-  final ITaskRepository _repository;
+  late SharedPreferences _prefs;
+  late ITaskRepository _repository;
 
-  Future<void> initialize() async {
-    final prefs = await SharedPreferences.getInstance();
+  @override
+  SettingsState build() {
+    _prefs = ref.watch(sharedPreferencesProvider);
+    _repository = ref.watch(taskRepositoryProvider);
+
+    final prefs = _prefs;
     final themeModeRaw = prefs.getString(_themeModeKey);
     final autoCleanupEnabled = prefs.getBool(_autoCleanupEnabledKey) ?? false;
     final retentionDays = prefs.getInt(_retentionDaysKey) ?? 30;
     final pauseOnBackground = prefs.getBool(_pauseOnBackgroundKey) ?? true;
     final enableWakelock = prefs.getBool(_enableWakelockKey) ?? false;
 
-    state = state.copyWith(
+    return SettingsState(
       themeMode: _parseThemeMode(themeModeRaw),
       autoCleanupEnabled: autoCleanupEnabled,
       retentionDays: retentionDays < 1 ? 1 : retentionDays,
       pauseOnBackground: pauseOnBackground,
       enableWakelock: enableWakelock,
-      isLoading: false,
+      isCleaning: false,
     );
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_themeModeKey, mode.name);
+    await _prefs.setString(_themeModeKey, mode.name);
     state = state.copyWith(themeMode: mode);
   }
 
   Future<void> setAutoCleanupEnabled(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_autoCleanupEnabledKey, value);
+    await _prefs.setBool(_autoCleanupEnabledKey, value);
     state = state.copyWith(autoCleanupEnabled: value);
   }
 
@@ -51,20 +53,17 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   Future<void> setRetentionDays(int days) async {
     final clamped = days < 1 ? 1 : days;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_retentionDaysKey, clamped);
+    await _prefs.setInt(_retentionDaysKey, clamped);
     state = state.copyWith(retentionDays: clamped);
   }
 
   Future<void> setPauseOnBackground(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_pauseOnBackgroundKey, value);
+    await _prefs.setBool(_pauseOnBackgroundKey, value);
     state = state.copyWith(pauseOnBackground: value);
   }
 
   Future<void> setEnableWakelock(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_enableWakelockKey, value);
+    await _prefs.setBool(_enableWakelockKey, value);
     state = state.copyWith(enableWakelock: value);
   }
 
@@ -82,7 +81,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   }
 
   Future<void> runLaunchCleanupIfNeeded() async {
-    if (state.isLoading || !state.autoCleanupEnabled) {
+    if (!state.autoCleanupEnabled) {
       return;
     }
 

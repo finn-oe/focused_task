@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:focused_task/core/database/app_database.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
-import 'package:focused_task/features/tasks/presentation/stats/stats_screen.dart';
+import 'package:focused_task/features/tasks/presentation/stats/stats_range.dart';
 
 // EU daylight-saving switches in 2026. In other time zones these are regular days, and the
 // assertions still hold – they only fail with naive `Duration(days: 1)` arithmetic in DST zones.

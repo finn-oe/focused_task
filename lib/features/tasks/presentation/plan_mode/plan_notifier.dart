@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:focused_task/core/providers/app_providers.dart';
 
 import 'package:focused_task/core/utils/fractional_indexer.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
@@ -11,7 +14,7 @@ class PlanModeState {
   const PlanModeState({required this.selectedDay, required this.tasks, required this.isLoading, this.error});
 
   factory PlanModeState.initial() {
-    return PlanModeState(selectedDay: DateTime.now().dateOnly, tasks: const [], isLoading: true);
+    return PlanModeState(selectedDay: clock.now().dateOnly, tasks: const [], isLoading: true);
   }
 
   final DateTime selectedDay;
@@ -29,17 +32,27 @@ class PlanModeState {
   }
 }
 
-class PlanModeNotifier extends StateNotifier<PlanModeState> {
-  PlanModeNotifier(this._repository) : super(PlanModeState.initial()) {
-    _bind(state.selectedDay);
-  }
-
-  final ITaskRepository _repository;
+class PlanModeNotifier extends Notifier<PlanModeState> {
+  late ITaskRepository _repository;
   StreamSubscription<List<TaskEntity>>? _subscription;
 
+  @override
+  PlanModeState build() {
+    _repository = ref.watch(taskRepositoryProvider);
+    ref.onDispose(() => _subscription?.cancel());
+
+    final initial = PlanModeState.initial();
+    _subscribe(initial.selectedDay);
+    return initial;
+  }
+
   void _bind(DateTime day) {
-    _subscription?.cancel();
     state = state.copyWith(isLoading: true, clearError: true);
+    _subscribe(day);
+  }
+
+  void _subscribe(DateTime day) {
+    _subscription?.cancel();
 
     _subscription = _repository
         .watchTasksForDay(day)
@@ -142,11 +155,5 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
     state = state.copyWith(tasks: updatedTasks);
 
     await _repository.setTaskCompletion(taskId: task.id, isCompleted: !task.isCompleted);
-  }
-
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
   }
 }

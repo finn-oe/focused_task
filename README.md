@@ -46,7 +46,7 @@ The goal is to support **all platforms Flutter offers**:
 
 ## Getting started
 
-Requirements: [Flutter](https://docs.flutter.dev/get-started/install) 3.44.6 (stable, Dart 3.12) – the version CI uses.
+Requirements: [Flutter](https://docs.flutter.dev/get-started/install) 3.50.0 (stable, Dart 3.14) – the version CI uses.
 
 ```bash
 git clone https://github.com/finn-oe/focused_task.git
