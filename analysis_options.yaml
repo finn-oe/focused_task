@@ -16,7 +16,11 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+    - lib/**/*.g.dart
 include: package:flutter_lints/flutter.yaml
+
+formatter:
+  page_width: 180
 
 linter:
   # The lint rules applied to this project can be customized in the
