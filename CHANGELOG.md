@@ -3,6 +3,11 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.6.1] - 2026-11-17
+
+### Added
+- End-to-end tests of the main flows (plan, focus, day navigation, settings, session log), run in CI on Linux. (#36)
+
 ## [1.6.0] - 2026-11-17
 
 ### Added

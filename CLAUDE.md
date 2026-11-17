@@ -95,6 +95,7 @@ Rules:
 - Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `FakeNotificationService`, `fakePreferences()`, `buildTask()`); extend them when the interface grows. `FakeTaskRepository` also implements `IFocusSessionRepository`: override `taskRepositoryProvider` **and** `focusSessionRepositoryProvider` with the same instance.
 - Notifiers: `ProviderContainer(overrides: [...])` (or `ProviderContainer.test`). Widgets: `ProviderScope(overrides: [...])` with fakes. Anything that reads settings needs `sharedPreferencesProvider.overrideWithValue(await fakePreferences())`.
 - Every bug fix comes with a regression test.
+- **UI changes extend `integration_test/`** (end-to-end flows on the real app; bootstrap in `integration_test/test_app.dart`). Run them with `flutter test integration_test -d windows` (or `macos` / `linux`); CI runs them on Linux.
 
 ## Toolchain
 
@@ -108,6 +109,7 @@ Import Material widgets from `package:material_ui/material_ui.dart`; `package:fl
 flutter pub get
 flutter analyze
 flutter test
+flutter test integration_test -d windows   # end-to-end flows (or -d macos / -d linux)
 dart format .
 dart run build_runner build --delete-conflicting-outputs   # after changing Drift tables
 flutter run -d windows   # or chrome, macos, linux, android, ios

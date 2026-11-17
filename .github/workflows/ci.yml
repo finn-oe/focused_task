@@ -26,7 +26,7 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed $(git ls-files 'lib/*.dart' 'test/*.dart' | grep -v -e '\.g\.dart$' -e '^lib/l10n/generated/')
+        run: dart format --output=none --set-exit-if-changed $(git ls-files 'lib/*.dart' 'test/*.dart' 'integration_test/*.dart' | grep -v -e '\.g\.dart$' -e '^lib/l10n/generated/')
       - name: Check generated localizations are up to date
         run: |
           flutter gen-l10n
@@ -46,6 +46,22 @@ jobs:
           cmp /tmp/sqlite3.wasm web/sqlite3.wasm
       - run: flutter analyze
       - run: flutter test --coverage
+
+  integration-test:
+    name: Integration tests (Linux)
+    needs: analyze-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: sudo apt-get update && sudo apt-get install -y xvfb ninja-build libgtk-3-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+      - run: flutter pub get
+      - run: xvfb-run flutter test integration_test -d linux
 
   build:
     name: Build ${{ matrix.target }}
