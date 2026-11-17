@@ -40,8 +40,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Planen'), findsOneWidget);
-    expect(find.text('Ausgewählter Tag: Heute'), findsOneWidget);
+    expect(find.text('Heute'), findsOneWidget);
+    expect(find.text('Fokus starten'), findsOneWidget);
     expect(find.text('Keine Aufgaben für diesen Tag.'), findsOneWidget);
     expect(find.text('Aufgabe hinzufügen'), findsOneWidget);
   });

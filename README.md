@@ -14,6 +14,8 @@ compared to reality – so you can get a little more dedicated every day.
 
 ### Available today
 
+- **Navigation** – bottom bar on phones, rail on tablets, sidebar on wide windows. Switch days with ‹ ›, the date
+  picker, a swipe or `Alt+←/→`; the day is part of the URL (`/plan?date=2026-11-17`). `Ctrl/Cmd+N` adds a task.
 - **Plan mode** – tasks per day with description, sub-tasks (checklist) and an optional target duration.
   Reorder by drag & drop, mark as done, duplicate, or copy unfinished tasks from past days to today.
 - **Focus mode** – works through today's open tasks in order. Shows the time spent on the current task

@@ -1,15 +1,24 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:clock/clock.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/core/routing/app_router.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/session_recovery_dialog.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
-import 'package:focused_task/core/utils/duration_extensions.dart';
 
+/// Tasks of one day. The day comes from the URL (`/plan?date=YYYY-MM-DD`, missing = today) and the plan notifier
+/// follows it, so browser back/forward and deep links work.
 class PlanScreen extends ConsumerStatefulWidget {
-  const PlanScreen({super.key});
+  const PlanScreen({super.key, this.day});
+
+  /// Day from the route; `null` shows today.
+  final DateTime? day;
 
   @override
   ConsumerState<PlanScreen> createState() => _PlanScreenState();
@@ -18,12 +27,42 @@ class PlanScreen extends ConsumerStatefulWidget {
 class _PlanScreenState extends ConsumerState<PlanScreen> {
   bool _recoveryHandled = false;
 
+  DateTime get _today => clock.now().dateOnly;
+
+  DateTime get _shownDay => widget.day ?? _today;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _handleRecoverableSessions();
+    _followRoute();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _handleRecoverableSessions());
+  }
+
+  @override
+  void didUpdateWidget(PlanScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.day != widget.day) _followRoute();
+  }
+
+  /// Providers must not change while widgets build, so the notifier follows the route right after.
+  void _followRoute() {
+    final day = _shownDay;
+    Future.microtask(() {
+      if (mounted) ref.read(planModeNotifierProvider.notifier).setSelectedDay(day);
     });
+  }
+
+  void _goToDay(DateTime day) => context.go(AppRoutes.planFor(day.dateOnly, today: _today));
+
+  void _previousDay() => _goToDay(_shownDay.addDays(-1));
+
+  void _nextDay() => _goToDay(_shownDay.addDays(1));
+
+  void _addTask() => context.push(AppRoutes.taskForm);
+
+  Future<void> _pickDay() async {
+    final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: _shownDay);
+    if (selected != null && mounted) _goToDay(selected);
   }
 
   Future<void> _handleRecoverableSessions() async {
@@ -38,7 +77,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
       return;
     }
 
-    final recovery = await showSessionRecoveryDialog(context, sessions: sessions, now: DateTime.now());
+    final recovery = await showSessionRecoveryDialog(context, sessions: sessions, now: clock.now());
     if (recovery == null) {
       return;
     }
@@ -46,71 +85,144 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     await focus.recoverSessions(recovery: recovery, sessions: sessions);
   }
 
-  Future<void> _pickDay() async {
-    final state = ref.read(planModeNotifierProvider);
-    final notifier = ref.read(planModeNotifierProvider.notifier);
-    final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: state.selectedDay);
-    if (selected != null) {
-      await notifier.setSelectedDay(selected);
-    }
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final today = _today;
+    final shownDay = _shownDay;
+
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): _previousDay,
+        const SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): _nextDay,
+        const SingleActivator(LogicalKeyboardKey.keyN, control: true): _addTask,
+        const SingleActivator(LogicalKeyboardKey.keyN, meta: true): _addTask,
+      },
+      child: Focus(
+        autofocus: true,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 560;
+            return Scaffold(
+              appBar: AppBar(
+                titleSpacing: 4,
+                title: _DayNavigator(
+                  label: relativeDayLabel(context, shownDay, today: today),
+                  onPrevious: _previousDay,
+                  onNext: _nextDay,
+                  onPick: _pickDay,
+                ),
+                actions: [
+                  if (!shownDay.isSameDate(today))
+                    compact
+                        ? IconButton(tooltip: l10n.commonToday, onPressed: () => _goToDay(today), icon: const Icon(Icons.today))
+                        : Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ActionChip(label: Text(l10n.commonToday), avatar: const Icon(Icons.today), onPressed: () => _goToDay(today)),
+                          ),
+                  if (compact)
+                    IconButton.filled(
+                      tooltip: l10n.planStartFocus,
+                      onPressed: () => context.go(AppRoutes.focus),
+                      // The app bar's action icon colour would override the filled button's foreground.
+                      icon: Icon(Icons.play_arrow, color: Theme.of(context).colorScheme.onPrimary),
+                    )
+                  else
+                    FilledButton.icon(onPressed: () => context.go(AppRoutes.focus), icon: const Icon(Icons.play_arrow), label: Text(l10n.planStartFocus)),
+                  const SizedBox(width: 8),
+                ],
+              ),
+              body: _DayTasks(onSwipeToPrevious: _previousDay, onSwipeToNext: _nextDay),
+              floatingActionButton: FloatingActionButton.extended(onPressed: _addTask, icon: const Icon(Icons.add), label: Text(l10n.planAddTask)),
+            );
+          },
+        ),
+      ),
+    );
   }
+}
+
+/// `‹` previous day · date (tap → date picker) · `›` next day.
+class _DayNavigator extends StatelessWidget {
+  const _DayNavigator({required this.label, required this.onPrevious, required this.onNext, required this.onPick});
+
+  final String label;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+  final VoidCallback onPick;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(tooltip: l10n.planPreviousDay, onPressed: onPrevious, icon: const Icon(Icons.chevron_left)),
+        Flexible(
+          child: Tooltip(
+            message: l10n.planPickDayTooltip,
+            child: TextButton(
+              onPressed: onPick,
+              child: Text(label, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleMedium),
+            ),
+          ),
+        ),
+        IconButton(tooltip: l10n.planNextDay, onPressed: onNext, icon: const Icon(Icons.chevron_right)),
+      ],
+    );
+  }
+}
+
+/// Task list of the selected day with the day's tracked total. Swiping horizontally changes the day.
+class _DayTasks extends ConsumerWidget {
+  const _DayTasks({required this.onSwipeToPrevious, required this.onSwipeToNext});
+
+  final VoidCallback onSwipeToPrevious;
+  final VoidCallback onSwipeToNext;
+
+  static const _swipeVelocity = 300.0;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
     final state = ref.watch(planModeNotifierProvider);
     final notifier = ref.read(planModeNotifierProvider.notifier);
 
-    final now = DateTime.now();
-    final totalTimeSpentMs = state.tasks.fold<int>(0, (sum, task) => sum + task.elapsedAt(now).inMilliseconds);
-    final totalDuration = Duration(milliseconds: totalTimeSpentMs);
+    final now = clock.now();
+    final total = state.tasks.fold(Duration.zero, (sum, task) => sum + task.elapsedAt(now));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.planTitle),
-        actions: [
-          IconButton(tooltip: l10n.planSettingsTooltip, onPressed: () => context.push('/settings'), icon: const Icon(Icons.settings_outlined)),
-          IconButton(tooltip: l10n.planPickDayTooltip, onPressed: _pickDay, icon: const Icon(Icons.calendar_today_outlined)),
-          IconButton(tooltip: l10n.planStatisticsTooltip, onPressed: () => context.push('/stats'), icon: const Icon(Icons.insights_outlined)),
-          IconButton(tooltip: l10n.planStartFocusTooltip, onPressed: () => context.go('/focus'), icon: const Icon(Icons.play_arrow)),
-        ],
-      ),
-      body: Column(
-        children: [
-          Material(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
-            child: InkWell(
-              onTap: _pickDay,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(l10n.planSelectedDay(relativeDayLabel(context, state.selectedDay, today: now)), style: Theme.of(context).textTheme.titleMedium),
-                    if (totalTimeSpentMs > 0)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.timer_outlined, size: 18, color: Theme.of(context).colorScheme.primary),
-                          const SizedBox(width: 4),
-                          Text(
-                            totalDuration.toFormattedString(),
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                  ],
+    return Column(
+      children: [
+        if (total > Duration.zero)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(Icons.timer_outlined, size: 18, color: theme.colorScheme.primary),
+                const SizedBox(width: 4),
+                Text(
+                  total.toFormattedString(),
+                  style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.primary, fontWeight: FontWeight.bold),
                 ),
-              ),
+              ],
             ),
           ),
-          Expanded(
+        Expanded(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragEnd: (details) {
+              final velocity = details.primaryVelocity ?? 0;
+              if (velocity > _swipeVelocity) onSwipeToPrevious();
+              if (velocity < -_swipeVelocity) onSwipeToNext();
+            },
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : state.tasks.isEmpty
                 ? Center(child: Text(l10n.planNoTasks))
                 : ReorderableListView.builder(
+                    padding: const EdgeInsets.only(bottom: 88), // keep the last task clear of the add button
                     itemCount: state.tasks.length,
                     onReorderItem: notifier.reorderTask,
                     buildDefaultDragHandles: false,
@@ -120,14 +232,13 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                     },
                   ),
           ),
-          if (state.error != null)
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(l10n.planLoadError(state.error!), style: TextStyle(color: Theme.of(context).colorScheme.error)),
-            ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(onPressed: () => context.push('/task-form'), icon: const Icon(Icons.add), label: Text(l10n.planAddTask)),
+        ),
+        if (state.error != null)
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(l10n.planLoadError(state.error!), style: TextStyle(color: theme.colorScheme.error)),
+          ),
+      ],
     );
   }
 }

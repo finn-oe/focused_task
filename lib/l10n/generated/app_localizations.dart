@@ -98,6 +98,36 @@ abstract class AppLocalizations {
   /// **'Focused Task'**
   String get appTitle;
 
+  /// No description provided for @navPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan'**
+  String get navPlan;
+
+  /// No description provided for @navCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get navCalendar;
+
+  /// No description provided for @navStatistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get navStatistics;
+
+  /// No description provided for @navSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get navSettings;
+
+  /// No description provided for @calendarComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Week and month views are coming soon.'**
+  String get calendarComingSoon;
+
   /// No description provided for @commonCancel.
   ///
   /// In en, this message translates to:
@@ -158,41 +188,29 @@ abstract class AppLocalizations {
   /// **'{percent}%'**
   String commonPercent(int percent);
 
-  /// No description provided for @planTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Plan Mode'**
-  String get planTitle;
-
-  /// No description provided for @planSettingsTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get planSettingsTooltip;
-
   /// No description provided for @planPickDayTooltip.
   ///
   /// In en, this message translates to:
   /// **'Pick Day'**
   String get planPickDayTooltip;
 
-  /// No description provided for @planStatisticsTooltip.
+  /// No description provided for @planPreviousDay.
   ///
   /// In en, this message translates to:
-  /// **'Statistics'**
-  String get planStatisticsTooltip;
+  /// **'Previous day'**
+  String get planPreviousDay;
 
-  /// No description provided for @planStartFocusTooltip.
+  /// No description provided for @planNextDay.
   ///
   /// In en, this message translates to:
-  /// **'Start Focus'**
-  String get planStartFocusTooltip;
+  /// **'Next day'**
+  String get planNextDay;
 
-  /// No description provided for @planSelectedDay.
+  /// No description provided for @planStartFocus.
   ///
   /// In en, this message translates to:
-  /// **'Selected day: {day}'**
-  String planSelectedDay(String day);
+  /// **'Start focus'**
+  String get planStartFocus;
 
   /// No description provided for @planNoTasks.
   ///

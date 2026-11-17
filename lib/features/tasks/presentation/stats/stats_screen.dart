@@ -1,7 +1,6 @@
 import 'package:clock/clock.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
@@ -19,19 +18,7 @@ class StatsScreen extends ConsumerWidget {
     final stats = ref.watch(taskStatsProvider(dates));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.statsTitle),
-        leading: IconButton(
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/plan');
-            }
-          },
-          icon: const Icon(Icons.arrow_back),
-        ),
-      ),
+      appBar: AppBar(title: Text(l10n.statsTitle)),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(taskStatsProvider(dates).future),
         child: ListView(

@@ -1,8 +1,11 @@
 {
   "@@locale": "en",
-
   "appTitle": "Focused Task",
-
+  "navPlan": "Plan",
+  "navCalendar": "Calendar",
+  "navStatistics": "Statistics",
+  "navSettings": "Settings",
+  "calendarComingSoon": "Week and month views are coming soon.",
   "commonCancel": "Cancel",
   "commonSave": "Save",
   "commonDelete": "Delete",
@@ -16,19 +19,14 @@
   "@commonMinutes": {"placeholders": {"minutes": {"type": "int"}}},
   "commonPercent": "{percent}%",
   "@commonPercent": {"placeholders": {"percent": {"type": "int"}}},
-
-  "planTitle": "Plan Mode",
-  "planSettingsTooltip": "Settings",
   "planPickDayTooltip": "Pick Day",
-  "planStatisticsTooltip": "Statistics",
-  "planStartFocusTooltip": "Start Focus",
-  "planSelectedDay": "Selected day: {day}",
-  "@planSelectedDay": {"placeholders": {"day": {"type": "String"}}},
+  "planPreviousDay": "Previous day",
+  "planNextDay": "Next day",
+  "planStartFocus": "Start focus",
   "planNoTasks": "No tasks for this day.",
   "planLoadError": "Could not load the tasks: {error}",
   "@planLoadError": {"placeholders": {"error": {"type": "String"}}},
   "planAddTask": "Add Task",
-
   "taskMarkComplete": "Mark task as complete",
   "taskMarkIncomplete": "Mark task as incomplete",
   "taskNoDescription": "No description",
@@ -42,7 +40,6 @@
   "taskKeepCompletedTodosHint": "If off, all to-dos will be reset",
   "taskSubtractTimeSpent": "Subtract time spent",
   "taskSubtractTimeSpentHint": "Reduces the new target duration by the time already tracked",
-
   "taskFormAddTitle": "Add Task",
   "taskFormEditTitle": "Edit Task",
   "taskFormDuplicateTooltip": "Duplicate Task",
@@ -66,7 +63,6 @@
   "taskFormSave": "Save Task",
   "taskFormAddSubTaskTitle": "Add sub-task",
   "taskFormEditSubTaskTitle": "Edit sub-task",
-
   "focusTitle": "Focus Mode",
   "focusExitTooltip": "Exit focus",
   "focusTimeIsUp": "Time is up!",
@@ -82,17 +78,14 @@
   "focusAlarmNotificationBody": "You have reached your target duration for: {taskTitle}",
   "@focusAlarmNotificationBody": {"placeholders": {"taskTitle": {"type": "String"}}},
   "focusAlarmStopButton": "Stop Alarm",
-
   "pauseTitle": "Paused",
   "pauseMessage": "Focus paused while app is in background.",
   "pauseResume": "Resume Focus",
-
   "finishedTitle": "All Done",
   "finishedHeadline": "Finished for Today!",
   "finishedMessage": "Great work — you completed everything planned for today.",
   "finishedViewStatistics": "View Statistics",
   "finishedBackToPlan": "Back to Plan",
-
   "recoveryTitle": "Recover unfinished session?",
   "recoveryClosedWhileFocusing": "The app was closed while you were focusing on:",
   "recoveryQuestion": "How much of that time do you want to keep?",
@@ -102,7 +95,6 @@
   "@recoveryUntilNow": {"placeholders": {"duration": {"type": "String"}}},
   "recoveryUntilLastActivity": "Until last activity ({duration})",
   "@recoveryUntilLastActivity": {"placeholders": {"duration": {"type": "String"}}},
-
   "statsTitle": "Statistics",
   "statsDay": "Day",
   "statsWeek": "Week",
@@ -119,7 +111,6 @@
   "statsRemaining": "Remaining",
   "statsTaskCount": "{count, plural, =1{1 task} other{{count} tasks}}",
   "@statsTaskCount": {"placeholders": {"count": {"type": "int"}}},
-
   "settingsTitle": "Settings",
   "settingsAppearance": "Appearance",
   "settingsThemeSystem": "System",
