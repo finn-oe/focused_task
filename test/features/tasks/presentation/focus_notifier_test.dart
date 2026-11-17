@@ -2,7 +2,9 @@ import 'package:clock/clock.dart';
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart' show Locale;
 
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
@@ -16,7 +18,7 @@ void _runFocus(List<TaskEntity> tasks, void Function(FakeAsync async, FocusModeN
   fakeAsync((async) {
     final repository = FakeTaskRepository(tasks: tasks);
     final alarm = FakeTargetAlarm();
-    final container = ProviderContainer(overrides: [taskRepositoryProvider.overrideWithValue(repository), targetAlarmProvider.overrideWithValue(alarm)]);
+    final container = ProviderContainer(overrides: [taskRepositoryProvider.overrideWithValue(repository), targetAlarmProvider.overrideWithValue(alarm), _english]);
     final notifier = container.read(focusModeNotifierProvider.notifier);
     body(async, notifier, repository, alarm);
     container.dispose();
@@ -24,6 +26,8 @@ void _runFocus(List<TaskEntity> tasks, void Function(FakeAsync async, FocusModeN
 }
 
 final _today = DateTime(2026, 11, 17);
+
+final _english = appLocalizationsProvider.overrideWithValue(lookupAppLocalizations(const Locale('en')));
 
 void main() {
   group('FocusModeNotifier target alarm', () {
@@ -165,6 +169,7 @@ void main() {
           overrides: [
             taskRepositoryProvider.overrideWithValue(FakeTaskRepository(tasks: [buildTask(assignedDate: _today)])),
             targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
+            _english,
           ],
         );
         container.read(focusModeNotifierProvider.notifier).initializeForDay(_today);

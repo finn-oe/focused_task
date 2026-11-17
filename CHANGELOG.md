@@ -3,6 +3,16 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.2.0] - 2026-11-17
+
+### Added
+- German translation. Choose the language in Settings (System / English / Deutsch); it switches immediately and is remembered. (#32)
+- Dates are shown in the format of the selected language, and the statistics week starts on the locale's first weekday (e.g. Sunday in US English, Monday in German). (#32)
+
+### Changed
+- Alarm notifications use the app language. (#32)
+- Sub-task edit and delete buttons have tooltips. (#32)
+
 ## [1.1.0] - 2026-11-17
 
 ### Changed

@@ -138,7 +138,10 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     if (remaining == null || remaining <= Duration.zero || state.hasAlarmPlayedForCurrentTask) {
       return;
     }
-    await _alarm.schedule(taskTitle: task.title, at: now.add(remaining));
+    // Read at schedule time (not watched): switching the language must not reset a running session.
+    final l10n = ref.read(appLocalizationsProvider);
+    final notification = AlarmNotification(title: l10n.focusTimeIsUp, body: l10n.focusAlarmNotificationBody(task.title), stopButton: l10n.focusAlarmStopButton);
+    await _alarm.schedule(notification: notification, at: now.add(remaining));
   }
 
   Future<void> _loadNextTask() async {

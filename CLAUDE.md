@@ -69,13 +69,22 @@ Rules:
 
 ## Code quality
 
-- Code must pass `flutter analyze` with **zero** issues and be formatted with `dart format` (page width 180 is set in `analysis_options.yaml`; generated `*.g.dart` files are excluded).
+- Code must pass `flutter analyze` with **zero** issues and be formatted with `dart format` (page width 180 is set in `analysis_options.yaml`; generated `*.g.dart` and `lib/l10n/generated/` files are excluded).
 - Prefer small, focused widgets over large `build` methods; extract private widgets instead of helper methods returning widgets.
 - No hard-coded colours – use `Theme.of(context).colorScheme`. No duplicated helpers – shared formatting lives in `lib/core/utils/`.
 - Use strong types; avoid `dynamic`.
-- User-facing strings should be easy to localise later (keep them in one place per screen; no string concatenation of sentences).
+- No hard-coded user-facing strings – see *Strings*.
 - Destructive actions (delete, cleanup) need a confirmation or undo.
 - Do not add dependencies casually. Remove unused ones.
+
+## Strings
+
+- **Every user-facing string goes into `lib/l10n/app_en.arb` and `lib/l10n/app_de.arb`** (English is the template). Read them with `context.l10n.<key>` (`lib/core/l10n/l10n.dart`); outside the widget tree use `ref.read(appLocalizationsProvider)`.
+- Keys are prefixed with the screen (`plan…`, `focus…`, `settings…`) or `common…`. Use placeholders and ICU plurals (`{count, plural, =1{1 task} other{{count} tasks}}`); never concatenate sentences or build them from fragments.
+- Run `flutter gen-l10n` after editing ARB files and commit `lib/l10n/generated/` (CI checks it is up to date).
+- `MaterialApp.localizationsDelegates` must be `appLocalizationsDelegates`, not the generated `AppLocalizations.localizationsDelegates` (that list references the deprecated SDK Material localizations).
+- Dates: `DateFormat(..., locale)` / `relativeDayLabel`; weeks start on `firstDayOfWeek(context)`. Durations stay locale-independent (`HH:MM`, `duration_extensions.dart`).
+- Tests pump widgets with `localizedApp(...)` / `localizedRouterApp(...)` from `test/helpers/localized_app.dart`.
 
 ## Testing
 

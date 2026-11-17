@@ -2,11 +2,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/session_recovery_dialog.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
-import 'package:focused_task/core/utils/date_utils.dart';
 
 class PlanScreen extends ConsumerStatefulWidget {
   const PlanScreen({super.key});
@@ -24,20 +24,6 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _handleRecoverableSessions();
     });
-  }
-
-  String _formatSelectedDate(DateTime selectedDay) {
-    final difference = DateTime.now().calendarDaysUntil(selectedDay);
-
-    if (difference == 0) {
-      return 'Today';
-    } else if (difference == 1) {
-      return 'Tomorrow';
-    } else if (difference == -1) {
-      return 'Yesterday';
-    } else {
-      return '${selectedDay.year}-${selectedDay.month.toString().padLeft(2, '0')}-${selectedDay.day.toString().padLeft(2, '0')}';
-    }
   }
 
   Future<void> _handleRecoverableSessions() async {
@@ -71,6 +57,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final state = ref.watch(planModeNotifierProvider);
     final notifier = ref.read(planModeNotifierProvider.notifier);
 
@@ -80,12 +67,12 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Plan Mode'),
+        title: Text(l10n.planTitle),
         actions: [
-          IconButton(tooltip: 'Settings', onPressed: () => context.push('/settings'), icon: const Icon(Icons.settings_outlined)),
-          IconButton(tooltip: 'Pick Day', onPressed: _pickDay, icon: const Icon(Icons.calendar_today_outlined)),
-          IconButton(tooltip: 'Statistics', onPressed: () => context.push('/stats'), icon: const Icon(Icons.insights_outlined)),
-          IconButton(tooltip: 'Start Focus', onPressed: () => context.go('/focus'), icon: const Icon(Icons.play_arrow)),
+          IconButton(tooltip: l10n.planSettingsTooltip, onPressed: () => context.push('/settings'), icon: const Icon(Icons.settings_outlined)),
+          IconButton(tooltip: l10n.planPickDayTooltip, onPressed: _pickDay, icon: const Icon(Icons.calendar_today_outlined)),
+          IconButton(tooltip: l10n.planStatisticsTooltip, onPressed: () => context.push('/stats'), icon: const Icon(Icons.insights_outlined)),
+          IconButton(tooltip: l10n.planStartFocusTooltip, onPressed: () => context.go('/focus'), icon: const Icon(Icons.play_arrow)),
         ],
       ),
       body: Column(
@@ -100,7 +87,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Selected day: ${_formatSelectedDate(state.selectedDay)}', style: Theme.of(context).textTheme.titleMedium),
+                    Text(l10n.planSelectedDay(relativeDayLabel(context, state.selectedDay, today: now)), style: Theme.of(context).textTheme.titleMedium),
                     if (totalTimeSpentMs > 0)
                       Row(
                         mainAxisSize: MainAxisSize.min,
@@ -122,7 +109,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : state.tasks.isEmpty
-                ? const Center(child: Text('No tasks for this day.'))
+                ? Center(child: Text(l10n.planNoTasks))
                 : ReorderableListView.builder(
                     itemCount: state.tasks.length,
                     onReorderItem: notifier.reorderTask,
@@ -136,11 +123,11 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
           if (state.error != null)
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Text(state.error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              child: Text(l10n.planLoadError(state.error!), style: TextStyle(color: Theme.of(context).colorScheme.error)),
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(onPressed: () => context.push('/task-form'), icon: const Icon(Icons.add), label: const Text('Add Task')),
+      floatingActionButton: FloatingActionButton.extended(onPressed: () => context.push('/task-form'), icon: const Icon(Icons.add), label: Text(l10n.planAddTask)),
     );
   }
 }

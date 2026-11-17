@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:focused_task/core/database/app_database.dart';
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
@@ -39,7 +40,7 @@ final settingsNotifierProvider = NotifierProvider<SettingsNotifier, SettingsStat
 
 /// One-off work on app launch (currently the optional cleanup of old tasks). Watched once by the app root.
 ///
-/// A failed cleanup is shown in the settings screen (`lastCleanupMessage`) and is not retried, so it can't delete repeatedly.
+/// A failed cleanup is shown in the settings screen (`lastCleanup`) and is not retried, so it can't delete repeatedly.
 final appStartupProvider = FutureProvider<void>((ref) async {
   // Providers must not modify other providers synchronously while they initialize.
   await Future<void>.value();
@@ -53,3 +54,9 @@ final taskStatsProvider = FutureProvider.autoDispose.family<TaskStats, DateRange
 
 /// Period selected on the statistics screen.
 final statsRangeProvider = NotifierProvider.autoDispose<StatsRangeNotifier, StatsRange>(StatsRangeNotifier.new);
+
+/// Strings for code outside the widget tree (e.g. alarm notifications), in the language the app shows.
+final appLocalizationsProvider = Provider<AppLocalizations>((ref) {
+  final chosen = ref.watch(settingsNotifierProvider.select((settings) => settings.locale));
+  return lookupAppLocalizations(chosen ?? systemAppLocale());
+});

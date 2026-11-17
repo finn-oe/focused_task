@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 
 /// Labeled timer value used in focus mode.
@@ -46,7 +47,7 @@ class SessionTimer extends StatelessWidget {
   final Duration duration;
 
   @override
-  Widget build(BuildContext context) => TimerBox(label: 'Session', value: duration.toClockString());
+  Widget build(BuildContext context) => TimerBox(label: context.l10n.focusTimerSession, value: duration.toClockString());
 }
 
 /// Time spent on the current task, or the time remaining until / exceeding its target.
@@ -60,13 +61,13 @@ class TaskTimer extends StatelessWidget {
   Widget build(BuildContext context) {
     final target = targetMinutes;
     if (target == null) {
-      return TimerBox(label: 'Task', value: elapsed.toClockString(), outlined: true);
+      return TimerBox(label: context.l10n.focusTimerTask, value: elapsed.toClockString(), outlined: true);
     }
 
     final remaining = Duration(minutes: target) - elapsed;
     if (remaining.isNegative) {
-      return TimerBox(label: 'Overdue', value: '+${remaining.toClockString()}', color: Theme.of(context).colorScheme.error, outlined: true);
+      return TimerBox(label: context.l10n.focusTimerOverdue, value: '+${remaining.toClockString()}', color: Theme.of(context).colorScheme.error, outlined: true);
     }
-    return TimerBox(label: 'Remaining', value: remaining.toClockString(), outlined: true);
+    return TimerBox(label: context.l10n.focusTimerRemaining, value: remaining.toClockString(), outlined: true);
   }
 }

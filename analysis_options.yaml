@@ -17,6 +17,7 @@ analyzer:
     - macos/**
     - linux/**
     - lib/**/*.g.dart
+    - lib/l10n/generated/**
 include: package:flutter_lints/flutter.yaml
 
 formatter:

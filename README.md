@@ -7,7 +7,7 @@ You put tasks on days, start a focus session, and the app walks you through your
 tasks one by one while it tracks your time. Statistics then show how your plans
 compared to reality – so you can get a little more dedicated every day.
 
-> Status: early development (v1.0.x). See the [roadmap](#roadmap) and the
+> Status: early development (v1.x). Every merged change is released – see [Releases](https://github.com/finn-oe/focused_task/releases) and the [changelog](CHANGELOG.md). See the [roadmap](#roadmap) and the
 > [open issues](https://github.com/finn-oe/focused_task/issues) for what is planned.
 
 ## Features
@@ -24,7 +24,8 @@ compared to reality – so you can get a little more dedicated every day.
 - **Session recovery** – if the app was closed during a session, you are asked whether to keep the tracked time.
 - **Statistics** – completion rate, total focus time, average task duration and focus time per day for the
   current day, week or month.
-- **Settings** – light/dark/system theme, data retention, focus-mode behaviour.
+- **Languages** – English and German; follows the system language or can be chosen in the settings.
+- **Settings** – light/dark/system theme, language, data retention, focus-mode behaviour.
 
 ### Planned
 

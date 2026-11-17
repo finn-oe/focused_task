@@ -1,5 +1,16 @@
 import 'package:material_ui/material_ui.dart';
 
+/// Outcome of the last cleanup run; the screen turns it into a localized message.
+class CleanupResult {
+  const CleanupResult.deleted(int this.deletedCount);
+  const CleanupResult.failed() : deletedCount = null;
+
+  /// Number of deleted tasks, or `null` if the cleanup failed.
+  final int? deletedCount;
+
+  bool get failed => deletedCount == null;
+}
+
 class SettingsState {
   const SettingsState({
     required this.themeMode,
@@ -8,10 +19,14 @@ class SettingsState {
     required this.pauseOnBackground,
     required this.enableWakelock,
     required this.isCleaning,
-    this.lastCleanupMessage,
+    this.locale,
+    this.lastCleanup,
   });
 
   final ThemeMode themeMode;
+
+  /// Language chosen in the settings, or `null` to follow the system language.
+  final Locale? locale;
 
   /// Whether completed tasks older than [retentionDays] are deleted on launch. Off by default because
   /// deleted tasks also disappear from the statistics.
@@ -20,26 +35,29 @@ class SettingsState {
   final bool pauseOnBackground;
   final bool enableWakelock;
   final bool isCleaning;
-  final String? lastCleanupMessage;
+  final CleanupResult? lastCleanup;
 
   SettingsState copyWith({
     ThemeMode? themeMode,
+    Locale? locale,
+    bool clearLocale = false,
     bool? autoCleanupEnabled,
     int? retentionDays,
     bool? pauseOnBackground,
     bool? enableWakelock,
     bool? isCleaning,
-    String? lastCleanupMessage,
-    bool clearCleanupMessage = false,
+    CleanupResult? lastCleanup,
+    bool clearLastCleanup = false,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
+      locale: clearLocale ? null : locale ?? this.locale,
       autoCleanupEnabled: autoCleanupEnabled ?? this.autoCleanupEnabled,
       retentionDays: retentionDays ?? this.retentionDays,
       pauseOnBackground: pauseOnBackground ?? this.pauseOnBackground,
       enableWakelock: enableWakelock ?? this.enableWakelock,
       isCleaning: isCleaning ?? this.isCleaning,
-      lastCleanupMessage: clearCleanupMessage ? null : lastCleanupMessage ?? this.lastCleanupMessage,
+      lastCleanup: clearLastCleanup ? null : lastCleanup ?? this.lastCleanup,
     );
   }
 }

@@ -1,16 +1,19 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:focused_task/core/l10n/l10n.dart';
+
 class FinishedForTodayScreen extends StatelessWidget {
   const FinishedForTodayScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('All Done'),
+        title: Text(l10n.finishedTitle),
         leading: IconButton(onPressed: () => context.go('/plan'), icon: const Icon(Icons.close)),
       ),
       body: Center(
@@ -26,9 +29,9 @@ class FinishedForTodayScreen extends StatelessWidget {
                 child: Icon(Icons.check_circle, size: 56, color: theme.colorScheme.primary),
               ),
               const SizedBox(height: 24),
-              Text('Finished for Today!', style: theme.textTheme.headlineMedium, textAlign: TextAlign.center),
+              Text(l10n.finishedHeadline, style: theme.textTheme.headlineMedium, textAlign: TextAlign.center),
               const SizedBox(height: 12),
-              Text('Great work — you completed everything planned for today.', style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
+              Text(l10n.finishedMessage, style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
               const SizedBox(height: 32),
               FilledButton.icon(
                 onPressed: () {
@@ -37,10 +40,10 @@ class FinishedForTodayScreen extends StatelessWidget {
                   router.push('/stats');
                 },
                 icon: const Icon(Icons.insights_outlined),
-                label: const Text('View Statistics'),
+                label: Text(l10n.finishedViewStatistics),
               ),
               const SizedBox(height: 12),
-              OutlinedButton.icon(onPressed: () => context.go('/plan'), icon: const Icon(Icons.assignment_outlined), label: const Text('Back to Plan')),
+              OutlinedButton.icon(onPressed: () => context.go('/plan'), icon: const Icon(Icons.assignment_outlined), label: Text(l10n.finishedBackToPlan)),
             ],
           ),
         ),

@@ -12,11 +12,12 @@ class StatsRangeNotifier extends Notifier<StatsRange> {
   void select(StatsRange range) => state = range;
 }
 
-/// Inclusive calendar-date range (first and last day) of [range] around [now].
-DateRange statsDateRange(StatsRange range, DateTime now) {
+/// Inclusive calendar-date range (first and last day) of [range] around [now]. Weeks start on [firstWeekday].
+DateRange statsDateRange(StatsRange range, DateTime now, {required int firstWeekday}) {
+  final weekStart = now.startOfWeek(firstWeekday);
   return switch (range) {
     StatsRange.day => DateRange(now, now),
-    StatsRange.week => DateRange(now.startOfWeek, now.startOfWeek.addDays(DateTime.daysPerWeek - 1)),
+    StatsRange.week => DateRange(weekStart, weekStart.addDays(DateTime.daysPerWeek - 1)),
     StatsRange.month => DateRange(now.startOfMonth, now.startOfNextMonth.addDays(-1)),
   };
 }

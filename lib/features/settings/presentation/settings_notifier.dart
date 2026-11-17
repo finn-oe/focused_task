@@ -2,12 +2,14 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/settings/presentation/settings_state.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
 class SettingsNotifier extends Notifier<SettingsState> {
   static const String _themeModeKey = 'settings.theme_mode';
+  static const String _localeKey = 'settings.locale';
   static const String _autoCleanupEnabledKey = 'settings.auto_cleanup_enabled';
   static const String _retentionDaysKey = 'settings.retention_days';
   static const String _pauseOnBackgroundKey = 'settings.pause_on_background';
@@ -30,6 +32,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
 
     return SettingsState(
       themeMode: _parseThemeMode(themeModeRaw),
+      locale: _parseLocale(prefs.getString(_localeKey)),
       autoCleanupEnabled: autoCleanupEnabled,
       retentionDays: retentionDays < 1 ? 1 : retentionDays,
       pauseOnBackground: pauseOnBackground,
@@ -41,6 +44,17 @@ class SettingsNotifier extends Notifier<SettingsState> {
   Future<void> setThemeMode(ThemeMode mode) async {
     await _prefs.setString(_themeModeKey, mode.name);
     state = state.copyWith(themeMode: mode);
+  }
+
+  /// Sets the app language; `null` follows the system language.
+  Future<void> setLocale(Locale? locale) async {
+    if (locale == null) {
+      await _prefs.remove(_localeKey);
+      state = state.copyWith(clearLocale: true);
+    } else {
+      await _prefs.setString(_localeKey, locale.toLanguageTag());
+      state = state.copyWith(locale: locale);
+    }
   }
 
   Future<void> setAutoCleanupEnabled(bool value) async {
@@ -68,14 +82,14 @@ class SettingsNotifier extends Notifier<SettingsState> {
   }
 
   Future<int> cleanNow() async {
-    state = state.copyWith(isCleaning: true, clearCleanupMessage: true);
+    state = state.copyWith(isCleaning: true, clearLastCleanup: true);
 
     try {
       final deleted = await _repository.deleteCompletedTasksOlderThanDays(state.retentionDays);
-      state = state.copyWith(isCleaning: false, lastCleanupMessage: 'Deleted $deleted entries.');
+      state = state.copyWith(isCleaning: false, lastCleanup: CleanupResult.deleted(deleted));
       return deleted;
     } catch (_) {
-      state = state.copyWith(isCleaning: false, lastCleanupMessage: 'Cleanup failed. Please try again.');
+      state = state.copyWith(isCleaning: false, lastCleanup: const CleanupResult.failed());
       rethrow;
     }
   }
@@ -86,6 +100,13 @@ class SettingsNotifier extends Notifier<SettingsState> {
     }
 
     await cleanNow();
+  }
+
+  /// Only supported languages are restored; anything else falls back to the system language.
+  Locale? _parseLocale(String? raw) {
+    if (raw == null) return null;
+    final locale = Locale(raw.split('-').first);
+    return AppLocalizations.supportedLocales.contains(locale) ? locale : null;
   }
 
   ThemeMode _parseThemeMode(String? raw) {
