@@ -15,21 +15,18 @@ void main() {
     await TestApp.start(tester);
 
     await tester.tapAndSettle(find.text('Add Task'));
-    await tester.enterTextInField('Title', 'Write report');
+    await tester.tapAndSettle(find.text('Save Task'));
+    expect(find.text('Please enter a title.'), findsOneWidget);
 
+    await tester.enterText(find.widgetWithText(TextFormField, 'Title'), 'Write report');
+    await tester.tapAndSettle(find.text('25 min'));
+    final newSubTask = find.widgetWithText(TextField, 'Add sub-task');
     for (final subTask in ['Outline', 'Draft']) {
-      await tester.tapAndSettle(find.byTooltip('Add Sub-task'));
-      await tester.enterText(find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)), subTask);
-      await tester.tapAndSettle(find.text('Save'));
+      await tester.ensureVisible(newSubTask);
+      await tester.enterText(newSubTask, subTask);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
     }
-
-    await tester.tapAndSettle(find.text('Target Duration (Optional)'));
-    await tester.tapAndSettle(find.byIcon(Icons.keyboard_outlined)); // time picker: type instead of dialing
-    final fields = find.descendant(of: find.byType(Dialog), matching: find.byType(TextField));
-    await tester.enterText(fields.at(0), '00');
-    await tester.enterText(fields.at(1), '25');
-    await tester.tapAndSettle(find.text('OK'));
-    expect(find.text('0h 25m'), findsOneWidget);
 
     await tester.tapAndSettle(find.text('Save Task'));
 
@@ -37,7 +34,7 @@ void main() {
     await tester.tapAndSettle(find.byTooltip('Edit Task'));
     expect(find.text('Outline'), findsOneWidget);
     expect(find.text('Draft'), findsOneWidget);
-    expect(find.text('0h 25m'), findsOneWidget);
+    expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '25 min')).selected, isTrue);
   });
 
   testWidgets('focus: tick a sub-task, complete the task, see it in the statistics', (tester) async {

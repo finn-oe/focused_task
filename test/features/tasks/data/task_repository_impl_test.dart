@@ -6,6 +6,7 @@ import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
+import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
 void main() {
   late AppDatabase database;
@@ -48,6 +49,17 @@ void main() {
       expect(task.isCompleted, isFalse);
       expect(task.isRunning, isFalse);
     });
+  });
+
+  test('priority round-trips through create and update', () async {
+    final id = await repository.createTask(title: 'Task', assignedDate: DateTime.now(), sortOrder: 'a0', priority: TaskPriority.medium);
+    expect((await repository.getTaskById(id))!.priority, TaskPriority.medium);
+
+    await repository.updateTaskDetails(taskId: id, title: 'Task', priority: TaskPriority.high);
+    expect((await repository.getTaskById(id))!.priority, TaskPriority.high);
+
+    await repository.updateTaskDetails(taskId: id, title: 'Renamed');
+    expect((await repository.getTaskById(id))!.priority, TaskPriority.high, reason: 'omitting the priority keeps it');
   });
 
   test('countCompletedTasksOlderThanDays matches what cleanup deletes', () async {

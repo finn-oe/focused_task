@@ -8,6 +8,7 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/fractional_indexer.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/features/tasks/domain/entities/task_draft.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 
@@ -79,7 +80,14 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     _bind(normalized);
   }
 
-  Future<void> addTask({required String title, String? description, int? targetDurationMinutes, required List<TaskTodoEntity> todos, required DateTime assignedDate}) async {
+  Future<void> addTask({
+    required String title,
+    String? description,
+    int? targetDurationMinutes,
+    TaskPriority priority = TaskPriority.low,
+    required List<TaskTodoEntity> todos,
+    required DateTime assignedDate,
+  }) async {
     final lastSort = state.tasks.isEmpty ? null : state.tasks.last.sortOrder;
     final nextSort = FractionalIndexer.between(lastSort, null);
 
@@ -88,6 +96,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       description: description,
       assignedDate: assignedDate,
       sortOrder: nextSort,
+      priority: priority,
       targetDurationMinutes: targetDurationMinutes,
     );
     if (todos.isNotEmpty) {
@@ -111,23 +120,40 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       return todo.copyWith(isCompleted: false);
     }).toList();
 
-    await addTask(title: task.title, description: task.description, targetDurationMinutes: newTargetDuration, todos: newTodos, assignedDate: date);
+    await addTask(title: task.title, description: task.description, targetDurationMinutes: newTargetDuration, priority: task.priority, todos: newTodos, assignedDate: date);
   }
 
-  Future<void> updateTask({
-    required int id,
-    required String title,
-    String? description,
-    int? targetDurationMinutes,
-    required List<TaskTodoEntity> todos,
-    required DateTime assignedDate,
-  }) async {
-    await _repository.updateTaskDetails(taskId: id, title: title, description: description, targetDurationMinutes: targetDurationMinutes, assignedDate: assignedDate);
-    if (todos.isNotEmpty) {
-      await _repository.replaceTaskTodos(id, todos);
-    } else {
-      await _repository.replaceTaskTodos(id, []);
+  /// Saves the form: updates the task with [id], or creates a new one when [id] is `null`.
+  Future<void> saveDraft(TaskDraft draft, {int? id}) async {
+    final title = draft.title.trim();
+    final description = draft.description.trim().isEmpty ? null : draft.description.trim();
+    final todos = [
+      for (final (index, todo) in draft.todos.indexed)
+        if (todo.title.trim().isNotEmpty) todo.copyWith(title: todo.title.trim(), sortOrder: index.toString().padLeft(5, '0')),
+    ];
+
+    if (id == null) {
+      await addTask(title: title, description: description, targetDurationMinutes: draft.targetMinutes, priority: draft.priority, todos: todos, assignedDate: draft.date);
+      return;
     }
+    await _repository.updateTaskDetails(
+      taskId: id,
+      title: title,
+      description: description,
+      targetDurationMinutes: draft.targetMinutes,
+      assignedDate: draft.date,
+      priority: draft.priority,
+    );
+    await _repository.replaceTaskTodos(id, todos);
+  }
+
+  /// Creates a copy of [draft] with all sub-tasks unchecked.
+  Future<void> duplicateDraft(TaskDraft draft) {
+    return saveDraft(
+      draft.copyWith(
+        todos: [for (final todo in draft.todos) TaskTodoEntity(title: todo.title, isCompleted: false, sortOrder: todo.sortOrder)],
+      ),
+    );
   }
 
   /// Adds manually tracked time to [task]: on its day if that is in the past, otherwise today (never in the future).

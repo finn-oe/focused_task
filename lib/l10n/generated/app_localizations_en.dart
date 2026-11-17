@@ -133,12 +133,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskFormDuplicateTooltip => 'Duplicate Task';
 
   @override
-  String get taskFormDuplicateWithoutTitle => 'Cannot duplicate a task without a title';
-
-  @override
-  String get taskFormChangeDateTooltip => 'Change Date';
-
-  @override
   String get taskFormDeleteTooltip => 'Delete Task';
 
   @override
@@ -154,19 +148,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskFormAddSubTaskTooltip => 'Add Sub-task';
 
   @override
-  String get taskFormNoSubTasks => 'No sub-tasks added.';
-
-  @override
-  String get taskFormEditSubTaskTooltip => 'Edit sub-task';
-
-  @override
   String get taskFormDeleteSubTaskTooltip => 'Delete sub-task';
-
-  @override
-  String get taskFormTargetDuration => 'Target Duration (Optional)';
-
-  @override
-  String get taskFormNoLimit => 'No limit';
 
   @override
   String get taskFormTrackedTime => 'Tracked time';
@@ -178,18 +160,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskFormAddTimeTitle => 'Add tracked time';
 
   @override
-  String taskFormTargetDurationValue(int hours, int minutes) {
-    return '${hours}h ${minutes}m';
-  }
-
-  @override
   String get taskFormSave => 'Save Task';
-
-  @override
-  String get taskFormAddSubTaskTitle => 'Add sub-task';
-
-  @override
-  String get taskFormEditSubTaskTitle => 'Edit sub-task';
 
   @override
   String get focusTitle => 'Focus Mode';
@@ -488,4 +459,74 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationChannelBreaks => 'Breaks';
+
+  @override
+  String get taskFormTitleRequired => 'Please enter a title.';
+
+  @override
+  String get taskFormDateLabel => 'Date';
+
+  @override
+  String get taskFormDurationLabel => 'Target duration';
+
+  @override
+  String get taskFormDurationNone => 'None';
+
+  @override
+  String get taskFormDurationCustom => 'Custom';
+
+  @override
+  String get taskFormHours => 'Hours';
+
+  @override
+  String get taskFormMinutes => 'Minutes';
+
+  @override
+  String get taskFormDurationMax => 'At most 12 hours.';
+
+  @override
+  String get taskFormNewSubTask => 'Add sub-task';
+
+  @override
+  String get taskFormPriority => 'Priority';
+
+  @override
+  String get priorityLow => 'Low';
+
+  @override
+  String get priorityMedium => 'Medium';
+
+  @override
+  String get priorityHigh => 'High';
+
+  @override
+  String get taskPriorityMedium => 'Medium priority';
+
+  @override
+  String get taskPriorityHigh => 'High priority';
+
+  @override
+  String get taskFormDeleteTitle => 'Delete task?';
+
+  @override
+  String taskFormDeleteMessage(String title) {
+    return '“$title” will be deleted permanently.';
+  }
+
+  @override
+  String taskFormDeleteMessageTracked(String title, String duration) {
+    return '“$title” and its $duration h of tracked time will be deleted permanently. The time still counts in your statistics.';
+  }
+
+  @override
+  String get taskFormDiscardTitle => 'Discard changes?';
+
+  @override
+  String get taskFormDiscardMessage => 'Your changes to this task will be lost.';
+
+  @override
+  String get taskFormKeepEditing => 'Keep editing';
+
+  @override
+  String get taskFormDiscard => 'Discard';
 }

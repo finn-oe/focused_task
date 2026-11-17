@@ -135,12 +135,20 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
   }
 
   @override
-  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes, DateTime? assignedDate}) async {
+  Future<void> updateTaskDetails({
+    required int taskId,
+    required String title,
+    String? description,
+    int? targetDurationMinutes,
+    DateTime? assignedDate,
+    TaskPriority? priority,
+  }) async {
     _update(
       taskId,
       (task) => task.copyWith(
         title: title,
         description: description,
+        priority: priority,
         targetDurationMinutes: targetDurationMinutes,
         clearTargetDuration: targetDurationMinutes == null,
         assignedDate: assignedDate == null ? null : _day(assignedDate),

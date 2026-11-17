@@ -133,12 +133,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get taskFormDuplicateTooltip => 'Aufgabe duplizieren';
 
   @override
-  String get taskFormDuplicateWithoutTitle => 'Eine Aufgabe ohne Titel kann nicht dupliziert werden';
-
-  @override
-  String get taskFormChangeDateTooltip => 'Datum ändern';
-
-  @override
   String get taskFormDeleteTooltip => 'Aufgabe löschen';
 
   @override
@@ -154,19 +148,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get taskFormAddSubTaskTooltip => 'Unteraufgabe hinzufügen';
 
   @override
-  String get taskFormNoSubTasks => 'Keine Unteraufgaben.';
-
-  @override
-  String get taskFormEditSubTaskTooltip => 'Unteraufgabe bearbeiten';
-
-  @override
   String get taskFormDeleteSubTaskTooltip => 'Unteraufgabe löschen';
-
-  @override
-  String get taskFormTargetDuration => 'Zieldauer (optional)';
-
-  @override
-  String get taskFormNoLimit => 'Keine Begrenzung';
 
   @override
   String get taskFormTrackedTime => 'Erfasste Zeit';
@@ -178,18 +160,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get taskFormAddTimeTitle => 'Erfasste Zeit hinzufügen';
 
   @override
-  String taskFormTargetDurationValue(int hours, int minutes) {
-    return '$hours Std. $minutes Min.';
-  }
-
-  @override
   String get taskFormSave => 'Aufgabe speichern';
-
-  @override
-  String get taskFormAddSubTaskTitle => 'Unteraufgabe hinzufügen';
-
-  @override
-  String get taskFormEditSubTaskTitle => 'Unteraufgabe bearbeiten';
 
   @override
   String get focusTitle => 'Fokus';
@@ -490,4 +461,74 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get notificationChannelBreaks => 'Pausen';
+
+  @override
+  String get taskFormTitleRequired => 'Bitte gib einen Titel ein.';
+
+  @override
+  String get taskFormDateLabel => 'Datum';
+
+  @override
+  String get taskFormDurationLabel => 'Zieldauer';
+
+  @override
+  String get taskFormDurationNone => 'Keine';
+
+  @override
+  String get taskFormDurationCustom => 'Eigene';
+
+  @override
+  String get taskFormHours => 'Stunden';
+
+  @override
+  String get taskFormMinutes => 'Minuten';
+
+  @override
+  String get taskFormDurationMax => 'Höchstens 12 Stunden.';
+
+  @override
+  String get taskFormNewSubTask => 'Unteraufgabe hinzufügen';
+
+  @override
+  String get taskFormPriority => 'Priorität';
+
+  @override
+  String get priorityLow => 'Niedrig';
+
+  @override
+  String get priorityMedium => 'Mittel';
+
+  @override
+  String get priorityHigh => 'Hoch';
+
+  @override
+  String get taskPriorityMedium => 'Mittlere Priorität';
+
+  @override
+  String get taskPriorityHigh => 'Hohe Priorität';
+
+  @override
+  String get taskFormDeleteTitle => 'Aufgabe löschen?';
+
+  @override
+  String taskFormDeleteMessage(String title) {
+    return '„$title“ wird endgültig gelöscht.';
+  }
+
+  @override
+  String taskFormDeleteMessageTracked(String title, String duration) {
+    return '„$title“ und $duration Std. erfasste Zeit werden endgültig gelöscht. Die Zeit zählt weiter in deiner Statistik.';
+  }
+
+  @override
+  String get taskFormDiscardTitle => 'Änderungen verwerfen?';
+
+  @override
+  String get taskFormDiscardMessage => 'Deine Änderungen an dieser Aufgabe gehen verloren.';
+
+  @override
+  String get taskFormKeepEditing => 'Weiter bearbeiten';
+
+  @override
+  String get taskFormDiscard => 'Verwerfen';
 }

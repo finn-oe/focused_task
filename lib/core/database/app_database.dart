@@ -176,13 +176,14 @@ class AppDatabase extends _$AppDatabase {
     return into(tasks).insert(companion.copyWith(assignedDate: Value(normalizedAssignedDate)));
   }
 
-  Future<int> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes, DateTime? assignedDate}) {
+  Future<int> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes, DateTime? assignedDate, int? priority}) {
     return (update(tasks)..where((t) => t.id.equals(taskId))).write(
       TasksCompanion(
         title: Value(title),
         description: Value(description),
         targetDurationMinutes: Value(targetDurationMinutes),
         assignedDate: assignedDate != null ? Value(assignedDate.dateOnly) : const Value.absent(),
+        priority: priority != null ? Value(priority) : const Value.absent(),
       ),
     );
   }
