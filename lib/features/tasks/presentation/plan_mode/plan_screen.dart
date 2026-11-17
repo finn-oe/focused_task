@@ -46,8 +46,8 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     }
 
     _recoveryHandled = true;
-    final repository = ref.read(taskRepositoryProvider);
-    final sessions = await repository.getRecoverableSessions();
+    final focus = ref.read(focusModeNotifierProvider.notifier);
+    final sessions = await focus.loadRecoverableSessions();
     if (!mounted || sessions.isEmpty) {
       return;
     }
@@ -57,7 +57,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
       return;
     }
 
-    await ref.read(focusModeNotifierProvider.notifier).recoverSessions(recovery: recovery, sessions: sessions);
+    await focus.recoverSessions(recovery: recovery, sessions: sessions);
   }
 
   Future<void> _pickDay() async {

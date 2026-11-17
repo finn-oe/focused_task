@@ -1,7 +1,9 @@
 import 'package:clock/clock.dart';
 import 'package:fake_async/fake_async.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
 
@@ -14,9 +16,10 @@ void _runFocus(List<TaskEntity> tasks, void Function(FakeAsync async, FocusModeN
   fakeAsync((async) {
     final repository = FakeTaskRepository(tasks: tasks);
     final alarm = FakeTargetAlarm();
-    final notifier = FocusModeNotifier(repository, alarm);
+    final container = ProviderContainer(overrides: [taskRepositoryProvider.overrideWithValue(repository), targetAlarmProvider.overrideWithValue(alarm)]);
+    final notifier = container.read(focusModeNotifierProvider.notifier);
     body(async, notifier, repository, alarm);
-    notifier.dispose();
+    container.dispose();
   }, initialTime: DateTime(2026, 11, 17, 9));
 }
 
@@ -144,6 +147,36 @@ void main() {
   });
 
   group('FocusModeNotifier crash recovery', () {
+    test('loads the sessions that were left running', () {
+      final running = buildTask(id: 1, assignedDate: _today, latestStart: DateTime(2026, 11, 17, 8));
+      final idle = buildTask(id: 2, assignedDate: _today, sortOrder: 'a1');
+      _runFocus([running, idle], (async, notifier, repository, alarm) {
+        List<TaskEntity>? sessions;
+        notifier.loadRecoverableSessions().then((value) => sessions = value);
+        async.flushMicrotasks();
+
+        expect(sessions?.map((session) => session.id), [1]);
+      });
+    });
+
+    test('stops its ticker when the provider is disposed', () {
+      fakeAsync((async) {
+        final container = ProviderContainer(
+          overrides: [
+            taskRepositoryProvider.overrideWithValue(FakeTaskRepository(tasks: [buildTask(assignedDate: _today)])),
+            targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
+          ],
+        );
+        container.read(focusModeNotifierProvider.notifier).initializeForDay(_today);
+        async.flushMicrotasks();
+        expect(async.periodicTimerCount, 1);
+
+        container.dispose();
+
+        expect(async.periodicTimerCount, 0);
+      }, initialTime: DateTime(2026, 11, 17, 9));
+    });
+
     test('records a heartbeat while a session runs', () {
       _runFocus([buildTask(assignedDate: _today)], (async, notifier, repository, alarm) {
         notifier.initializeForDay(_today);

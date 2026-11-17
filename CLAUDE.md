@@ -38,9 +38,9 @@ Rules that follow from this:
 | Concern | Choice |
 |---|---|
 | UI | Flutter, Material 3 (`lib/core/ui/themes/`) |
-| State | `flutter_riverpod` (providers in `lib/core/providers/app_providers.dart`) |
+| State | `flutter_riverpod` 3, `Notifier`/`NotifierProvider` only (providers in `lib/core/providers/app_providers.dart`) |
 | Routing | `go_router` (`lib/core/routing/app_router.dart`) |
-| Persistence | Drift / SQLite (`lib/core/database/`), `shared_preferences` for settings |
+| Persistence | Drift / SQLite (`lib/core/database/`), `shared_preferences` for settings (loaded in `main()`, exposed via `sharedPreferencesProvider`) |
 | Ordering | Fractional indexing (`lib/core/utils/fractional_indexer.dart`) |
 | Alarms | `TargetAlarm` in `lib/core/services/target_alarm.dart`: `alarm` (mobile), timer + `audioplayers` (desktop/web) |
 
@@ -62,6 +62,7 @@ Rules:
 - **Dependency direction:** `presentation → domain ← data`. Presentation code depends on repository *interfaces* (`ITaskRepository`), never on `AppDatabase` or Drift row classes.
 - **Domain is pure Dart.** Entities are immutable, have `copyWith`, and contain no Flutter or Drift imports.
 - **Business logic lives in notifiers/domain**, not in widgets. Widgets render state and forward user intent.
+- **Notifiers** extend `Notifier` and get their dependencies with `ref.watch(...)` in `build()`, never via constructors. Widgets never read `taskRepositoryProvider` directly; data a screen loads goes through a provider (e.g. `taskStatsProvider`) or a notifier method.
 - **Time is injected.** Use `clock.now()` from `package:clock` instead of `DateTime.now()` in logic, so tests can control time with `fakeAsync` / `withClock`.
 - **Dates:** a task's day is a calendar date. Compute day boundaries with `DateTime(y, m, d + 1)`, never `+ Duration(days: 1)` (breaks on DST switches).
 - **Database changes** require bumping `schemaVersion`, a migration step in `AppDatabase.migration`, and a migration test. Regenerate code with `dart run build_runner build --delete-conflicting-outputs`; commit the generated `*.g.dart`.
@@ -80,8 +81,8 @@ Rules:
 
 - `flutter test` must pass before every commit.
 - Repository/database logic: test against `AppDatabase(NativeDatabase.memory())`.
-- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `buildTask()`); extend them when the interface grows.
-- Widgets: `ProviderScope(overrides: [...])` with fakes.
+- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `fakePreferences()`, `buildTask()`); extend them when the interface grows.
+- Notifiers: `ProviderContainer(overrides: [...])` (or `ProviderContainer.test`). Widgets: `ProviderScope(overrides: [...])` with fakes. Anything that reads settings needs `sharedPreferencesProvider.overrideWithValue(await fakePreferences())`.
 - Every bug fix comes with a regression test.
 
 ## Toolchain

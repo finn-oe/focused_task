@@ -3,16 +3,18 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_screen.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/pause_screen.dart';
 
+import '../../../helpers/fake_preferences.dart';
 import '../../../helpers/fake_target_alarm.dart';
 import '../../../helpers/fake_task_repository.dart';
 import '../../../helpers/task_builders.dart';
 
-Widget _app(FakeTaskRepository repository, {String initialLocation = '/focus'}) {
+Widget _app(FakeTaskRepository repository, SharedPreferences preferences, {String initialLocation = '/focus'}) {
   final router = GoRouter(
     initialLocation: initialLocation,
     routes: [
@@ -22,7 +24,11 @@ Widget _app(FakeTaskRepository repository, {String initialLocation = '/focus'}) 
     ],
   );
   return ProviderScope(
-    overrides: [taskRepositoryProvider.overrideWithValue(repository), targetAlarmProvider.overrideWithValue(FakeTargetAlarm())],
+    overrides: [
+      taskRepositoryProvider.overrideWithValue(repository),
+      targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
+      sharedPreferencesProvider.overrideWithValue(preferences),
+    ],
     child: MaterialApp.router(routerConfig: router),
   );
 }
@@ -42,7 +48,7 @@ void main() {
       tasks: [buildTask(title: 'Deep work', assignedDate: DateTime.now())],
     );
 
-    await tester.pumpWidget(_app(repository));
+    await tester.pumpWidget(_app(repository, await fakePreferences()));
     await tester.pump();
     await tester.pump();
     expect(find.text('Deep work'), findsOneWidget);
@@ -58,7 +64,7 @@ void main() {
   testWidgets('system back on the pause screen exits focus', (tester) async {
     final repository = FakeTaskRepository(tasks: [buildTask(assignedDate: DateTime.now())]);
 
-    await tester.pumpWidget(_app(repository, initialLocation: '/pause'));
+    await tester.pumpWidget(_app(repository, await fakePreferences(), initialLocation: '/pause'));
     await tester.pump();
 
     await tester.binding.handlePopRoute();

@@ -1,4 +1,4 @@
-package com.example.focused_task
+package com.techreload.taskfocus
 
 import io.flutter.embedding.android.FlutterActivity
 

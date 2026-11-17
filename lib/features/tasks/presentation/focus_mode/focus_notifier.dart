@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
@@ -99,16 +100,22 @@ class FocusModeState {
   }
 }
 
-class FocusModeNotifier extends StateNotifier<FocusModeState> {
-  FocusModeNotifier(this._repository, this._alarm) : super(FocusModeState.initial());
-
-  final ITaskRepository _repository;
-  final TargetAlarm _alarm;
+class FocusModeNotifier extends Notifier<FocusModeState> {
+  late ITaskRepository _repository;
+  late TargetAlarm _alarm;
   Timer? _ticker;
   DateTime? _lastHeartbeat;
 
   /// How often a running session records that it is still alive.
   static const heartbeatInterval = Duration(seconds: 30);
+
+  @override
+  FocusModeState build() {
+    _repository = ref.watch(taskRepositoryProvider);
+    _alarm = ref.watch(targetAlarmProvider);
+    ref.onDispose(_stopTicker);
+    return FocusModeState.initial();
+  }
 
   Future<void> initializeForDay(DateTime day) async {
     state = state.copyWith(selectedDay: day.dateOnly, isLoading: true, clearError: true);
@@ -237,6 +244,9 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     state = state.copyWith(clearCurrentTask: true, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, now: clock.now(), shouldShowFinishedForToday: false);
   }
 
+  /// Sessions that were left running, e.g. because the app was killed while focusing.
+  Future<List<TaskEntity>> loadRecoverableSessions() => _repository.getRecoverableSessions();
+
   Future<void> recoverSessions({required SessionRecovery recovery, required List<TaskEntity> sessions}) async {
     final now = clock.now();
     for (final session in sessions) {
@@ -298,15 +308,5 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
 
   void clearFinishedForToday() {
     state = state.copyWith(shouldShowFinishedForToday: false);
-  }
-
-  void disposeNotifier() {
-    _stopTicker();
-  }
-
-  @override
-  void dispose() {
-    _stopTicker();
-    super.dispose();
   }
 }

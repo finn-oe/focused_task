@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
@@ -10,45 +11,26 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final targetAlarm = createTargetAlarm();
   await targetAlarm.init();
-  runApp(ProviderScope(overrides: [targetAlarmProvider.overrideWithValue(targetAlarm)], child: const FocusedTaskApp()));
+  final preferences = await SharedPreferences.getInstance();
+  runApp(ProviderScope(overrides: [targetAlarmProvider.overrideWithValue(targetAlarm), sharedPreferencesProvider.overrideWithValue(preferences)], child: const FocusedTaskApp()));
 }
 
-class FocusedTaskApp extends ConsumerStatefulWidget {
+class FocusedTaskApp extends ConsumerWidget {
   const FocusedTaskApp({super.key});
 
   @override
-  ConsumerState<FocusedTaskApp> createState() => _FocusedTaskAppState();
-}
-
-class _FocusedTaskAppState extends ConsumerState<FocusedTaskApp> {
-  bool _bootstrapped = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (_bootstrapped) {
-        return;
-      }
-
-      _bootstrapped = true;
-      final settingsNotifier = ref.read(settingsNotifierProvider.notifier);
-      await settingsNotifier.initialize();
-      await settingsNotifier.runLaunchCleanupIfNeeded();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Runs the launch work once; the UI does not wait for it.
+    ref.watch(appStartupProvider);
     final router = ref.watch(appRouterProvider);
-    final settings = ref.watch(settingsNotifierProvider);
+    final themeMode = ref.watch(settingsNotifierProvider.select((settings) => settings.themeMode));
 
     return MaterialApp.router(
       title: 'Focused Task',
       debugShowCheckedModeBanner: false,
       theme: AppThemes.light,
       darkTheme: AppThemes.dark,
-      themeMode: settings.themeMode,
+      themeMode: themeMode,
       routerConfig: router,
     );
   }
