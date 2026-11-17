@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 
 class TaskFormScreen extends ConsumerStatefulWidget {
   const TaskFormScreen({super.key, this.task});
@@ -36,11 +37,10 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
       _selectedDate = widget.task!.assignedDate;
     } else {
       final planSelectedDay = ref.read(planModeNotifierProvider).selectedDay;
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
+      final today = DateTime.now().dateOnly;
 
       if (planSelectedDay.isBefore(today)) {
-        _selectedDate = now;
+        _selectedDate = today;
       } else {
         _selectedDate = planSelectedDay;
       }

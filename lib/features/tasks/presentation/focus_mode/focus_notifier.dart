@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 import 'package:focused_task/core/services/alarm_service.dart'; // Updated import
+import 'package:focused_task/core/utils/date_utils.dart';
 
 class FocusModeState {
   const FocusModeState({
@@ -23,7 +24,7 @@ class FocusModeState {
 
   factory FocusModeState.initial() {
     final now = DateTime.now();
-    return FocusModeState(selectedDay: DateTime(now.year, now.month, now.day), now: now, sessionBaseMs: 0, isLoading: false, isPaused: true);
+    return FocusModeState(selectedDay: now.dateOnly, now: now, sessionBaseMs: 0, isLoading: false, isPaused: true);
   }
 
   final DateTime selectedDay;
@@ -90,7 +91,7 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
   Timer? _ticker;
 
   Future<void> initializeForDay(DateTime day) async {
-    final normalized = DateTime(day.year, day.month, day.day);
+    final normalized = day.dateOnly;
     state = state.copyWith(selectedDay: normalized, isLoading: true, clearError: true);
 
     await _loadNextTask();

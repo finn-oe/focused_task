@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 
 class PlanScreen extends ConsumerStatefulWidget {
   const PlanScreen({super.key});
@@ -25,11 +26,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   }
 
   String _formatSelectedDate(DateTime selectedDay) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final targetDate = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
-
-    final difference = targetDate.difference(today).inDays;
+    final difference = DateTime.now().calendarDaysUntil(selectedDay);
 
     if (difference == 0) {
       return 'Today';

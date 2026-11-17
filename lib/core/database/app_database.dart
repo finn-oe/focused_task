@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:focused_task/core/database/tables/tasks_table.dart';
 import 'package:focused_task/core/database/tables/task_todos_table.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 
 part 'app_database.g.dart';
 
@@ -44,18 +45,8 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  DateTime _startOfDay(DateTime day) {
-    return DateTime(day.year, day.month, day.day);
-  }
-
-  DateTime _endOfDay(DateTime day) {
-    return _startOfDay(day).add(const Duration(days: 1));
-  }
-
   Expression<bool> _isInDay(Tasks table, DateTime day) {
-    final start = _startOfDay(day);
-    final end = _endOfDay(day);
-    return table.assignedDate.isBiggerOrEqualValue(start) & table.assignedDate.isSmallerThanValue(end);
+    return table.assignedDate.isBiggerOrEqualValue(day.dateOnly) & table.assignedDate.isSmallerThanValue(day.nextDay);
   }
 
   Stream<List<TaskWithTodos>> watchTasksForDay(DateTime day) {
@@ -95,7 +86,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<Task>> getTasksInRange({required DateTime start, required DateTime end}) {
     final query = select(tasks)
-      ..where((task) => task.assignedDate.isBiggerOrEqualValue(_startOfDay(start)) & task.assignedDate.isSmallerThanValue(_endOfDay(end)))
+      ..where((task) => task.assignedDate.isBiggerOrEqualValue(start.dateOnly) & task.assignedDate.isSmallerThanValue(end.nextDay))
       ..orderBy([(task) => OrderingTerm.asc(task.sortOrder)]);
 
     return query.get();
@@ -119,7 +110,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> createTask(TasksCompanion companion) async {
-    final normalizedAssignedDate = _startOfDay(companion.assignedDate.value);
+    final normalizedAssignedDate = companion.assignedDate.value.dateOnly;
     return into(tasks).insert(companion.copyWith(assignedDate: Value(normalizedAssignedDate)));
   }
 
@@ -129,7 +120,7 @@ class AppDatabase extends _$AppDatabase {
         title: Value(title),
         description: Value(description),
         targetDurationMinutes: Value(targetDurationMinutes),
-        assignedDate: assignedDate != null ? Value(_startOfDay(assignedDate)) : const Value.absent(),
+        assignedDate: assignedDate != null ? Value(assignedDate.dateOnly) : const Value.absent(),
       ),
     );
   }
@@ -180,7 +171,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> deleteCompletedTasksBefore(DateTime cutoffDay) {
-    final cutoff = _startOfDay(cutoffDay);
+    final cutoff = cutoffDay.dateOnly;
     final query = delete(tasks)..where((task) => task.isCompleted.equals(true) & task.latestStart.isNull() & task.assignedDate.isSmallerThanValue(cutoff));
     return query.go();
   }

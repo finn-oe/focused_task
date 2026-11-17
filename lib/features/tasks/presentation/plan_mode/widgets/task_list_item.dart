@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 
 class TaskListItem extends ConsumerWidget {
   const TaskListItem({super.key, required this.task, required this.index});
@@ -79,10 +80,8 @@ class TaskListItem extends ConsumerWidget {
 
     final shouldShowProgress = totalTodos > 0 && task.timeSpent > 0 && !task.isCompleted;
 
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final taskDate = DateTime(task.assignedDate.year, task.assignedDate.month, task.assignedDate.day);
-    final isPast = taskDate.isBefore(today);
+    final today = DateTime.now().dateOnly;
+    final isPast = task.assignedDate.dateOnly.isBefore(today);
 
     return Card(
       key: ValueKey(task.id),
