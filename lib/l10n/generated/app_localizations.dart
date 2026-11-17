@@ -320,18 +320,6 @@ abstract class AppLocalizations {
   /// **'Duplicate Task'**
   String get taskFormDuplicateTooltip;
 
-  /// No description provided for @taskFormDuplicateWithoutTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Cannot duplicate a task without a title'**
-  String get taskFormDuplicateWithoutTitle;
-
-  /// No description provided for @taskFormChangeDateTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Change Date'**
-  String get taskFormChangeDateTooltip;
-
   /// No description provided for @taskFormDeleteTooltip.
   ///
   /// In en, this message translates to:
@@ -362,35 +350,11 @@ abstract class AppLocalizations {
   /// **'Add Sub-task'**
   String get taskFormAddSubTaskTooltip;
 
-  /// No description provided for @taskFormNoSubTasks.
-  ///
-  /// In en, this message translates to:
-  /// **'No sub-tasks added.'**
-  String get taskFormNoSubTasks;
-
-  /// No description provided for @taskFormEditSubTaskTooltip.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit sub-task'**
-  String get taskFormEditSubTaskTooltip;
-
   /// No description provided for @taskFormDeleteSubTaskTooltip.
   ///
   /// In en, this message translates to:
   /// **'Delete sub-task'**
   String get taskFormDeleteSubTaskTooltip;
-
-  /// No description provided for @taskFormTargetDuration.
-  ///
-  /// In en, this message translates to:
-  /// **'Target Duration (Optional)'**
-  String get taskFormTargetDuration;
-
-  /// No description provided for @taskFormNoLimit.
-  ///
-  /// In en, this message translates to:
-  /// **'No limit'**
-  String get taskFormNoLimit;
 
   /// No description provided for @taskFormTrackedTime.
   ///
@@ -410,29 +374,11 @@ abstract class AppLocalizations {
   /// **'Add tracked time'**
   String get taskFormAddTimeTitle;
 
-  /// No description provided for @taskFormTargetDurationValue.
-  ///
-  /// In en, this message translates to:
-  /// **'{hours}h {minutes}m'**
-  String taskFormTargetDurationValue(int hours, int minutes);
-
   /// No description provided for @taskFormSave.
   ///
   /// In en, this message translates to:
   /// **'Save Task'**
   String get taskFormSave;
-
-  /// No description provided for @taskFormAddSubTaskTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Add sub-task'**
-  String get taskFormAddSubTaskTitle;
-
-  /// No description provided for @taskFormEditSubTaskTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit sub-task'**
-  String get taskFormEditSubTaskTitle;
 
   /// No description provided for @focusTitle.
   ///
@@ -949,6 +895,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Breaks'**
   String get notificationChannelBreaks;
+
+  /// No description provided for @taskFormTitleRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a title.'**
+  String get taskFormTitleRequired;
+
+  /// No description provided for @taskFormDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get taskFormDateLabel;
+
+  /// No description provided for @taskFormDurationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Target duration'**
+  String get taskFormDurationLabel;
+
+  /// No description provided for @taskFormDurationNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get taskFormDurationNone;
+
+  /// No description provided for @taskFormDurationCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get taskFormDurationCustom;
+
+  /// No description provided for @taskFormHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get taskFormHours;
+
+  /// No description provided for @taskFormMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Minutes'**
+  String get taskFormMinutes;
+
+  /// No description provided for @taskFormDurationMax.
+  ///
+  /// In en, this message translates to:
+  /// **'At most 12 hours.'**
+  String get taskFormDurationMax;
+
+  /// No description provided for @taskFormNewSubTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Add sub-task'**
+  String get taskFormNewSubTask;
+
+  /// No description provided for @taskFormPriority.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get taskFormPriority;
+
+  /// No description provided for @priorityLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get priorityLow;
+
+  /// No description provided for @priorityMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get priorityMedium;
+
+  /// No description provided for @priorityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get priorityHigh;
+
+  /// No description provided for @taskPriorityMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium priority'**
+  String get taskPriorityMedium;
+
+  /// No description provided for @taskPriorityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High priority'**
+  String get taskPriorityHigh;
+
+  /// No description provided for @taskFormDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete task?'**
+  String get taskFormDeleteTitle;
+
+  /// No description provided for @taskFormDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'“{title}” will be deleted permanently.'**
+  String taskFormDeleteMessage(String title);
+
+  /// No description provided for @taskFormDeleteMessageTracked.
+  ///
+  /// In en, this message translates to:
+  /// **'“{title}” and its {duration} h of tracked time will be deleted permanently. The time still counts in your statistics.'**
+  String taskFormDeleteMessageTracked(String title, String duration);
+
+  /// No description provided for @taskFormDiscardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard changes?'**
+  String get taskFormDiscardTitle;
+
+  /// No description provided for @taskFormDiscardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your changes to this task will be lost.'**
+  String get taskFormDiscardMessage;
+
+  /// No description provided for @taskFormKeepEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep editing'**
+  String get taskFormKeepEditing;
+
+  /// No description provided for @taskFormDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get taskFormDiscard;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

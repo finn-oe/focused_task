@@ -3,6 +3,17 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.7.0] - 2026-11-17
+
+### Added
+- Priority (Low / Medium / High) in the task form; Medium and High show a flag in the plan. (#25)
+- Target duration chips (15 / 25 / 45 / 60 / 90 min), "Custom" up to 12 hours, and "None". (#25)
+- Sub-tasks are added inline: type and press Enter for the next one; edit in place, swipe or tap to delete, drag to reorder. (#25)
+
+### Changed
+- The task form shows the date as a field, asks before deleting (naming the tracked time) and before discarding unsaved changes, and tells you when the title is missing. (#25)
+- Past tasks can be edited (tap the task or the edit button); "Copy to Today" is still there. (#25)
+
 ## [1.6.1] - 2026-11-17
 
 ### Added

@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/core/routing/app_router.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/task_form_fields.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
@@ -109,9 +111,17 @@ class TaskListItem extends ConsumerWidget {
             ),
           ),
         ),
-        title: Text(
-          task.title,
-          style: isCompleted ? TextStyle(decoration: TextDecoration.lineThrough, color: colorScheme.onSurfaceVariant) : null,
+        onTap: () => context.push(AppRoutes.taskForm, extra: task),
+        title: Row(
+          children: [
+            if (task.priority != TaskPriority.low) ...[PriorityFlag(priority: task.priority, size: 16), const SizedBox(width: 4)],
+            Flexible(
+              child: Text(
+                task.title,
+                style: isCompleted ? TextStyle(decoration: TextDecoration.lineThrough, color: colorScheme.onSurfaceVariant) : null,
+              ),
+            ),
+          ],
         ),
         subtitle: Text(task.description ?? l10n.taskNoDescription, style: isCompleted ? TextStyle(color: colorScheme.onSurfaceVariant) : null),
         trailing: Row(
@@ -135,20 +145,20 @@ class TaskListItem extends ConsumerWidget {
                 ),
               ),
 
+            // Past tasks can be edited too; copying them to today is the secondary action.
             if (isPast)
               IconButton(
                 tooltip: l10n.taskCopyToTodayTooltip,
                 icon: const Icon(Icons.today_outlined),
                 color: isCompleted ? colorScheme.onSurfaceVariant : null,
                 onPressed: () => _showCopyToTodayDialog(context, ref, today),
-              )
-            else
-              IconButton(
-                tooltip: l10n.taskEditTooltip,
-                icon: const Icon(Icons.edit_outlined),
-                color: isCompleted ? colorScheme.onSurfaceVariant : null,
-                onPressed: () => context.push('/task-form', extra: task),
               ),
+            IconButton(
+              tooltip: l10n.taskEditTooltip,
+              icon: const Icon(Icons.edit_outlined),
+              color: isCompleted ? colorScheme.onSurfaceVariant : null,
+              onPressed: () => context.push(AppRoutes.taskForm, extra: task),
+            ),
 
             ReorderableDragStartListener(
               index: index,

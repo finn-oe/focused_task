@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
@@ -23,9 +24,12 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Tracked time'), 200, scrollable: find.byType(Scrollable).first);
     expect(find.text('Tracked time'), findsOneWidget);
     expect(find.text('00:15'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('Add time'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Add time'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('OK')); // time picker starts at 00:30

@@ -58,8 +58,15 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
-  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes, DateTime? assignedDate}) {
-    return _database.updateTaskDetails(taskId: taskId, title: title, description: description, targetDurationMinutes: targetDurationMinutes, assignedDate: assignedDate);
+  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes, DateTime? assignedDate, TaskPriority? priority}) {
+    return _database.updateTaskDetails(
+      taskId: taskId,
+      title: title,
+      description: description,
+      targetDurationMinutes: targetDurationMinutes,
+      assignedDate: assignedDate,
+      priority: priority?.value,
+    );
   }
 
   @override

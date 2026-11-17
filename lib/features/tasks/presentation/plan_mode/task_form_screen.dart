@@ -1,13 +1,18 @@
 import 'package:clock/clock.dart';
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
+
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
-import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
+import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/features/tasks/domain/entities/task_draft.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/duration_picker.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/sub_task_editor.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/task_form_fields.dart';
 
+/// Adds a task, or edits [task] (also past ones).
 class TaskFormScreen extends ConsumerStatefulWidget {
   const TaskFormScreen({super.key, this.task});
 
@@ -18,36 +23,34 @@ class TaskFormScreen extends ConsumerStatefulWidget {
 }
 
 class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late final TaskDraft _initial;
+  late TaskDraft _draft;
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
-  int? _targetDurationMinutes;
+
+  /// Set once the form saved or the user confirmed discarding, so leaving doesn't ask again.
+  bool _leaving = false;
 
   bool get _isEditMode => widget.task != null;
 
-  List<TaskTodoEntity> _todos = [];
-
-  late DateTime _selectedDate;
+  bool get _hasChanges => _draft != _initial;
 
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController(text: widget.task?.title ?? '');
-    _descriptionController = TextEditingController(text: widget.task?.description ?? '');
-    _targetDurationMinutes = widget.task?.targetDurationMinutes;
-    _todos = widget.task?.todos.toList() ?? [];
-
-    if (widget.task != null) {
-      _selectedDate = widget.task!.assignedDate;
+    final task = widget.task;
+    if (task != null) {
+      _initial = TaskDraft.fromTask(task);
     } else {
-      final planSelectedDay = ref.read(planModeNotifierProvider).selectedDay;
-      final today = DateTime.now().dateOnly;
-
-      if (planSelectedDay.isBefore(today)) {
-        _selectedDate = today;
-      } else {
-        _selectedDate = planSelectedDay;
-      }
+      // New tasks go to the day shown in the plan, but never into the past.
+      final today = clock.now().dateOnly;
+      final planDay = ref.read(planModeNotifierProvider).selectedDay;
+      _initial = TaskDraft.empty(planDay.isBefore(today) ? today : planDay);
     }
+    _draft = _initial;
+    _titleController = TextEditingController(text: _initial.title);
+    _descriptionController = TextEditingController(text: _initial.description);
   }
 
   @override
@@ -57,222 +60,114 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
     super.dispose();
   }
 
-  Future<void> _showTodoDialog({int? editIndex}) async {
-    final isEdit = editIndex != null;
-    final newTitle = await showDialog<String>(
+  void _update(TaskDraft draft) => setState(() => _draft = draft);
+
+  void _leave() {
+    setState(() => _leaving = true);
+    Navigator.of(context).pop();
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    await ref.read(planModeNotifierProvider.notifier).saveDraft(_draft, id: widget.task?.id);
+    if (mounted) _leave();
+  }
+
+  Future<void> _duplicate() async {
+    if (!_formKey.currentState!.validate()) return;
+    await ref.read(planModeNotifierProvider.notifier).duplicateDraft(_draft);
+    if (mounted) _leave();
+  }
+
+  Future<void> _delete() async {
+    final task = widget.task!;
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => _TodoInputDialog(initialTitle: isEdit ? _todos[editIndex].title : null),
+      builder: (context) => _DeleteTaskDialog(task: task),
     );
+    if (confirmed != true || !mounted) return;
+    await ref.read(planModeNotifierProvider.notifier).deleteTask(task.id);
+    if (mounted) _leave();
+  }
 
-    if (!mounted) return;
-
-    if (newTitle != null && newTitle.trim().isNotEmpty) {
-      setState(() {
-        if (isEdit) {
-          _todos[editIndex] = _todos[editIndex].copyWith(title: newTitle.trim());
-        } else {
-          _todos.add(TaskTodoEntity(title: newTitle.trim(), isCompleted: false, sortOrder: ''));
-        }
-      });
-    }
+  Future<void> _confirmDiscard() async {
+    final discard = await showDialog<bool>(context: context, builder: (context) => const _DiscardChangesDialog());
+    if (discard == true && mounted) _leave();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final notifier = ref.read(planModeNotifierProvider.notifier);
-    final targetMinutes = _targetDurationMinutes;
+    final task = widget.task;
 
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditMode ? l10n.taskFormEditTitle : l10n.taskFormAddTitle),
-        actions: [
-          if (_isEditMode)
-            IconButton(
-              tooltip: l10n.taskFormDuplicateTooltip,
-              icon: const Icon(Icons.copy_outlined),
-              onPressed: () async {
-                final title = _titleController.text.trim();
-                if (title.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.taskFormDuplicateWithoutTitle)));
-                  return;
-                }
-
-                final description = _descriptionController.text.trim();
-                final parsedDesc = description.isEmpty ? null : description;
-
-                final resetSortedTodos = _todos.asMap().entries.map((entry) {
-                  return entry.value.copyWith(isCompleted: false, sortOrder: entry.key.toString().padLeft(5, '0'));
-                }).toList();
-
-                await notifier.addTask(title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes, assignedDate: _selectedDate, todos: resetSortedTodos);
-
-                if (context.mounted) context.pop();
-              },
-            ),
-          IconButton(
-            tooltip: l10n.taskFormChangeDateTooltip,
-            icon: const Icon(Icons.calendar_today_outlined),
-            onPressed: () async {
-              final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: _selectedDate);
-              if (selected != null && mounted) {
-                setState(() => _selectedDate = selected);
-              }
-            },
-          ),
-          if (_isEditMode)
-            IconButton(
-              icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-              tooltip: l10n.taskFormDeleteTooltip,
-              onPressed: () async {
-                await notifier.deleteTask(widget.task!.id);
-                if (context.mounted) context.pop();
-              },
-            ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: InputDecoration(labelText: l10n.taskFormTitleLabel, border: const OutlineInputBorder()),
-              autofocus: !_isEditMode,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _descriptionController,
-              decoration: InputDecoration(labelText: l10n.taskFormDescriptionLabel, border: const OutlineInputBorder()),
-              maxLines: 4,
-              minLines: 2,
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(l10n.taskFormSubTasks, style: theme.textTheme.titleMedium),
-                IconButton(onPressed: _showTodoDialog, icon: const Icon(Icons.add), tooltip: l10n.taskFormAddSubTaskTooltip),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            if (_todos.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                child: Text(l10n.taskFormNoSubTasks, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
-              )
-            else
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: screenHeight * 0.4),
-                child: ReorderableListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _todos.length,
-                  onReorderItem: (oldIndex, newIndex) {
-                    setState(() {
-                      final item = _todos.removeAt(oldIndex);
-                      _todos.insert(newIndex, item);
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final todo = _todos[index];
-                    return ListTile(
-                      key: ObjectKey(todo),
-                      contentPadding: EdgeInsets.zero,
-                      leading: Checkbox(
-                        value: todo.isCompleted,
-                        onChanged: (val) => setState(() => _todos[index] = todo.copyWith(isCompleted: val)),
-                      ),
-                      title: Text(todo.title),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            tooltip: l10n.taskFormEditSubTaskTooltip,
-                            icon: const Icon(Icons.edit, size: 20),
-                            onPressed: () => _showTodoDialog(editIndex: index),
-                          ),
-                          IconButton(
-                            tooltip: l10n.taskFormDeleteSubTaskTooltip,
-                            icon: Icon(Icons.delete, size: 20, color: theme.colorScheme.error),
-                            onPressed: () => setState(() => _todos.removeAt(index)),
-                          ),
-                          ReorderableDragStartListener(
-                            index: index,
-                            child: const Padding(padding: EdgeInsets.only(right: 8.0, left: 8.0), child: Icon(Icons.drag_handle)),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+    return PopScope(
+      canPop: _leaving || !_hasChanges,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmDiscard();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_isEditMode ? l10n.taskFormEditTitle : l10n.taskFormAddTitle),
+          actions: [
+            if (_isEditMode) ...[
+              IconButton(tooltip: l10n.taskFormDuplicateTooltip, icon: const Icon(Icons.copy_outlined), onPressed: _duplicate),
+              IconButton(
+                tooltip: l10n.taskFormDeleteTooltip,
+                icon: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
+                onPressed: _delete,
               ),
-
-            const SizedBox(height: 16),
-            Card(
-              elevation: 0,
-              color: theme.colorScheme.surfaceContainerLow,
-              child: ListTile(
-                title: Text(l10n.taskFormTargetDuration),
-                subtitle: Text(targetMinutes == null ? l10n.taskFormNoLimit : l10n.taskFormTargetDurationValue(targetMinutes ~/ 60, targetMinutes % 60)),
-                trailing: const Icon(Icons.timer_outlined),
-                onTap: () async {
-                  final initialTime = TimeOfDay(hour: (_targetDurationMinutes ?? 0) ~/ 60, minute: (_targetDurationMinutes ?? 0) % 60);
-
-                  final selectedTime = await showTimePicker(
-                    context: context,
-                    initialTime: initialTime,
-                    builder: (context, child) => MediaQuery(data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true), child: child!),
-                  );
-
-                  if (selectedTime != null) {
-                    setState(() {
-                      final totalMins = selectedTime.hour * 60 + selectedTime.minute;
-                      _targetDurationMinutes = totalMins == 0 ? null : totalMins;
-                    });
-                  }
-                },
-              ),
-            ),
-            if (widget.task case final task?) ...[const SizedBox(height: 8), _TrackedTimeTile(task: task)],
+            ],
           ],
         ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: FilledButton(
-            onPressed: () async {
-              final title = _titleController.text.trim();
-              final description = _descriptionController.text.trim();
-              final parsedDesc = description.isEmpty ? null : description;
-
-              if (title.isEmpty) return;
-
-              final sortedTodos = _todos.asMap().entries.map((entry) {
-                return entry.value.copyWith(sortOrder: entry.key.toString().padLeft(5, '0'));
-              }).toList();
-
-              if (_isEditMode) {
-                await notifier.updateTask(
-                  id: widget.task!.id,
-                  title: title,
-                  description: parsedDesc,
-                  targetDurationMinutes: _targetDurationMinutes,
-                  assignedDate: _selectedDate,
-                  todos: sortedTodos,
-                );
-              } else {
-                await notifier.addTask(title: title, description: parsedDesc, targetDurationMinutes: _targetDurationMinutes, assignedDate: _selectedDate, todos: sortedTodos);
-              }
-
-              if (context.mounted) context.pop();
-            },
-            child: Padding(padding: const EdgeInsets.symmetric(vertical: 16.0), child: Text(l10n.taskFormSave)),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              TaskTitleField(
+                controller: _titleController,
+                autofocus: !_isEditMode,
+                onChanged: (value) => _update(_draft.copyWith(title: value)),
+              ),
+              const SizedBox(height: 16),
+              TaskDateField(
+                date: _draft.date,
+                onChanged: (date) => _update(_draft.copyWith(date: date)),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(labelText: l10n.taskFormDescriptionLabel, border: const OutlineInputBorder()),
+                maxLines: 4,
+                minLines: 2,
+                onChanged: (value) => _update(_draft.copyWith(description: value)),
+              ),
+              _Section(title: l10n.taskFormDurationLabel),
+              DurationPicker(
+                minutes: _draft.targetMinutes,
+                onChanged: (minutes) => _update(minutes == null ? _draft.copyWith(clearTarget: true) : _draft.copyWith(targetMinutes: minutes)),
+              ),
+              _Section(title: l10n.taskFormPriority),
+              PrioritySelector(
+                priority: _draft.priority,
+                onChanged: (priority) => _update(_draft.copyWith(priority: priority)),
+              ),
+              _Section(title: l10n.taskFormSubTasks),
+              SubTaskEditor(
+                initialTodos: _initial.todos,
+                onChanged: (todos) => _update(_draft.copyWith(todos: todos)),
+              ),
+              if (task != null) ...[const SizedBox(height: 16), _TrackedTimeTile(task: task)],
+            ],
+          ),
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: FilledButton(
+              onPressed: _save,
+              child: Padding(padding: const EdgeInsets.symmetric(vertical: 16), child: Text(l10n.taskFormSave)),
+            ),
           ),
         ),
       ),
@@ -280,44 +175,57 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
   }
 }
 
-class _TodoInputDialog extends StatefulWidget {
-  const _TodoInputDialog({this.initialTitle});
+class _Section extends StatelessWidget {
+  const _Section({required this.title});
 
-  final String? initialTitle;
+  final String title;
 
   @override
-  State<_TodoInputDialog> createState() => _TodoInputDialogState();
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 24, bottom: 8),
+      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+    );
+  }
 }
 
-class _TodoInputDialogState extends State<_TodoInputDialog> {
-  late final TextEditingController _controller;
+/// Asks before deleting; names the tracked time, which stays in the statistics.
+class _DeleteTaskDialog extends StatelessWidget {
+  const _DeleteTaskDialog({required this.task});
+
+  final TaskEntity task;
 
   @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialTitle ?? '');
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final tracked = task.elapsedAt(clock.now());
+    return AlertDialog(
+      title: Text(l10n.taskFormDeleteTitle),
+      content: Text(tracked > Duration.zero ? l10n.taskFormDeleteMessageTracked(task.title, tracked.toFormattedString()) : l10n.taskFormDeleteMessage(task.title)),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error, foregroundColor: Theme.of(context).colorScheme.onError),
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(l10n.commonDelete),
+        ),
+      ],
+    );
   }
+}
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+class _DiscardChangesDialog extends StatelessWidget {
+  const _DiscardChangesDialog();
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AlertDialog(
-      title: Text(widget.initialTitle != null ? l10n.taskFormEditSubTaskTitle : l10n.taskFormAddSubTaskTitle),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: InputDecoration(labelText: l10n.taskFormTitleLabel, border: const OutlineInputBorder()),
-        onSubmitted: (val) => Navigator.of(context).pop(val),
-      ),
+      title: Text(l10n.taskFormDiscardTitle),
+      content: Text(l10n.taskFormDiscardMessage),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonCancel)),
-        FilledButton(onPressed: () => Navigator.of(context).pop(_controller.text), child: Text(l10n.commonSave)),
+        TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.taskFormKeepEditing)),
+        FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.taskFormDiscard)),
       ],
     );
   }
