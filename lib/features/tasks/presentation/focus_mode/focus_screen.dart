@@ -6,8 +6,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/lifecycle_observer.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
-import 'package:focused_task/features/tasks/presentation/focus_mode/widgets/session_timer.dart';
-import 'package:focused_task/features/tasks/presentation/focus_mode/widgets/task_timer.dart';
+import 'package:focused_task/features/tasks/presentation/focus_mode/widgets/timer_box.dart';
 
 class FocusScreen extends ConsumerStatefulWidget {
   const FocusScreen({super.key});
@@ -36,7 +35,13 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     super.dispose();
   }
 
-  void _showAlarmDialog() async {
+  Future<void> _exitToPlan() async {
+    await ref.read(focusModeNotifierProvider.notifier).exitFocus();
+    if (!mounted) return;
+    context.go('/plan');
+  }
+
+  Future<void> _showAlarmDialog() async {
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -49,7 +54,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       },
     );
 
-    ref.read(focusModeNotifierProvider.notifier).dismissAlarm();
+    if (!mounted) return;
+    await ref.read(focusModeNotifierProvider.notifier).dismissAlarm();
   }
 
   @override
@@ -71,41 +77,39 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 
     return FocusLifecycleObserver(
       pauseOnBackground: settings.pauseOnBackground,
+      // Closing the desktop window must not leave the session running.
+      onExitRequested: notifier.pauseSession,
       onBackground: () async {
         await notifier.pauseSession();
+        if (settings.enableWakelock) await WakelockPlus.disable();
         if (!context.mounted) return;
-        if (settings.enableWakelock) WakelockPlus.disable();
         context.go('/pause');
       },
       onResume: () {},
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Focus Mode'),
-          scrolledUnderElevation: 0.0,
-          surfaceTintColor: Colors.transparent,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          leading: IconButton(
-            onPressed: () async {
-              await notifier.exitFocus();
-              if (!context.mounted) return;
-              context.go('/plan');
-            },
-            icon: const Icon(Icons.close),
+      child: PopScope(
+        canPop: false,
+        // Android back gesture / browser back: end the session properly instead of leaving it running.
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _exitToPlan();
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Focus Mode'),
+            scrolledUnderElevation: 0.0,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            leading: IconButton(tooltip: 'Exit focus', onPressed: _exitToPlan, icon: const Icon(Icons.close)),
           ),
+          body: state.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _FocusBody(
+                  state: state,
+                  onComplete: () async {
+                    await notifier.completeCurrentTask();
+                  },
+                  onExit: _exitToPlan,
+                ),
         ),
-        body: state.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _FocusBody(
-                state: state,
-                onComplete: () async {
-                  await notifier.completeCurrentTask();
-                },
-                onExit: () async {
-                  await notifier.exitFocus();
-                  if (!context.mounted) return;
-                  context.go('/plan');
-                },
-              ),
       ),
     );
   }

@@ -5,12 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focused_task/core/utils/fractional_indexer.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 
 class PlanModeState {
   const PlanModeState({required this.selectedDay, required this.tasks, required this.isLoading, this.error});
 
   factory PlanModeState.initial() {
-    return PlanModeState(selectedDay: _dateOnly(DateTime.now()), tasks: const [], isLoading: true);
+    return PlanModeState(selectedDay: DateTime.now().dateOnly, tasks: const [], isLoading: true);
   }
 
   final DateTime selectedDay;
@@ -25,10 +26,6 @@ class PlanModeState {
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : error ?? this.error,
     );
-  }
-
-  static DateTime _dateOnly(DateTime value) {
-    return DateTime(value.year, value.month, value.day);
   }
 }
 
@@ -57,7 +54,7 @@ class PlanModeNotifier extends StateNotifier<PlanModeState> {
   }
 
   Future<void> setSelectedDay(DateTime day) async {
-    final normalized = DateTime(day.year, day.month, day.day);
+    final normalized = day.dateOnly;
     if (normalized == state.selectedDay) {
       return;
     }

@@ -11,36 +11,39 @@ class PauseScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(focusModeNotifierProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Paused')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Focus paused while app is in background.', style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: () async {
-                  await notifier.resumeSession();
-                  if (context.mounted) {
-                    context.go('/focus');
-                  }
-                },
-                child: const Text('Resume Focus'),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: () async {
-                  await notifier.exitFocus();
-                  if (context.mounted) {
-                    context.go('/plan');
-                  }
-                },
-                child: const Text('Exit Focus'),
-              ),
-            ],
+    Future<void> exitToPlan() async {
+      await notifier.exitFocus();
+      if (context.mounted) context.go('/plan');
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) exitToPlan();
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Paused')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Focus paused while app is in background.', style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () async {
+                    await notifier.resumeSession();
+                    if (context.mounted) {
+                      context.go('/focus');
+                    }
+                  },
+                  child: const Text('Resume Focus'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton(onPressed: exitToPlan, child: const Text('Exit Focus')),
+              ],
+            ),
           ),
         ),
       ),

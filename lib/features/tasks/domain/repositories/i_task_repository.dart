@@ -31,6 +31,9 @@ abstract class ITaskRepository {
 
   Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt});
 
+  /// Marks the running session of [taskId] as alive at [at] (see [TaskEntity.lastSeenAt]).
+  Future<void> recordHeartbeat({required int taskId, required DateTime at});
+
   Future<void> completeTask({required int taskId, required DateTime completedAt});
 
   Future<void> deleteTask(int taskId);
@@ -41,5 +44,10 @@ abstract class ITaskRepository {
 
   Future<int> deleteCompletedTasksOlderThanDays(int days);
 
+  Future<int> countCompletedTasksOlderThanDays(int days);
+
   Future<void> replaceTaskTodos(int taskId, List<TaskTodoEntity> newTodos);
+
+  /// Checks or unchecks a single sub-task without rewriting the others (IDs stay stable).
+  Future<void> setTodoCompletion({required int todoId, required bool isCompleted});
 }

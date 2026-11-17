@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 
 class TaskFormScreen extends ConsumerStatefulWidget {
   const TaskFormScreen({super.key, this.task});
@@ -36,11 +37,10 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
       _selectedDate = widget.task!.assignedDate;
     } else {
       final planSelectedDay = ref.read(planModeNotifierProvider).selectedDay;
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
+      final today = DateTime.now().dateOnly;
 
       if (planSelectedDay.isBefore(today)) {
-        _selectedDate = now;
+        _selectedDate = today;
       } else {
         _selectedDate = planSelectedDay;
       }
@@ -151,7 +151,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Sub-tasks', style: theme.textTheme.titleMedium),
-                IconButton(onPressed: () => _showTodoDialog(), icon: const Icon(Icons.add), tooltip: 'Add Sub-task'),
+                IconButton(onPressed: _showTodoDialog, icon: const Icon(Icons.add), tooltip: 'Add Sub-task'),
               ],
             ),
             const SizedBox(height: 8),
@@ -176,7 +176,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
                   itemBuilder: (context, index) {
                     final todo = _todos[index];
                     return ListTile(
-                      key: ValueKey(todo.id ?? 'new_${todo.title}_$index'),
+                      key: ObjectKey(todo),
                       contentPadding: EdgeInsets.zero,
                       leading: Checkbox(
                         value: todo.isCompleted,
@@ -191,7 +191,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
                             onPressed: () => _showTodoDialog(editIndex: index),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                            icon: Icon(Icons.delete, size: 20, color: theme.colorScheme.error),
                             onPressed: () => setState(() => _todos.removeAt(index)),
                           ),
                           ReorderableDragStartListener(

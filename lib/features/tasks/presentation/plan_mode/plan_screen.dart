@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/session_recovery_dialog.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 
 class PlanScreen extends ConsumerStatefulWidget {
   const PlanScreen({super.key});
@@ -25,11 +27,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   }
 
   String _formatSelectedDate(DateTime selectedDay) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final targetDate = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
-
-    final difference = targetDate.difference(today).inDays;
+    final difference = DateTime.now().calendarDaysUntil(selectedDay);
 
     if (difference == 0) {
       return 'Today';
@@ -54,31 +52,12 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
       return;
     }
 
-    final now = DateTime.now();
-    final total = sessions.fold<Duration>(Duration.zero, (sum, task) => task.latestStart == null ? sum : sum + now.difference(task.latestStart!));
-
-    final recover = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Recover unfinished session?'),
-          content: Text(
-            'We found ${sessions.length} unfinished focus session(s). '
-            'Recover ${total.toFormattedString()} of tracked time?',
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Discard')),
-            FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Recover')),
-          ],
-        );
-      },
-    );
-
-    if (recover == null) {
+    final recovery = await showSessionRecoveryDialog(context, sessions: sessions, now: DateTime.now());
+    if (recovery == null) {
       return;
     }
 
-    await ref.read(focusModeNotifierProvider.notifier).recoverOrDiscardSessions(recover: recover, sessions: sessions);
+    await ref.read(focusModeNotifierProvider.notifier).recoverSessions(recovery: recovery, sessions: sessions);
   }
 
   Future<void> _pickDay() async {

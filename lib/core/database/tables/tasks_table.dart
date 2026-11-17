@@ -20,4 +20,7 @@ class Tasks extends Table {
   DateTimeColumn get latestStart => dateTime().named('latest_start').nullable()();
 
   IntColumn get targetDurationMinutes => integer().nullable()();
+
+  /// Last time the running session was known to be alive (heartbeat). Used to recover crashed sessions.
+  DateTimeColumn get lastSeenAt => dateTime().named('last_seen_at').nullable()();
 }

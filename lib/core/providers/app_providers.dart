@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:focused_task/core/database/app_database.dart';
+import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 import 'package:focused_task/features/settings/presentation/settings_notifier.dart';
@@ -14,6 +15,9 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
   return database;
 });
 
+/// Target-duration alarm. Overridden in `main()` with an initialized instance, and with fakes in tests.
+final targetAlarmProvider = Provider<TargetAlarm>((ref) => createTargetAlarm());
+
 final taskRepositoryProvider = Provider<ITaskRepository>((ref) {
   return TaskRepositoryImpl(ref.watch(appDatabaseProvider));
 });
@@ -23,7 +27,7 @@ final planModeNotifierProvider = StateNotifierProvider<PlanModeNotifier, PlanMod
 });
 
 final focusModeNotifierProvider = StateNotifierProvider<FocusModeNotifier, FocusModeState>((ref) {
-  final notifier = FocusModeNotifier(ref.watch(taskRepositoryProvider));
+  final notifier = FocusModeNotifier(ref.watch(taskRepositoryProvider), ref.watch(targetAlarmProvider));
   ref.onDispose(notifier.disposeNotifier);
   return notifier;
 });

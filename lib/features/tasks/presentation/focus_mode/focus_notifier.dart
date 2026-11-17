@@ -1,10 +1,24 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:focused_task/core/services/target_alarm.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
-import 'package:focused_task/core/services/alarm_service.dart'; // Updated import
+
+/// How to close sessions that were left open (e.g. the app was killed while focusing).
+enum SessionRecovery {
+  /// Count the time up to the last heartbeat – the safe default.
+  untilLastActivity,
+
+  /// Count the time up to now, e.g. when the user kept working while the app was closed.
+  untilNow,
+
+  /// Drop the time of the unfinished session.
+  discard,
+}
 
 class FocusModeState {
   const FocusModeState({
@@ -22,8 +36,8 @@ class FocusModeState {
   });
 
   factory FocusModeState.initial() {
-    final now = DateTime.now();
-    return FocusModeState(selectedDay: DateTime(now.year, now.month, now.day), now: now, sessionBaseMs: 0, isLoading: false, isPaused: true);
+    final now = clock.now();
+    return FocusModeState(selectedDay: now.dateOnly, now: now, sessionBaseMs: 0, isLoading: false, isPaused: true);
   }
 
   final DateTime selectedDay;
@@ -36,6 +50,8 @@ class FocusModeState {
   final String? error;
   final bool shouldShowFinishedForToday;
   final bool shouldShowAlarm;
+
+  /// Whether the target alarm already rang (or the target was already exceeded) for [currentTask].
   final bool hasAlarmPlayedForCurrentTask;
 
   Duration get totalSessionDuration {
@@ -84,29 +100,38 @@ class FocusModeState {
 }
 
 class FocusModeNotifier extends StateNotifier<FocusModeState> {
-  FocusModeNotifier(this._repository) : super(FocusModeState.initial());
+  FocusModeNotifier(this._repository, this._alarm) : super(FocusModeState.initial());
 
   final ITaskRepository _repository;
+  final TargetAlarm _alarm;
   Timer? _ticker;
+  DateTime? _lastHeartbeat;
+
+  /// How often a running session records that it is still alive.
+  static const heartbeatInterval = Duration(seconds: 30);
 
   Future<void> initializeForDay(DateTime day) async {
-    final normalized = DateTime(day.year, day.month, day.day);
-    state = state.copyWith(selectedDay: normalized, isLoading: true, clearError: true);
+    state = state.copyWith(selectedDay: day.dateOnly, isLoading: true, clearError: true);
 
     await _loadNextTask();
   }
 
-  void _manageBackgroundAlarm(TaskEntity task, DateTime now) {
-    if (task.targetDurationMinutes != null && !state.hasAlarmPlayedForCurrentTask) {
-      final targetMs = task.targetDurationMinutes! * 60 * 1000;
-      final elapsedMs = task.elapsedAt(now).inMilliseconds;
-      final remainingMs = targetMs - elapsedMs;
-
-      AlarmService.scheduleAlarm(
-        taskTitle: task.title,
-        scheduledDate: now.add(Duration(milliseconds: remainingMs)),
-      );
+  /// Time left until [task] reaches its target, or `null` if it has no target.
+  static Duration? _remainingUntilTarget(TaskEntity task, DateTime now) {
+    final target = task.targetDurationMinutes;
+    if (target == null) {
+      return null;
     }
+    return Duration(minutes: target) - task.elapsedAt(now);
+  }
+
+  /// Schedules the OS/background alarm for the running [task] – only if its target is still ahead.
+  Future<void> _scheduleTargetAlarm(TaskEntity task, DateTime now) async {
+    final remaining = _remainingUntilTarget(task, now);
+    if (remaining == null || remaining <= Duration.zero || state.hasAlarmPlayedForCurrentTask) {
+      return;
+    }
+    await _alarm.schedule(taskTitle: task.title, at: now.add(remaining));
   }
 
   Future<void> _loadNextTask() async {
@@ -114,9 +139,9 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     if (task == null) {
       _stopTicker();
       state = state.copyWith(
-        currentTask: null,
         isLoading: false,
         isPaused: true,
+        clearCurrentTask: true,
         clearSessionStartedAt: true,
         sessionBaseMs: 0,
         shouldShowFinishedForToday: true,
@@ -126,26 +151,28 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
       return;
     }
 
-    TaskEntity current = task;
-    if (task.latestStart == null) {
-      final now = DateTime.now();
-      await _repository.startTaskSession(taskId: task.id, startedAt: now);
+    var current = task;
+    if (!task.isRunning) {
+      await _repository.startTaskSession(taskId: task.id, startedAt: clock.now());
       current = (await _repository.getTaskById(task.id)) ?? task;
     }
 
+    final now = clock.now();
+    final remaining = _remainingUntilTarget(current, now);
     _startTicker();
     state = state.copyWith(
       currentTask: current,
       isPaused: false,
-      sessionStartedAt: state.sessionStartedAt ?? DateTime.now(),
+      sessionStartedAt: state.sessionStartedAt ?? now,
+      now: now,
       isLoading: false,
       clearError: true,
       shouldShowFinishedForToday: false,
-      hasAlarmPlayedForCurrentTask: false,
+      // A task that is already over its target must not ring again every time focus is (re)entered.
+      hasAlarmPlayedForCurrentTask: remaining != null && remaining <= Duration.zero,
     );
 
-    // Schedule the OS background alarm since a new task just loaded and started
-    _manageBackgroundAlarm(current, DateTime.now());
+    await _scheduleTargetAlarm(current, now);
   }
 
   Future<void> pauseSession() async {
@@ -154,15 +181,15 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
       return;
     }
 
-    // Cancel the OS background alarm since the timer is no longer running
-    await AlarmService.cancelAlarm();
+    await _alarm.cancel();
 
-    final now = DateTime.now();
+    final now = clock.now();
     await _repository.pauseTaskSession(taskId: task.id, pausedAt: now);
 
     final updatedTask = await _repository.getTaskById(task.id);
     final runningMs = state.sessionStartedAt == null ? 0 : now.difference(state.sessionStartedAt!).inMilliseconds;
 
+    _stopTicker();
     state = state.copyWith(
       currentTask: updatedTask,
       sessionBaseMs: state.sessionBaseMs + runningMs,
@@ -179,16 +206,15 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
       return;
     }
 
-    final now = DateTime.now();
+    final now = clock.now();
     await _repository.startTaskSession(taskId: task.id, startedAt: now);
     final updatedTask = await _repository.getTaskById(task.id);
 
     _startTicker();
     state = state.copyWith(currentTask: updatedTask, isPaused: false, sessionStartedAt: now, now: now, shouldShowFinishedForToday: false);
 
-    // Re-schedule the OS background alarm with the updated time
     if (updatedTask != null) {
-      _manageBackgroundAlarm(updatedTask, now);
+      await _scheduleTargetAlarm(updatedTask, now);
     }
   }
 
@@ -198,28 +224,29 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
       return;
     }
 
-    // Cancel any pending alarms for this task
-    await AlarmService.cancelAlarm();
-
-    await _repository.completeTask(taskId: task.id, completedAt: DateTime.now());
+    await _alarm.cancel();
+    await _repository.completeTask(taskId: task.id, completedAt: clock.now());
 
     await _loadNextTask();
   }
 
   Future<void> exitFocus() async {
-    await AlarmService.cancelAlarm();
     await pauseSession();
+    await _alarm.cancel();
     _stopTicker();
-    state = state.copyWith(clearCurrentTask: true, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, now: DateTime.now(), shouldShowFinishedForToday: false);
+    state = state.copyWith(clearCurrentTask: true, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, now: clock.now(), shouldShowFinishedForToday: false);
   }
 
-  Future<void> recoverOrDiscardSessions({required bool recover, required List<TaskEntity> sessions}) async {
-    final now = DateTime.now();
+  Future<void> recoverSessions({required SessionRecovery recovery, required List<TaskEntity> sessions}) async {
+    final now = clock.now();
     for (final session in sessions) {
-      if (recover) {
-        await _repository.pauseTaskSession(taskId: session.id, pausedAt: now);
-      } else {
-        await _repository.discardUnfinishedSession(taskId: session.id);
+      switch (recovery) {
+        case SessionRecovery.untilLastActivity:
+          await _repository.pauseTaskSession(taskId: session.id, pausedAt: session.lastActivityAt ?? now);
+        case SessionRecovery.untilNow:
+          await _repository.pauseTaskSession(taskId: session.id, pausedAt: now);
+        case SessionRecovery.discard:
+          await _repository.discardUnfinishedSession(taskId: session.id);
       }
     }
   }
@@ -228,52 +255,45 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     final task = state.currentTask;
     if (task == null) return;
 
-    final updatedTodos = task.todos.map((todo) {
-      if (todo.id == todoId) {
-        return todo.copyWith(isCompleted: !todo.isCompleted);
-      }
-      return todo;
-    }).toList();
+    final todo = task.todos.where((todo) => todo.id == todoId).firstOrNull;
+    if (todo == null) return;
 
-    state = state.copyWith(currentTask: task.copyWith(todos: updatedTodos));
+    final isCompleted = !todo.isCompleted;
+    state = state.copyWith(
+      currentTask: task.copyWith(todos: [for (final candidate in task.todos) candidate.id == todoId ? candidate.copyWith(isCompleted: isCompleted) : candidate]),
+    );
 
-    await _repository.replaceTaskTodos(task.id, updatedTodos);
+    await _repository.setTodoCompletion(todoId: todoId, isCompleted: isCompleted);
   }
 
-  void dismissAlarm() {
-    AlarmService.cancelAlarm();
+  Future<void> dismissAlarm() async {
+    await _alarm.cancel();
     state = state.copyWith(shouldShowAlarm: false);
   }
 
   void _startTicker() {
-    _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) {
-      final now = DateTime.now();
-      bool triggerAlarm = false;
+    _ticker ??= Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+  }
 
-      // Check if target duration is met
-      final task = state.currentTask;
-      if (task?.targetDurationMinutes != null && !state.hasAlarmPlayedForCurrentTask) {
-        final elapsedMs = task!.elapsedAt(now).inMilliseconds;
-        final targetMs = task.targetDurationMinutes! * 60 * 1000;
+  void _tick() {
+    final now = clock.now();
+    final task = state.currentTask;
+    final remaining = task == null ? null : _remainingUntilTarget(task, now);
+    final reachedTarget = remaining != null && remaining <= Duration.zero && !state.hasAlarmPlayedForCurrentTask;
 
-        if (elapsedMs >= targetMs) {
-          triggerAlarm = true;
-          // Notice we DO NOT cancel the alarm here anymore.
-          // We want the alarm service to physically ring the phone!
-        }
-      }
+    if (task != null && !state.isPaused && (_lastHeartbeat == null || now.difference(_lastHeartbeat!) >= heartbeatInterval)) {
+      _lastHeartbeat = now;
+      unawaited(_repository.recordHeartbeat(taskId: task.id, at: now));
+    }
 
-      state = state.copyWith(
-        now: now,
-        shouldShowAlarm: triggerAlarm ? true : state.shouldShowAlarm,
-        hasAlarmPlayedForCurrentTask: triggerAlarm ? true : state.hasAlarmPlayedForCurrentTask,
-      );
-    });
+    // The alarm itself is rung by [TargetAlarm]; here we only show the in-app dialog.
+    state = state.copyWith(now: now, shouldShowAlarm: reachedTarget || state.shouldShowAlarm, hasAlarmPlayedForCurrentTask: reachedTarget || state.hasAlarmPlayedForCurrentTask);
   }
 
   void _stopTicker() {
     _ticker?.cancel();
     _ticker = null;
+    _lastHeartbeat = null;
   }
 
   void clearFinishedForToday() {

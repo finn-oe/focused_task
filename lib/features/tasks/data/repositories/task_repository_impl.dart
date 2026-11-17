@@ -4,15 +4,12 @@ import 'package:focused_task/core/database/app_database.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 
 class TaskRepositoryImpl implements ITaskRepository {
   TaskRepositoryImpl(this._database);
 
   final AppDatabase _database;
-
-  DateTime _dateOnly(DateTime value) {
-    return DateTime(value.year, value.month, value.day);
-  }
 
   @override
   Stream<List<TaskEntity>> watchTasksForDay(DateTime day) {
@@ -50,7 +47,7 @@ class TaskRepositoryImpl implements ITaskRepository {
       TasksCompanion.insert(
         title: title,
         description: Value(description),
-        assignedDate: _dateOnly(assignedDate),
+        assignedDate: assignedDate.dateOnly,
         sortOrder: sortOrder,
         priority: Value(priority.value),
         targetDurationMinutes: Value(targetDurationMinutes),
@@ -76,7 +73,7 @@ class TaskRepositoryImpl implements ITaskRepository {
   @override
   Future<TaskStats> getTaskStats({required DateTime start, required DateTime end}) async {
     final tasks = await _database.getTasksInRange(start: start, end: end);
-    return TaskStats.fromTasks(tasks.map(_taskOnlyToEntity), daysInRange: start.difference(end).abs().inDays == 0 ? 1 : start.difference(end).abs().inDays + 1);
+    return TaskStats.fromTasks(tasks.map(_taskOnlyToEntity), daysInRange: start.calendarDaysUntil(end).abs() + 1);
   }
 
   @override
@@ -87,6 +84,11 @@ class TaskRepositoryImpl implements ITaskRepository {
   @override
   Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt}) {
     return _database.pauseTaskSession(taskId: taskId, pausedAt: pausedAt);
+  }
+
+  @override
+  Future<void> recordHeartbeat({required int taskId, required DateTime at}) {
+    return _database.recordHeartbeat(taskId: taskId, at: at);
   }
 
   @override
@@ -111,17 +113,23 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
-  Future<int> deleteCompletedTasksOlderThanDays(int days) {
-    final safeDays = days < 1 ? 1 : days;
-    final cutoff = _dateOnly(DateTime.now()).subtract(Duration(days: safeDays));
-    return _database.deleteCompletedTasksBefore(cutoff);
-  }
+  Future<int> deleteCompletedTasksOlderThanDays(int days) => _database.deleteCompletedTasksBefore(_retentionCutoff(days));
+
+  @override
+  Future<int> countCompletedTasksOlderThanDays(int days) => _database.countCompletedTasksBefore(_retentionCutoff(days));
+
+  DateTime _retentionCutoff(int days) => DateTime.now().addDays(-(days < 1 ? 1 : days));
 
   @override
   Future<void> replaceTaskTodos(int taskId, List<TaskTodoEntity> newTodos) async {
     final driftTodos = newTodos.map((t) => TaskTodo(id: t.id ?? 0, taskId: taskId, title: t.title, isCompleted: t.isCompleted, sortOrder: t.sortOrder)).toList();
 
     await _database.replaceTaskTodos(taskId, driftTodos);
+  }
+
+  @override
+  Future<void> setTodoCompletion({required int todoId, required bool isCompleted}) {
+    return _database.setTodoCompletion(todoId: todoId, isCompleted: isCompleted);
   }
 
   // Maps a joined Task + Todos object
@@ -138,6 +146,7 @@ class TaskRepositoryImpl implements ITaskRepository {
       timeSpent: task.timeSpent,
       latestStart: task.latestStart,
       targetDurationMinutes: task.targetDurationMinutes,
+      lastSeenAt: task.lastSeenAt,
       todos: data.todos.map((todo) => TaskTodoEntity(id: todo.id, title: todo.title, isCompleted: todo.isCompleted, sortOrder: todo.sortOrder)).toList(growable: false),
     );
   }

@@ -4,43 +4,15 @@ import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
 
+import 'helpers/task_builders.dart';
+
 void main() {
   group('TaskStats', () {
     test('computes completion, focus, and duration metrics from tasks', () {
       final tasks = [
-        TaskEntity(
-          id: 1,
-          title: 'Plan sprint',
-          description: null,
-          assignedDate: DateTime(2024, 1, 1),
-          sortOrder: 'a',
-          isCompleted: true,
-          priority: TaskPriority.low,
-          timeSpent: 45 * 60 * 1000,
-          latestStart: null,
-        ),
-        TaskEntity(
-          id: 2,
-          title: 'Write docs',
-          description: null,
-          assignedDate: DateTime(2024, 1, 1),
-          sortOrder: 'b',
-          isCompleted: false,
-          priority: TaskPriority.medium,
-          timeSpent: 15 * 60 * 1000,
-          latestStart: null,
-        ),
-        TaskEntity(
-          id: 3,
-          title: 'Review PR',
-          description: null,
-          assignedDate: DateTime(2024, 1, 2),
-          sortOrder: 'c',
-          isCompleted: true,
-          priority: TaskPriority.high,
-          timeSpent: 30 * 60 * 1000,
-          latestStart: null,
-        ),
+        buildTask(id: 1, isCompleted: true, timeSpent: 45 * 60 * 1000),
+        buildTask(id: 2, priority: TaskPriority.medium, timeSpent: 15 * 60 * 1000),
+        buildTask(id: 3, isCompleted: true, priority: TaskPriority.high, timeSpent: 30 * 60 * 1000),
       ];
 
       final stats = TaskStats.fromTasks(tasks, daysInRange: 2);
@@ -54,45 +26,28 @@ void main() {
     });
 
     test('includes in-progress task time in focus metrics', () {
-      final tasks = [
-        TaskEntity(
-          id: 1,
-          title: 'Plan sprint',
-          description: null,
-          assignedDate: DateTime(2024, 1, 1),
-          sortOrder: 'a',
-          isCompleted: false,
-          priority: TaskPriority.low,
-          timeSpent: 45 * 60 * 1000,
-          latestStart: null,
-        ),
-      ];
-
-      final stats = TaskStats.fromTasks(tasks, daysInRange: 1);
+      final stats = TaskStats.fromTasks([buildTask(timeSpent: 45 * 60 * 1000)], daysInRange: 1);
 
       expect(stats.totalFocusMinutes, 45);
       expect(stats.averageTaskDurationMinutes, 45);
       expect(stats.focusMinutesPerDay, 45);
     });
+
+    test('returns zeros for an empty range', () {
+      final stats = TaskStats.fromTasks(const [], daysInRange: 7);
+
+      expect(stats.totalTasks, 0);
+      expect(stats.completionScore, 0);
+      expect(stats.totalFocusMinutes, 0);
+      expect(stats.averageTaskDurationMinutes, 0);
+    });
   });
 
   group('FocusModeState', () {
     test('clears the current task when requested', () {
-      final state = FocusModeState.initial().copyWith(
-        currentTask: TaskEntity(
-          id: 1,
-          title: 'Plan sprint',
-          description: null,
-          assignedDate: DateTime(2024, 1, 1),
-          sortOrder: 'a',
-          isCompleted: false,
-          priority: TaskPriority.low,
-          timeSpent: 0,
-          latestStart: null,
-        ),
-      );
+      final state = FocusModeState.initial().copyWith(currentTask: buildTask());
 
-      final cleared = state.copyWith(currentTask: null, clearCurrentTask: true);
+      final cleared = state.copyWith(clearCurrentTask: true);
 
       expect(cleared.currentTask, isNull);
     });

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class SettingsState {
   const SettingsState({
     required this.themeMode,
+    required this.autoCleanupEnabled,
     required this.retentionDays,
     required this.pauseOnBackground,
     required this.enableWakelock,
@@ -12,10 +13,22 @@ class SettingsState {
   });
 
   factory SettingsState.initial() {
-    return const SettingsState(themeMode: ThemeMode.system, retentionDays: 30, pauseOnBackground: true, enableWakelock: false, isLoading: true, isCleaning: false);
+    return const SettingsState(
+      themeMode: ThemeMode.system,
+      autoCleanupEnabled: false,
+      retentionDays: 30,
+      pauseOnBackground: true,
+      enableWakelock: false,
+      isLoading: true,
+      isCleaning: false,
+    );
   }
 
   final ThemeMode themeMode;
+
+  /// Whether completed tasks older than [retentionDays] are deleted on launch. Off by default because
+  /// deleted tasks also disappear from the statistics.
+  final bool autoCleanupEnabled;
   final int retentionDays;
   final bool pauseOnBackground;
   final bool enableWakelock;
@@ -25,6 +38,7 @@ class SettingsState {
 
   SettingsState copyWith({
     ThemeMode? themeMode,
+    bool? autoCleanupEnabled,
     int? retentionDays,
     bool? pauseOnBackground,
     bool? enableWakelock,
@@ -35,6 +49,7 @@ class SettingsState {
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
+      autoCleanupEnabled: autoCleanupEnabled ?? this.autoCleanupEnabled,
       retentionDays: retentionDays ?? this.retentionDays,
       pauseOnBackground: pauseOnBackground ?? this.pauseOnBackground,
       enableWakelock: enableWakelock ?? this.enableWakelock,

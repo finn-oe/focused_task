@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:focused_task/core/database/tables/tasks_table.dart';
 import 'package:focused_task/core/database/tables/task_todos_table.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 
 part 'app_database.g.dart';
 
@@ -21,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -36,6 +37,9 @@ class AppDatabase extends _$AppDatabase {
         if (from < 3) {
           await m.createTable(taskTodos);
         }
+        if (from < 4) {
+          await m.addColumn(tasks, tasks.lastSeenAt);
+        }
       },
       beforeOpen: (details) async {
         // Essential for SQLite to respect onDelete: KeyAction.cascade
@@ -44,18 +48,8 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  DateTime _startOfDay(DateTime day) {
-    return DateTime(day.year, day.month, day.day);
-  }
-
-  DateTime _endOfDay(DateTime day) {
-    return _startOfDay(day).add(const Duration(days: 1));
-  }
-
   Expression<bool> _isInDay(Tasks table, DateTime day) {
-    final start = _startOfDay(day);
-    final end = _endOfDay(day);
-    return table.assignedDate.isBiggerOrEqualValue(start) & table.assignedDate.isSmallerThanValue(end);
+    return table.assignedDate.isBiggerOrEqualValue(day.dateOnly) & table.assignedDate.isSmallerThanValue(day.nextDay);
   }
 
   Stream<List<TaskWithTodos>> watchTasksForDay(DateTime day) {
@@ -95,7 +89,7 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<Task>> getTasksInRange({required DateTime start, required DateTime end}) {
     final query = select(tasks)
-      ..where((task) => task.assignedDate.isBiggerOrEqualValue(_startOfDay(start)) & task.assignedDate.isSmallerThanValue(_endOfDay(end)))
+      ..where((task) => task.assignedDate.isBiggerOrEqualValue(start.dateOnly) & task.assignedDate.isSmallerThanValue(end.nextDay))
       ..orderBy([(task) => OrderingTerm.asc(task.sortOrder)]);
 
     return query.get();
@@ -119,7 +113,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> createTask(TasksCompanion companion) async {
-    final normalizedAssignedDate = _startOfDay(companion.assignedDate.value);
+    final normalizedAssignedDate = companion.assignedDate.value.dateOnly;
     return into(tasks).insert(companion.copyWith(assignedDate: Value(normalizedAssignedDate)));
   }
 
@@ -129,7 +123,7 @@ class AppDatabase extends _$AppDatabase {
         title: Value(title),
         description: Value(description),
         targetDurationMinutes: Value(targetDurationMinutes),
-        assignedDate: assignedDate != null ? Value(_startOfDay(assignedDate)) : const Value.absent(),
+        assignedDate: assignedDate != null ? Value(assignedDate.dateOnly) : const Value.absent(),
       ),
     );
   }
@@ -138,12 +132,22 @@ class AppDatabase extends _$AppDatabase {
     await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(sortOrder: Value(sortOrder)));
   }
 
-  Future<void> setTaskCompletion({required int taskId, required bool isCompleted}) async {
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(isCompleted: Value(isCompleted)));
+  /// Marks a task as (in)complete. Completing a task also closes a running session, so its timer
+  /// never keeps counting after the task is done.
+  Future<void> setTaskCompletion({required int taskId, required bool isCompleted, DateTime? at}) async {
+    if (isCompleted) {
+      return completeTask(taskId: taskId, completedAt: at ?? DateTime.now());
+    }
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(isCompleted: Value(false)));
   }
 
   Future<void> startTaskSession({required int taskId, required DateTime startedAt}) async {
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(latestStart: Value(startedAt)));
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(latestStart: Value(startedAt), lastSeenAt: Value(startedAt)));
+  }
+
+  /// Records that the running session of [taskId] is still alive at [at].
+  Future<void> recordHeartbeat({required int taskId, required DateTime at}) async {
+    await (update(tasks)..where((task) => task.id.equals(taskId) & task.latestStart.isNotNull())).write(TasksCompanion(lastSeenAt: Value(at)));
   }
 
   Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt}) async {
@@ -156,33 +160,52 @@ class AppDatabase extends _$AppDatabase {
     final elapsed = pausedAt.difference(task.latestStart!).inMilliseconds;
     final clampedElapsed = elapsed < 0 ? 0 : elapsed;
 
-    await (update(tasks)..where((row) => row.id.equals(taskId))).write(TasksCompanion(timeSpent: Value(task.timeSpent + clampedElapsed), latestStart: const Value(null)));
+    await (update(tasks)..where((row) => row.id.equals(taskId))).write(
+      TasksCompanion(timeSpent: Value(task.timeSpent + clampedElapsed), latestStart: const Value(null), lastSeenAt: const Value(null)),
+    );
   }
 
-  Future<void> completeTask({required int taskId, required DateTime completedAt}) async {
-    await pauseTaskSession(taskId: taskId, pausedAt: completedAt);
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(isCompleted: Value(true)));
+  Future<void> completeTask({required int taskId, required DateTime completedAt}) {
+    return transaction(() async {
+      await pauseTaskSession(taskId: taskId, pausedAt: completedAt);
+      await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(isCompleted: Value(true)));
+    });
   }
 
   Future<void> discardUnfinishedSession(int taskId) async {
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(latestStart: Value(null)));
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(latestStart: Value(null), lastSeenAt: Value(null)));
   }
 
+  /// Tasks with a session that was never closed (e.g. the app was killed while focusing).
+  ///
+  /// Completed tasks are included on purpose: older versions could complete a task without closing
+  /// its session, and those rows must be recoverable too.
   Future<List<Task>> getRecoverableSessions() {
-    final query = select(tasks)
-      ..where((task) => task.latestStart.isNotNull())
-      ..where((task) => task.isCompleted.equals(false));
-    return query.get();
+    return (select(tasks)..where((task) => task.latestStart.isNotNull())).get();
   }
 
   Future<int> deleteTask(int taskId) {
     return (delete(tasks)..where((t) => t.id.equals(taskId))).go();
   }
 
+  Expression<bool> _isCleanupCandidate(Tasks task, DateTime cutoffDay) {
+    return task.isCompleted.equals(true) & task.latestStart.isNull() & task.assignedDate.isSmallerThanValue(cutoffDay.dateOnly);
+  }
+
   Future<int> deleteCompletedTasksBefore(DateTime cutoffDay) {
-    final cutoff = _startOfDay(cutoffDay);
-    final query = delete(tasks)..where((task) => task.isCompleted.equals(true) & task.latestStart.isNull() & task.assignedDate.isSmallerThanValue(cutoff));
-    return query.go();
+    return (delete(tasks)..where((task) => _isCleanupCandidate(task, cutoffDay))).go();
+  }
+
+  Future<int> countCompletedTasksBefore(DateTime cutoffDay) {
+    final count = tasks.id.count();
+    final query = selectOnly(tasks)
+      ..addColumns([count])
+      ..where(_isCleanupCandidate(tasks, cutoffDay));
+    return query.map((row) => row.read(count) ?? 0).getSingle();
+  }
+
+  Future<void> setTodoCompletion({required int todoId, required bool isCompleted}) async {
+    await (update(taskTodos)..where((todo) => todo.id.equals(todoId))).write(TaskTodosCompanion(isCompleted: Value(isCompleted)));
   }
 
   Future<void> replaceTaskTodos(int taskId, List<TaskTodo> newTodos) {

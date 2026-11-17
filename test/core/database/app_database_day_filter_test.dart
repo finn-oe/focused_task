@@ -49,11 +49,11 @@ void main() {
 
       final oldDayTasks = await database.getTasksForDay(fortyDaysAgo);
       expect(oldDayTasks.length, 1);
-      expect(oldDayTasks.first.title, 'old incomplete');
+      expect(oldDayTasks.first.task.title, 'old incomplete');
 
       final recentDayTasks = await database.getTasksForDay(tenDaysAgo);
       expect(recentDayTasks.length, 1);
-      expect(recentDayTasks.first.title, 'recent completed');
+      expect(recentDayTasks.first.task.title, 'recent completed');
     });
 
     test('retention cleanup never deletes running or recoverable sessions', () async {
@@ -76,8 +76,8 @@ void main() {
 
       final tasks = await database.getTasksForDay(fortyDaysAgo);
       expect(tasks.length, 1);
-      expect(tasks.first.title, 'old completed but running session');
-      expect(tasks.first.latestStart, isNotNull);
+      expect(tasks.first.task.title, 'old completed but running session');
+      expect(tasks.first.task.latestStart, isNotNull);
     });
   });
 }

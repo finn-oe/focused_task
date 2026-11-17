@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
 
 enum StatsRange { day, week, month }
 
@@ -31,11 +32,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
     });
 
     final repository = ref.read(taskRepositoryProvider);
-    final now = DateTime.now();
-    final range = _range;
-    final start = _startOfRange(now, range);
-    final end = _endOfRange(now, range);
-    final stats = await repository.getTaskStats(start: start, end: end);
+    final range = statsDateRange(_range, DateTime.now());
+    final stats = await repository.getTaskStats(start: range.start, end: range.end);
 
     if (!mounted) {
       return;
@@ -145,29 +143,14 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       ),
     );
   }
+}
 
-  DateTime _startOfRange(DateTime now, StatsRange range) {
-    switch (range) {
-      case StatsRange.day:
-        return DateTime(now.year, now.month, now.day);
-      case StatsRange.week:
-        final firstDayOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        return DateTime(firstDayOfWeek.year, firstDayOfWeek.month, firstDayOfWeek.day);
-      case StatsRange.month:
-        return DateTime(now.year, now.month, 1);
-    }
-  }
-
-  DateTime _endOfRange(DateTime now, StatsRange range) {
-    switch (range) {
-      case StatsRange.day:
-        return DateTime(now.year, now.month, now.day, 23, 59, 59);
-      case StatsRange.week:
-        final lastDayOfWeek = now.add(Duration(days: DateTime.daysPerWeek - now.weekday));
-        return DateTime(lastDayOfWeek.year, lastDayOfWeek.month, lastDayOfWeek.day, 23, 59, 59);
-      case StatsRange.month:
-        final firstDayOfNextMonth = DateTime(now.year, now.month + 1, 1);
-        return DateTime(firstDayOfNextMonth.year, firstDayOfNextMonth.month, firstDayOfNextMonth.day - 1, 23, 59, 59);
-    }
-  }
+/// Inclusive calendar-date range (first and last day) of [range] around [now].
+@visibleForTesting
+({DateTime start, DateTime end}) statsDateRange(StatsRange range, DateTime now) {
+  return switch (range) {
+    StatsRange.day => (start: now.dateOnly, end: now.dateOnly),
+    StatsRange.week => (start: now.startOfWeek, end: now.startOfWeek.addDays(DateTime.daysPerWeek - 1)),
+    StatsRange.month => (start: now.startOfMonth, end: now.startOfNextMonth.addDays(-1)),
+  };
 }
