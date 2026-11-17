@@ -6,8 +6,8 @@ on:
   pull_request:
 
 env:
-  # Keep in sync with CLAUDE.md. Upgrading Flutter is tracked in #18.
-  FLUTTER_VERSION: 3.44.6
+  # Keep in sync with CLAUDE.md and README.md.
+  FLUTTER_VERSION: 3.50.0
 
 concurrency:
   group: ci-${{ github.ref }}

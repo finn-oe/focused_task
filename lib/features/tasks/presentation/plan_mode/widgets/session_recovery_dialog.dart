@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';

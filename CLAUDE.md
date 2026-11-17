@@ -37,7 +37,7 @@ Rules that follow from this:
 
 | Concern | Choice |
 |---|---|
-| UI | Flutter, Material 3 (`lib/core/ui/themes/`) |
+| UI | Flutter, Material 3 via `package:material_ui` (`lib/core/ui/themes/`) |
 | State | `flutter_riverpod` 3, `Notifier`/`NotifierProvider` only (providers in `lib/core/providers/app_providers.dart`) |
 | Routing | `go_router` (`lib/core/routing/app_router.dart`) |
 | Persistence | Drift / SQLite (`lib/core/database/`), `shared_preferences` for settings (loaded in `main()`, exposed via `sharedPreferencesProvider`) |
@@ -87,7 +87,9 @@ Rules:
 
 ## Toolchain
 
-Flutter **3.44.6** (stable, Dart 3.12), pinned in `.github/workflows/ci.yml` (`FLUTTER_VERSION`). Use the same version locally. Upgrading Flutter (and moving from `package:flutter/material.dart` to `package:material_ui`, deprecated since 3.47) is part of #18.
+Flutter **3.50.0** (stable, Dart 3.14), pinned in `.github/workflows/ci.yml` (`FLUTTER_VERSION`). Use the same version locally.
+
+Import Material widgets from `package:material_ui/material_ui.dart`; `package:flutter/material.dart` is deprecated since Flutter 3.47.
 
 ## Common commands
 

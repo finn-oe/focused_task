@@ -1431,8 +1431,10 @@ class $$TasksTableTableManager
               ),
           withReferenceMapper: (p0) => p0
               .map(
-                (e) =>
-                    (e.readTable(table), $$TasksTableReferences(db, table, e)),
+                (e) => (
+                  e.readTable<$TasksTable, Task>(table),
+                  $$TasksTableReferences(db, table, e),
+                ),
               )
               .toList(),
           prefetchHooksCallback: ({taskTodosRefs = false}) {
@@ -1443,14 +1445,19 @@ class $$TasksTableTableManager
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (taskTodosRefs)
-                    await $_getPrefetchedData<Task, $TasksTable, TaskTodo>(
+                    await $_getPrefetchedDataByColumns<
+                      Task,
+                      $TasksTable,
+                      TaskTodo,
+                      $TaskTodosTable
+                    >(
                       currentTable: table,
                       referencedTable: $$TasksTableReferences
                           ._taskTodosRefsTable(db),
                       managerFromTypedResult: (p0) =>
                           $$TasksTableReferences(db, table, p0).taskTodosRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.taskId == item.id),
+                      currentColumn: 'id',
+                      referencedColumn: 'task_id',
                       typedResults: items,
                     ),
                 ];
@@ -1724,7 +1731,7 @@ class $$TaskTodosTableTableManager
           withReferenceMapper: (p0) => p0
               .map(
                 (e) => (
-                  e.readTable(table),
+                  e.readTable<$TaskTodosTable, TaskTodo>(table),
                   $$TaskTodosTableReferences(db, table, e),
                 ),
               )
