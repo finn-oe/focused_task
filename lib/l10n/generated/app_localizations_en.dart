@@ -162,6 +162,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get taskFormNoLimit => 'No limit';
 
   @override
+  String get taskFormTrackedTime => 'Tracked time';
+
+  @override
+  String get taskFormAddTime => 'Add time';
+
+  @override
+  String get taskFormAddTimeTitle => 'Add tracked time';
+
+  @override
   String taskFormTargetDurationValue(int hours, int minutes) {
     return '${hours}h ${minutes}m';
   }
@@ -254,6 +263,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recoveryDiscard => 'Discard';
+
+  @override
+  String get recoveryDeletedTask => '(deleted task)';
 
   @override
   String recoveryUntilNow(String duration) {

@@ -60,15 +60,10 @@ void main() {
       final now = DateTime.now();
       final fortyDaysAgo = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 40));
 
-      await database.createTask(
-        TasksCompanion.insert(
-          title: 'old completed but running session',
-          assignedDate: fortyDaysAgo,
-          sortOrder: 'a0',
-          isCompleted: const drift.Value(true),
-          latestStart: drift.Value(now.subtract(const Duration(minutes: 5))),
-        ),
+      final id = await database.createTask(
+        TasksCompanion.insert(title: 'old completed but running session', assignedDate: fortyDaysAgo, sortOrder: 'a0', isCompleted: const drift.Value(true)),
       );
+      await database.startSession(taskId: id, kind: 'focus', at: now.subtract(const Duration(minutes: 5)));
 
       final cutoff = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 30));
       final deleted = await database.deleteCompletedTasksBefore(cutoff);
@@ -77,7 +72,7 @@ void main() {
       final tasks = await database.getTasksForDay(fortyDaysAgo);
       expect(tasks.length, 1);
       expect(tasks.first.task.title, 'old completed but running session');
-      expect(tasks.first.task.latestStart, isNotNull);
+      expect(tasks.first.openSession, isNotNull);
     });
   });
 }

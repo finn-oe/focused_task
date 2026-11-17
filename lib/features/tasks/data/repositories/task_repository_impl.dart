@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 
 import 'package:focused_task/core/database/app_database.dart';
+import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
+import 'package:focused_task/features/sessions/domain/focus_time.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
@@ -72,39 +74,19 @@ class TaskRepositoryImpl implements ITaskRepository {
 
   @override
   Future<TaskStats> getTaskStats({required DateTime start, required DateTime end}) async {
-    final tasks = await _database.getTasksInRange(start: start, end: end);
-    return TaskStats.fromTasks(tasks.map(_taskOnlyToEntity), daysInRange: start.calendarDaysUntil(end).abs() + 1);
-  }
-
-  @override
-  Future<void> startTaskSession({required int taskId, required DateTime startedAt}) {
-    return _database.startTaskSession(taskId: taskId, startedAt: startedAt);
-  }
-
-  @override
-  Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt}) {
-    return _database.pauseTaskSession(taskId: taskId, pausedAt: pausedAt);
-  }
-
-  @override
-  Future<void> recordHeartbeat({required int taskId, required DateTime at}) {
-    return _database.recordHeartbeat(taskId: taskId, at: at);
+    final range = DateRange(start, end);
+    final tasks = await _database.getTasksInRange(start: range.start, end: range.end);
+    final sessions = await _database.getSessionsOverlapping(range.start, range.end.nextDay);
+    return TaskStats.from(
+      tasks: tasks.map(_taskOnlyToEntity),
+      focusByTask: focusTimeByTask(sessions.map(FocusSessionRepositoryImpl.toEntity), range),
+      daysInRange: range.start.calendarDaysUntil(range.end) + 1,
+    );
   }
 
   @override
   Future<void> completeTask({required int taskId, required DateTime completedAt}) {
     return _database.completeTask(taskId: taskId, completedAt: completedAt);
-  }
-
-  @override
-  Future<void> discardUnfinishedSession({required int taskId}) {
-    return _database.discardUnfinishedSession(taskId);
-  }
-
-  @override
-  Future<List<TaskEntity>> getRecoverableSessions() async {
-    final tasks = await _database.getRecoverableSessions();
-    return tasks.map(_taskOnlyToEntity).toList(growable: false);
   }
 
   @override
@@ -144,9 +126,9 @@ class TaskRepositoryImpl implements ITaskRepository {
       isCompleted: task.isCompleted,
       priority: TaskPriority.fromValue(task.priority),
       timeSpent: task.timeSpent,
-      latestStart: task.latestStart,
+      latestStart: data.openSession?.startedAt,
       targetDurationMinutes: task.targetDurationMinutes,
-      lastSeenAt: task.lastSeenAt,
+      lastSeenAt: data.openSession?.lastSeenAt,
       todos: data.todos.map((todo) => TaskTodoEntity(id: todo.id, title: todo.title, isCompleted: todo.isCompleted, sortOrder: todo.sortOrder)).toList(growable: false),
     );
   }

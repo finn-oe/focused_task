@@ -2,25 +2,30 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:focused_task/core/database/app_database.dart';
+import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
+import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 
 void main() {
   late AppDatabase database;
   late TaskRepositoryImpl repository;
+  late FocusSessionRepositoryImpl sessions;
 
   setUp(() {
     database = AppDatabase(NativeDatabase.memory());
     repository = TaskRepositoryImpl(database);
+    sessions = FocusSessionRepositoryImpl(database);
   });
 
   tearDown(() => database.close());
 
-  Future<int> createTask({DateTime? day}) => repository.createTask(title: 'Task', assignedDate: day ?? DateTime.now(), sortOrder: 'a0');
+  Future<int> createTask({DateTime? day, String title = 'Task'}) => repository.createTask(title: title, assignedDate: day ?? DateTime.now(), sortOrder: 'a0');
 
   group('setTaskCompletion', () {
     test('closes a running session so the timer stops counting', () async {
       final id = await createTask();
-      await repository.startTaskSession(taskId: id, startedAt: DateTime.now().subtract(const Duration(hours: 1)));
+      await sessions.start(taskId: id, at: DateTime.now().subtract(const Duration(hours: 1)));
 
       await repository.setTaskCompletion(taskId: id, isCompleted: true);
 
@@ -28,6 +33,7 @@ void main() {
       expect(task.isCompleted, isTrue);
       expect(task.latestStart, isNull);
       expect(Duration(milliseconds: task.timeSpent).inMinutes, 60);
+      expect((await database.select(database.focusSessions).getSingle()).endReason, 'completed');
 
       final later = task.elapsedAt(DateTime.now().add(const Duration(hours: 5)));
       expect(later.inMinutes, 60, reason: 'elapsed time must not grow after completion');
@@ -44,18 +50,6 @@ void main() {
     });
   });
 
-  group('getRecoverableSessions', () {
-    test('includes completed tasks whose session was never closed (legacy data)', () async {
-      final id = await createTask();
-      await database.startTaskSession(taskId: id, startedAt: DateTime.now());
-      // Simulate a row written by an older version: completed, but session still open.
-      await database.customStatement('UPDATE tasks SET is_completed = 1 WHERE id = $id');
-
-      final sessions = await repository.getRecoverableSessions();
-      expect(sessions.map((task) => task.id), [id]);
-    });
-  });
-
   test('countCompletedTasksOlderThanDays matches what cleanup deletes', () async {
     final old = DateTime.now().subtract(const Duration(days: 40));
     final done = await createTask(day: old);
@@ -68,26 +62,108 @@ void main() {
     expect(await repository.countCompletedTasksOlderThanDays(30), 0);
   });
 
-  group('session heartbeat', () {
-    test('is set on start, updated while running and cleared on pause', () async {
+  group('focus sessions', () {
+    final start = DateTime(2026, 11, 17, 9);
+
+    test('the running state of a task comes from its open session, including the heartbeat', () async {
       final id = await createTask();
-      final start = DateTime(2026, 11, 17, 9);
-      await repository.startTaskSession(taskId: id, startedAt: start);
+      final session = await sessions.start(taskId: id, at: start);
       expect((await repository.getTaskById(id))!.lastActivityAt, start);
 
-      await repository.recordHeartbeat(taskId: id, at: start.add(const Duration(minutes: 20)));
+      await sessions.heartbeat(session.id, start.add(const Duration(minutes: 20)));
       expect((await repository.getTaskById(id))!.lastActivityAt, start.add(const Duration(minutes: 20)));
 
-      await repository.pauseTaskSession(taskId: id, pausedAt: start.add(const Duration(minutes: 25)));
+      await sessions.end(session.id, start.add(const Duration(minutes: 25)), EndReason.paused);
       final paused = (await repository.getTaskById(id))!;
-      expect(paused.lastSeenAt, isNull);
+      expect(paused.isRunning, isFalse);
       expect(paused.lastActivityAt, isNull);
+      expect(Duration(milliseconds: paused.timeSpent), const Duration(minutes: 25));
     });
 
-    test('is ignored for tasks without a running session', () async {
+    test('the plan list reflects running sessions', () async {
+      final id = await createTask(day: start);
+      await sessions.start(taskId: id, at: start);
+
+      final tasks = await repository.watchTasksForDay(start).first;
+      expect(tasks.single.latestStart, start);
+    });
+
+    test('at most one session is open: starting closes the previous one at its last activity', () async {
+      final first = await createTask(title: 'first');
+      final second = await createTask(title: 'second');
+      final leftover = await sessions.start(taskId: first, at: start);
+      await sessions.heartbeat(leftover.id, start.add(const Duration(minutes: 10)));
+
+      await sessions.start(taskId: second, at: start.add(const Duration(hours: 2)));
+
+      final open = await sessions.openSession();
+      expect(open?.taskId, second);
+      expect(Duration(milliseconds: (await repository.getTaskById(first))!.timeSpent), const Duration(minutes: 10));
+      expect((await sessions.unfinishedSessions()).map((session) => session.taskTitle), ['second']);
+    });
+
+    test('discarding drops the time; ending twice changes nothing', () async {
       final id = await createTask();
-      await repository.recordHeartbeat(taskId: id, at: DateTime.now());
-      expect((await repository.getTaskById(id))!.lastSeenAt, isNull);
+      final session = await sessions.start(taskId: id, at: start);
+
+      await sessions.end(session.id, start.add(const Duration(hours: 1)), EndReason.discarded);
+      await sessions.end(session.id, start.add(const Duration(hours: 2)), EndReason.paused);
+
+      expect((await repository.getTaskById(id))!.timeSpent, 0);
+      final row = await database.select(database.focusSessions).getSingle();
+      expect(row.endReason, 'discarded');
+      expect(row.endedAt, start);
+    });
+
+    test('30 minutes worked today on a task planned for another day count today', () async {
+      final today = DateTime.now().dateOnly;
+      final id = await createTask(day: today.addDays(3));
+      final session = await sessions.start(taskId: id, at: today.add(const Duration(hours: 9)));
+      await sessions.end(session.id, today.add(const Duration(hours: 9, minutes: 30)), EndReason.paused);
+
+      final todayStats = await repository.getTaskStats(start: today, end: today);
+      expect(todayStats.totalFocusMinutes, 30);
+      expect(todayStats.totalTasks, 0, reason: 'task counts still use the assigned day');
+
+      final plannedDay = await repository.getTaskStats(start: today.addDays(3), end: today.addDays(3));
+      expect(plannedDay.totalFocusMinutes, 0);
+      expect(plannedDay.totalTasks, 1);
+    });
+
+    test('deleting a task keeps its sessions so totals stay correct', () async {
+      final today = DateTime.now().dateOnly;
+      final id = await createTask(day: today);
+      final session = await sessions.start(taskId: id, at: today.add(const Duration(hours: 8)));
+      await sessions.end(session.id, today.add(const Duration(hours: 8, minutes: 45)), EndReason.completed);
+
+      await repository.deleteTask(id);
+
+      final row = await database.select(database.focusSessions).getSingle();
+      expect(row.taskId, isNull);
+      expect((await repository.getTaskStats(start: today, end: today)).totalFocusMinutes, 45);
+      expect(await sessions.focusTimeByDay(DateRange(today, today)), {today: const Duration(minutes: 45)});
+    });
+
+    test('manual time is added as a closed session and to the tracked total', () async {
+      final day = DateTime(2026, 11, 10);
+      final id = await createTask(day: day);
+
+      await sessions.addManualTime(taskId: id, day: day, duration: const Duration(minutes: 50));
+
+      expect(Duration(milliseconds: (await repository.getTaskById(id))!.timeSpent), const Duration(minutes: 50));
+      final row = await database.select(database.focusSessions).getSingle();
+      expect((row.startedAt, row.endReason), (DateTime(2026, 11, 10, 12), 'manual'));
+      expect(await sessions.focusTimeByDay(DateRange(day, day)), {day: const Duration(minutes: 50)});
+    });
+
+    test('watchInRange emits sessions overlapping the range', () async {
+      final id = await createTask();
+      final session = await sessions.start(taskId: id, at: DateTime(2026, 11, 16, 23, 30));
+      await sessions.end(session.id, DateTime(2026, 11, 17, 0, 30), EndReason.paused);
+
+      final onDay = await sessions.watchInRange(DateTime(2026, 11, 17), DateTime(2026, 11, 18)).first;
+      expect(onDay.map((session) => session.id), [session.id]);
+      expect(await sessions.watchInRange(DateTime(2026, 11, 18), DateTime(2026, 11, 19)).first, isEmpty);
     });
   });
 }

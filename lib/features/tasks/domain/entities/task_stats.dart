@@ -1,5 +1,3 @@
-import 'package:clock/clock.dart';
-
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
 class TaskStats {
@@ -19,28 +17,23 @@ class TaskStats {
   final int focusMinutesPerDay;
   final double completionScore;
 
-  factory TaskStats.fromTasks(Iterable<TaskEntity> tasks, {required int daysInRange}) {
+  /// [tasks] are the tasks assigned to the range (for the counts); [focusByTask] is the focus time spent in the range
+  /// per task (`null` = deleted tasks), wherever those tasks are planned.
+  factory TaskStats.from({required Iterable<TaskEntity> tasks, required Map<int?, Duration> focusByTask, required int daysInRange}) {
     final taskList = tasks.toList(growable: false);
-    final completedTasks = taskList.where((task) => task.isCompleted).toList(growable: false);
-
-    final now = clock.now();
-
-    final tasksWithTime = taskList.where((task) => task.elapsedAt(now).inMilliseconds > 0).toList(growable: false);
-    int totalMilliseconds = 0;
-    for (final task in tasksWithTime) {
-      totalMilliseconds += task.elapsedAt(now).inMilliseconds;
-    }
-    final totalFocusMinutes = totalMilliseconds ~/ 60000;
-    final completedCount = completedTasks.length;
+    final completedCount = taskList.where((task) => task.isCompleted).length;
     final totalTaskCount = taskList.length;
-    final averageDuration = tasksWithTime.isEmpty ? 0 : (totalMilliseconds ~/ tasksWithTime.length) ~/ 60000;
+
+    final worked = focusByTask.values.where((time) => time > Duration.zero).toList(growable: false);
+    final totalMilliseconds = worked.fold(0, (sum, time) => sum + time.inMilliseconds);
+    final averageDuration = worked.isEmpty ? 0 : (totalMilliseconds ~/ worked.length) ~/ 60000;
     final minutesPerDay = daysInRange <= 0 ? 0 : (totalMilliseconds ~/ daysInRange) ~/ 60000;
     final completionScore = totalTaskCount == 0 ? 0.0 : (completedCount / totalTaskCount) * 100;
 
     return TaskStats(
       totalTasks: totalTaskCount,
       completedTasks: completedCount,
-      totalFocusMinutes: totalFocusMinutes,
+      totalFocusMinutes: totalMilliseconds ~/ 60000,
       averageTaskDurationMinutes: averageDuration,
       focusMinutesPerDay: minutesPerDay,
       completionScore: double.parse(completionScore.toStringAsFixed(1)),

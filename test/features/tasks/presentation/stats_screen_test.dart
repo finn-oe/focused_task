@@ -14,15 +14,16 @@ void main() {
     final today = DateTime.now().dateOnly;
     final repository = FakeTaskRepository(
       tasks: [
-        buildTask(id: 1, assignedDate: today, isCompleted: true, timeSpent: const Duration(minutes: 25).inMilliseconds),
+        buildTask(id: 1, assignedDate: today, isCompleted: true),
         // Two weeks ago: outside of "Day" and "Week", but possibly inside "Month".
-        buildTask(id: 2, assignedDate: today.addDays(-14), sortOrder: 'a1', timeSpent: const Duration(minutes: 5).inMilliseconds),
+        buildTask(id: 2, assignedDate: today.addDays(-14), sortOrder: 'a1'),
       ],
     );
+    await repository.addManualTime(taskId: 1, day: today, duration: const Duration(minutes: 25));
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [taskRepositoryProvider.overrideWithValue(repository)],
+        overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
         child: localizedApp(home: const StatsScreen()),
       ),
     );
@@ -39,7 +40,8 @@ void main() {
   });
 
   test('taskStatsProvider caches per date range', () async {
-    final container = ProviderContainer.test(overrides: [taskRepositoryProvider.overrideWithValue(FakeTaskRepository())]);
+    final repository = FakeTaskRepository();
+    final container = ProviderContainer.test(overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)]);
     final today = DateTime(2026, 11, 17);
 
     expect(taskStatsProvider(DateRange(today, today)), taskStatsProvider(DateRange(today.add(const Duration(hours: 5)), today)));

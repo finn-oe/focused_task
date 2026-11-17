@@ -18,7 +18,11 @@ FakeTaskRepository _repositoryWithOldCompletedTask() {
 
 Future<ProviderContainer> _container(FakeTaskRepository repository, [Map<String, Object> preferences = const {}]) async {
   final container = ProviderContainer.test(
-    overrides: [taskRepositoryProvider.overrideWithValue(repository), sharedPreferencesProvider.overrideWithValue(await fakePreferences(preferences))],
+    overrides: [
+      taskRepositoryProvider.overrideWithValue(repository),
+      focusSessionRepositoryProvider.overrideWithValue(repository),
+      sharedPreferencesProvider.overrideWithValue(await fakePreferences(preferences)),
+    ],
   );
   return container;
 }

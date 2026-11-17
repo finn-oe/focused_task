@@ -1,32 +1,62 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
+
+import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/sessions/domain/focus_session.dart';
+import 'package:focused_task/features/sessions/domain/focus_time.dart' as focus_time;
+import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
-/// Simple in-memory [ITaskRepository] for widget and notifier tests.
+/// Simple in-memory [ITaskRepository] **and** [IFocusSessionRepository] for widget and notifier tests, so tasks and
+/// sessions share one consistent store. Override both providers with the same instance.
 ///
 /// It mirrors the behaviour of the Drift implementation closely enough for presentation-layer tests.
 /// Repository behaviour itself is tested against a real in-memory database.
-class FakeTaskRepository implements ITaskRepository {
-  FakeTaskRepository({List<TaskEntity> tasks = const []}) {
+///
+/// Seeded tasks with a `latestStart` (and `lastSeenAt`) get an open session, like data left by a crash.
+class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
+  FakeTaskRepository({List<TaskEntity> tasks = const [], List<FocusSession> sessions = const []}) {
     for (final task in tasks) {
-      _tasks[task.id] = task;
+      _tasks[task.id] = task.copyWith(clearLatestStart: true);
+      final start = task.latestStart;
+      if (start != null) {
+        _sessions.add(FocusSession(id: _nextSessionId++, taskId: task.id, kind: SessionKind.focus, startedAt: start, lastSeenAt: task.lastSeenAt ?? start));
+      }
+    }
+    for (final session in sessions) {
+      _sessions.add(session);
+      if (session.id >= _nextSessionId) _nextSessionId = session.id + 1;
     }
     _nextId = _tasks.keys.fold(0, (max, id) => id > max ? id : max) + 1;
   }
 
   final Map<int, TaskEntity> _tasks = {};
+  final List<FocusSession> _sessions = [];
   final StreamController<void> _changes = StreamController<void>.broadcast();
   late int _nextId;
+  int _nextSessionId = 1;
 
   List<TaskEntity> get tasks => _sorted(_tasks.values);
 
-  TaskEntity task(int id) => _tasks[id]!;
+  /// All sessions, oldest first.
+  List<FocusSession> get sessions => List.unmodifiable(_sessions);
+
+  TaskEntity task(int id) => _withSession(_tasks[id]!);
 
   static DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 
-  List<TaskEntity> _sorted(Iterable<TaskEntity> tasks) => tasks.toList()..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+  FocusSession? _openSessionOf(int taskId) => _sessions.where((session) => session.isOpen && session.taskId == taskId).firstOrNull;
+
+  /// Adds the running state of the task's open session, like the Drift implementation.
+  TaskEntity _withSession(TaskEntity task) {
+    final open = _openSessionOf(task.id);
+    return open == null ? task : task.copyWith(latestStart: open.startedAt, lastSeenAt: open.lastSeenAt);
+  }
+
+  List<TaskEntity> _sorted(Iterable<TaskEntity> tasks) => tasks.map(_withSession).toList()..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
   List<TaskEntity> _forDay(DateTime day) => _sorted(_tasks.values.where((task) => _day(task.assignedDate) == _day(day)));
 
@@ -42,13 +72,17 @@ class FakeTaskRepository implements ITaskRepository {
     }
   }
 
-  TaskEntity _closeSession(TaskEntity task, DateTime at) {
-    if (task.latestStart == null) {
-      return task;
-    }
-    final elapsed = at.difference(task.latestStart!).inMilliseconds;
-    return task.copyWith(timeSpent: task.timeSpent + (elapsed < 0 ? 0 : elapsed), clearLatestStart: true);
+  void _replaceSession(FocusSession session) {
+    _sessions[_sessions.indexWhere((candidate) => candidate.id == session.id)] = session;
+    _changes.add(null);
   }
+
+  void _addTrackedTime(int? taskId, SessionKind kind, Duration duration) {
+    if (taskId == null || kind != SessionKind.focus || duration <= Duration.zero) return;
+    _update(taskId, (task) => task.copyWith(timeSpent: task.timeSpent + duration.inMilliseconds));
+  }
+
+  // --- ITaskRepository ----------------------------------------------------------------------------------------------
 
   @override
   Stream<List<TaskEntity>> watchTasksForDay(DateTime day) async* {
@@ -60,7 +94,7 @@ class FakeTaskRepository implements ITaskRepository {
   Future<List<TaskEntity>> getTasksForDay(DateTime day) async => _forDay(day);
 
   @override
-  Future<TaskEntity?> getTaskById(int id) async => _tasks[id];
+  Future<TaskEntity?> getTaskById(int id) async => _tasks.containsKey(id) ? task(id) : null;
 
   @override
   Future<TaskEntity?> getNextIncompleteTaskForDay(DateTime day) async {
@@ -121,53 +155,37 @@ class FakeTaskRepository implements ITaskRepository {
 
   @override
   Future<void> setTaskCompletion({required int taskId, required bool isCompleted}) async {
-    _update(taskId, (task) => (isCompleted ? _closeSession(task, DateTime.now()) : task).copyWith(isCompleted: isCompleted));
+    if (isCompleted) return completeTask(taskId: taskId, completedAt: clock.now());
+    _update(taskId, (task) => task.copyWith(isCompleted: false));
   }
 
   @override
   Future<TaskStats> getTaskStats({required DateTime start, required DateTime end}) async {
-    final inRange = _tasks.values.where((task) => !_day(task.assignedDate).isBefore(_day(start)) && !_day(task.assignedDate).isAfter(_day(end)));
-    return TaskStats.fromTasks(inRange, daysInRange: _day(end).difference(_day(start)).inDays + 1);
-  }
-
-  @override
-  Future<void> startTaskSession({required int taskId, required DateTime startedAt}) async {
-    _update(taskId, (task) => task.copyWith(latestStart: startedAt, lastSeenAt: startedAt));
-  }
-
-  @override
-  Future<void> recordHeartbeat({required int taskId, required DateTime at}) async {
-    _update(taskId, (task) => task.isRunning ? task.copyWith(lastSeenAt: at) : task);
-  }
-
-  @override
-  Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt}) async {
-    _update(taskId, (task) => _closeSession(task, pausedAt));
+    final range = DateRange(start, end);
+    final inRange = _tasks.values.where((task) => !_day(task.assignedDate).isBefore(range.start) && !_day(task.assignedDate).isAfter(range.end));
+    return TaskStats.from(tasks: inRange, focusByTask: focus_time.focusTimeByTask(_sessions, range), daysInRange: range.start.calendarDaysUntil(range.end) + 1);
   }
 
   @override
   Future<void> completeTask({required int taskId, required DateTime completedAt}) async {
-    _update(taskId, (task) => _closeSession(task, completedAt).copyWith(isCompleted: true));
+    final open = _openSessionOf(taskId);
+    if (open != null) await end(open.id, completedAt, EndReason.completed);
+    _update(taskId, (task) => task.copyWith(isCompleted: true));
   }
 
   @override
   Future<void> deleteTask(int taskId) async {
     _tasks.remove(taskId);
+    for (final session in _sessions.where((session) => session.taskId == taskId).toList()) {
+      _replaceSession(session.copyWith(clearTaskId: true));
+    }
     _changes.add(null);
   }
 
-  @override
-  Future<void> discardUnfinishedSession({required int taskId}) async {
-    _update(taskId, (task) => task.copyWith(clearLatestStart: true));
-  }
-
-  @override
-  Future<List<TaskEntity>> getRecoverableSessions() async => _tasks.values.where((task) => task.latestStart != null).toList();
-
   List<int> _cleanupCandidates(int days) {
-    final now = DateTime.now();
+    final now = clock.now();
     final cutoff = DateTime(now.year, now.month, now.day - days);
-    return _tasks.values.where((task) => task.isCompleted && task.latestStart == null && task.assignedDate.isBefore(cutoff)).map((task) => task.id).toList();
+    return _tasks.values.where((task) => task.isCompleted && _openSessionOf(task.id) == null && task.assignedDate.isBefore(cutoff)).map((task) => task.id).toList();
   }
 
   @override
@@ -176,8 +194,9 @@ class FakeTaskRepository implements ITaskRepository {
   @override
   Future<int> deleteCompletedTasksOlderThanDays(int days) async {
     final ids = _cleanupCandidates(days);
-    ids.forEach(_tasks.remove);
-    _changes.add(null);
+    for (final id in ids) {
+      await deleteTask(id);
+    }
     return ids.length;
   }
 
@@ -194,5 +213,80 @@ class FakeTaskRepository implements ITaskRepository {
         _put(task.copyWith(todos: [for (final todo in task.todos) todo.id == todoId ? todo.copyWith(isCompleted: isCompleted) : todo]));
       }
     }
+  }
+
+  // --- IFocusSessionRepository --------------------------------------------------------------------------------------
+
+  @override
+  Future<FocusSession> start({int? taskId, SessionKind kind = SessionKind.focus, required DateTime at}) async {
+    for (final open in _sessions.where((session) => session.isOpen).toList()) {
+      await end(open.id, open.lastActivityAt, EndReason.recovered);
+    }
+    final session = FocusSession(id: _nextSessionId++, taskId: taskId, kind: kind, startedAt: at, lastSeenAt: at);
+    _sessions.add(session);
+    _changes.add(null);
+    return session;
+  }
+
+  @override
+  Future<void> heartbeat(int id, DateTime at) async {
+    final session = _sessions.where((session) => session.id == id && session.isOpen).firstOrNull;
+    if (session != null) _replaceSession(session.copyWith(lastSeenAt: at));
+  }
+
+  @override
+  Future<void> end(int id, DateTime at, EndReason reason) async {
+    final session = _sessions.where((session) => session.id == id).firstOrNull;
+    if (session == null || !session.isOpen) return;
+    final endAt = reason == EndReason.discarded || at.isBefore(session.startedAt) ? session.startedAt : at;
+    _replaceSession(session.copyWith(endedAt: endAt, endReason: reason));
+    _addTrackedTime(session.taskId, session.kind, endAt.difference(session.startedAt));
+  }
+
+  @override
+  Future<FocusSession?> openSession() async => _sessions.where((session) => session.isOpen).lastOrNull;
+
+  @override
+  Future<List<FocusSession>> unfinishedSessions() async {
+    return [
+      for (final session in _sessions.where((session) => session.isOpen))
+        FocusSession(
+          id: session.id,
+          taskId: session.taskId,
+          kind: session.kind,
+          startedAt: session.startedAt,
+          lastSeenAt: session.lastSeenAt,
+          taskTitle: _tasks[session.taskId]?.title,
+        ),
+    ];
+  }
+
+  List<FocusSession> _inRange(DateTime start, DateTime endExclusive) {
+    return _sessions.where((session) => session.startedAt.isBefore(endExclusive) && (session.isOpen || session.endedAt!.isAfter(start))).toList();
+  }
+
+  @override
+  Stream<List<FocusSession>> watchInRange(DateTime start, DateTime endExclusive) async* {
+    yield _inRange(start, endExclusive);
+    yield* _changes.stream.map((_) => _inRange(start, endExclusive));
+  }
+
+  @override
+  Future<Map<DateTime, Duration>> focusTimeByDay(DateRange range) async => focus_time.focusTimeByDay(_sessions, range);
+
+  @override
+  Future<void> addManualTime({required int taskId, required DateTime day, required Duration duration}) async {
+    final start = DateTime(day.year, day.month, day.day, 12);
+    final session = FocusSession(
+      id: _nextSessionId++,
+      taskId: taskId,
+      kind: SessionKind.focus,
+      startedAt: start,
+      endedAt: start.add(duration),
+      lastSeenAt: start.add(duration),
+      endReason: EndReason.manual,
+    );
+    _sessions.add(session);
+    _addTrackedTime(taskId, SessionKind.focus, duration);
   }
 }

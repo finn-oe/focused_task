@@ -61,6 +61,7 @@ Rules:
 
 - **Dependency direction:** `presentation → domain ← data`. Presentation code depends on repository *interfaces* (`ITaskRepository`), never on `AppDatabase` or Drift row classes.
 - **Domain is pure Dart.** Entities are immutable, have `copyWith`, and contain no Flutter or Drift imports.
+- **Tracked time lives in `focus_sessions`** (`lib/features/sessions/`, `IFocusSessionRepository`). Start/heartbeat/end sessions through the repository; never write `tasks.time_spent` directly – it is a cached total that `end()` / `addManualTime()` update in the same transaction. At most one session is open at a time. Statistics count focus time on the day it happened (`focusTimeByDay` splits at local midnight).
 - **Business logic lives in notifiers/domain**, not in widgets. Widgets render state and forward user intent.
 - **Notifiers** extend `Notifier` and get their dependencies with `ref.watch(...)` in `build()`, never via constructors. Widgets never read `taskRepositoryProvider` directly; data a screen loads goes through a provider (e.g. `taskStatsProvider`) or a notifier method.
 - **Time is injected.** Use `clock.now()` from `package:clock` instead of `DateTime.now()` in logic, so tests can control time with `fakeAsync` / `withClock`.
@@ -90,7 +91,7 @@ Rules:
 
 - `flutter test` must pass before every commit.
 - Repository/database logic: test against `AppDatabase(NativeDatabase.memory())`.
-- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `fakePreferences()`, `buildTask()`); extend them when the interface grows.
+- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `fakePreferences()`, `buildTask()`); extend them when the interface grows. `FakeTaskRepository` also implements `IFocusSessionRepository`: override `taskRepositoryProvider` **and** `focusSessionRepositoryProvider` with the same instance.
 - Notifiers: `ProviderContainer(overrides: [...])` (or `ProviderContainer.test`). Widgets: `ProviderScope(overrides: [...])` with fakes. Anything that reads settings needs `sharedPreferencesProvider.overrideWithValue(await fakePreferences())`.
 - Every bug fix comes with a regression test.
 

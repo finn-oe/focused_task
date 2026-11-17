@@ -31,9 +31,10 @@ Future<T> _withContext<T>(WidgetTester tester, Locale locale, T Function(BuildCo
 
 void main() {
   testWidgets('plan screen shows German texts for de', (tester) async {
+    final repository = FakeTaskRepository();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [taskRepositoryProvider.overrideWithValue(FakeTaskRepository())],
+        overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
         child: localizedApp(home: const PlanScreen(), locale: const Locale('de')),
       ),
     );
@@ -71,7 +72,7 @@ void main() {
         );
         await tester.pumpWidget(
           ProviderScope(
-            overrides: [taskRepositoryProvider.overrideWithValue(repository)],
+            overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
             child: localizedApp(home: const StatsScreen(), locale: locale),
           ),
         );

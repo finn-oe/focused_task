@@ -374,6 +374,24 @@ abstract class AppLocalizations {
   /// **'No limit'**
   String get taskFormNoLimit;
 
+  /// No description provided for @taskFormTrackedTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracked time'**
+  String get taskFormTrackedTime;
+
+  /// No description provided for @taskFormAddTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Add time'**
+  String get taskFormAddTime;
+
+  /// No description provided for @taskFormAddTimeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add tracked time'**
+  String get taskFormAddTimeTitle;
+
   /// No description provided for @taskFormTargetDurationValue.
   ///
   /// In en, this message translates to:
@@ -553,6 +571,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard'**
   String get recoveryDiscard;
+
+  /// No description provided for @recoveryDeletedTask.
+  ///
+  /// In en, this message translates to:
+  /// **'(deleted task)'**
+  String get recoveryDeletedTask;
 
   /// No description provided for @recoveryUntilNow.
   ///
