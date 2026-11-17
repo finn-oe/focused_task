@@ -129,8 +129,13 @@ class AppDatabase extends _$AppDatabase {
     await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(sortOrder: Value(sortOrder)));
   }
 
-  Future<void> setTaskCompletion({required int taskId, required bool isCompleted}) async {
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(isCompleted: Value(isCompleted)));
+  /// Marks a task as (in)complete. Completing a task also closes a running session, so its timer
+  /// never keeps counting after the task is done.
+  Future<void> setTaskCompletion({required int taskId, required bool isCompleted, DateTime? at}) async {
+    if (isCompleted) {
+      return completeTask(taskId: taskId, completedAt: at ?? DateTime.now());
+    }
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(isCompleted: Value(false)));
   }
 
   Future<void> startTaskSession({required int taskId, required DateTime startedAt}) async {
@@ -150,20 +155,23 @@ class AppDatabase extends _$AppDatabase {
     await (update(tasks)..where((row) => row.id.equals(taskId))).write(TasksCompanion(timeSpent: Value(task.timeSpent + clampedElapsed), latestStart: const Value(null)));
   }
 
-  Future<void> completeTask({required int taskId, required DateTime completedAt}) async {
-    await pauseTaskSession(taskId: taskId, pausedAt: completedAt);
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(isCompleted: Value(true)));
+  Future<void> completeTask({required int taskId, required DateTime completedAt}) {
+    return transaction(() async {
+      await pauseTaskSession(taskId: taskId, pausedAt: completedAt);
+      await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(isCompleted: Value(true)));
+    });
   }
 
   Future<void> discardUnfinishedSession(int taskId) async {
     await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(latestStart: Value(null)));
   }
 
+  /// Tasks with a session that was never closed (e.g. the app was killed while focusing).
+  ///
+  /// Completed tasks are included on purpose: older versions could complete a task without closing
+  /// its session, and those rows must be recoverable too.
   Future<List<Task>> getRecoverableSessions() {
-    final query = select(tasks)
-      ..where((task) => task.latestStart.isNotNull())
-      ..where((task) => task.isCompleted.equals(false));
-    return query.get();
+    return (select(tasks)..where((task) => task.latestStart.isNotNull())).get();
   }
 
   Future<int> deleteTask(int taskId) {

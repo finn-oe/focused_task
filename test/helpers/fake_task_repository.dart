@@ -121,7 +121,7 @@ class FakeTaskRepository implements ITaskRepository {
 
   @override
   Future<void> setTaskCompletion({required int taskId, required bool isCompleted}) async {
-    _update(taskId, (task) => task.copyWith(isCompleted: isCompleted));
+    _update(taskId, (task) => (isCompleted ? _closeSession(task, DateTime.now()) : task).copyWith(isCompleted: isCompleted));
   }
 
   @override
