@@ -1,8 +1,5 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
+import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:focused_task/core/database/tables/tasks_table.dart';
@@ -218,10 +215,16 @@ class AppDatabase extends _$AppDatabase {
   }
 }
 
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File(p.join(directory.path, 'focused_task.sqlite'));
-    return NativeDatabase.createInBackground(file);
-  });
+/// File name (without `.sqlite`) of the database.
+///
+/// Native: `<application documents>/focused_task.sqlite` – the path used since the first release, so existing data is
+/// kept. Web: stored in OPFS or IndexedDB, depending on what the browser supports.
+const databaseName = 'focused_task';
+
+QueryExecutor _openConnection() {
+  return driftDatabase(
+    name: databaseName,
+    native: const DriftNativeOptions(databaseDirectory: getApplicationDocumentsDirectory),
+    web: DriftWebOptions(sqlite3Wasm: Uri.parse('sqlite3.wasm'), driftWorker: Uri.parse('drift_worker.js')),
+  );
 }

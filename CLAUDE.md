@@ -28,7 +28,7 @@ Rules that follow from this:
 
 - **Never** import `dart:io` (or call `Platform.*`) from shared code. Put platform-specific code behind an interface in `lib/core/services/` and select the implementation with conditional imports (`if (dart.library.io)` / `if (dart.library.js_interop)`) or `kIsWeb` + `defaultTargetPlatform`.
 - Every plugin added to `pubspec.yaml` must support all six platforms, or be wrapped so the app degrades gracefully where it is missing (feature hidden, not a crash).
-- The database must work on web too (Drift WASM / `drift_flutter`), so keep database setup in one place (`lib/core/database/`).
+- The database must work on web too (Drift WASM / `drift_flutter`), so keep database setup in one place (`lib/core/database/`). The native file is `<app documents>/focused_task.sqlite` – never change name or location (users would lose their data). After upgrading `drift` or `sqlite3`, update `web/drift_worker.js` and `web/sqlite3.wasm` (README → Web; CI checks them).
 - Layouts must work from a 360 px phone up to a wide desktop window. Prefer adaptive layouts (`LayoutBuilder`, `NavigationRail` on wide screens) over fixed sizes.
 - Respect platform conventions: back gesture/button on Android (`PopScope`), keyboard shortcuts and window focus on desktop, safe areas on mobile.
 - Before calling a change done, at minimum run `flutter analyze` and `flutter test`; if platform code was touched, also build the affected targets (e.g. `flutter build web`, `flutter build windows`).

@@ -36,6 +36,14 @@ jobs:
         run: |
           dart run build_runner build --delete-conflicting-outputs
           git diff --exit-code -- lib
+      - name: Check web database files match the locked drift / sqlite3 versions
+        run: |
+          dart compile js -O4 --no-source-maps tool/drift_worker.dart -o web/drift_worker.js
+          rm -f web/drift_worker.js.deps
+          git diff --exit-code -- web/drift_worker.js
+          SQLITE3_VERSION=$(awk '/^  sqlite3:$/{f=1} f&&/version:/{gsub(/"/,"",$2); print $2; exit}' pubspec.lock)
+          curl -sSfL -o /tmp/sqlite3.wasm "https://github.com/simolus3/sqlite3.dart/releases/download/sqlite3-${SQLITE3_VERSION}/sqlite3.wasm"
+          cmp /tmp/sqlite3.wasm web/sqlite3.wasm
       - run: flutter analyze
       - run: flutter test --coverage
 
@@ -43,14 +51,12 @@ jobs:
     name: Build ${{ matrix.target }}
     needs: analyze-and-test
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental == true }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - { target: apk, os: ubuntu-latest, args: --debug }
-          # Web is not supported yet (drift uses dart:ffi), see #30. Remove continue-on-error once fixed.
-          - { target: web, os: ubuntu-latest, args: '', experimental: true }
+          - { target: web, os: ubuntu-latest, args: '' }
           - { target: linux, os: ubuntu-latest, args: --debug }
           - { target: windows, os: windows-latest, args: --debug }
           - { target: macos, os: macos-latest, args: --debug }

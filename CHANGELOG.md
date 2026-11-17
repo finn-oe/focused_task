@@ -3,6 +3,14 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.3.0] - 2026-11-17
+
+### Added
+- The app runs in the browser (web). Tasks are stored locally in the browser. (#30)
+
+### Changed
+- The database is opened through `drift_flutter`; on Android, iOS and desktop it stays in the same file, so existing data is kept. (#30)
+
 ## [1.2.0] - 2026-11-17
 
 ### Added
