@@ -55,4 +55,16 @@ void main() {
       expect(sessions.map((task) => task.id), [id]);
     });
   });
+
+  test('countCompletedTasksOlderThanDays matches what cleanup deletes', () async {
+    final old = DateTime.now().subtract(const Duration(days: 40));
+    final done = await createTask(day: old);
+    await repository.setTaskCompletion(taskId: done, isCompleted: true);
+    await createTask(day: old); // not completed
+    await repository.setTaskCompletion(taskId: await createTask(), isCompleted: true); // recent
+
+    expect(await repository.countCompletedTasksOlderThanDays(30), 1);
+    expect(await repository.deleteCompletedTasksOlderThanDays(30), 1);
+    expect(await repository.countCompletedTasksOlderThanDays(30), 0);
+  });
 }

@@ -159,10 +159,18 @@ class FakeTaskRepository implements ITaskRepository {
   @override
   Future<List<TaskEntity>> getRecoverableSessions() async => _tasks.values.where((task) => task.latestStart != null).toList();
 
+  List<int> _cleanupCandidates(int days) {
+    final now = DateTime.now();
+    final cutoff = DateTime(now.year, now.month, now.day - days);
+    return _tasks.values.where((task) => task.isCompleted && task.latestStart == null && task.assignedDate.isBefore(cutoff)).map((task) => task.id).toList();
+  }
+
+  @override
+  Future<int> countCompletedTasksOlderThanDays(int days) async => _cleanupCandidates(days).length;
+
   @override
   Future<int> deleteCompletedTasksOlderThanDays(int days) async {
-    final cutoff = _day(DateTime.now()).subtract(Duration(days: days));
-    final ids = _tasks.values.where((task) => task.isCompleted && task.latestStart == null && task.assignedDate.isBefore(cutoff)).map((task) => task.id).toList();
+    final ids = _cleanupCandidates(days);
     ids.forEach(_tasks.remove);
     _changes.add(null);
     return ids.length;

@@ -41,5 +41,7 @@ abstract class ITaskRepository {
 
   Future<int> deleteCompletedTasksOlderThanDays(int days);
 
+  Future<int> countCompletedTasksOlderThanDays(int days);
+
   Future<void> replaceTaskTodos(int taskId, List<TaskTodoEntity> newTodos);
 }

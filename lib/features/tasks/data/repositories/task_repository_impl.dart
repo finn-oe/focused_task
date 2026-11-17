@@ -108,11 +108,12 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
-  Future<int> deleteCompletedTasksOlderThanDays(int days) {
-    final safeDays = days < 1 ? 1 : days;
-    final cutoff = DateTime.now().addDays(-safeDays);
-    return _database.deleteCompletedTasksBefore(cutoff);
-  }
+  Future<int> deleteCompletedTasksOlderThanDays(int days) => _database.deleteCompletedTasksBefore(_retentionCutoff(days));
+
+  @override
+  Future<int> countCompletedTasksOlderThanDays(int days) => _database.countCompletedTasksBefore(_retentionCutoff(days));
+
+  DateTime _retentionCutoff(int days) => DateTime.now().addDays(-(days < 1 ? 1 : days));
 
   @override
   Future<void> replaceTaskTodos(int taskId, List<TaskTodoEntity> newTodos) async {

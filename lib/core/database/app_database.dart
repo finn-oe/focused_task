@@ -178,10 +178,20 @@ class AppDatabase extends _$AppDatabase {
     return (delete(tasks)..where((t) => t.id.equals(taskId))).go();
   }
 
+  Expression<bool> _isCleanupCandidate(Tasks task, DateTime cutoffDay) {
+    return task.isCompleted.equals(true) & task.latestStart.isNull() & task.assignedDate.isSmallerThanValue(cutoffDay.dateOnly);
+  }
+
   Future<int> deleteCompletedTasksBefore(DateTime cutoffDay) {
-    final cutoff = cutoffDay.dateOnly;
-    final query = delete(tasks)..where((task) => task.isCompleted.equals(true) & task.latestStart.isNull() & task.assignedDate.isSmallerThanValue(cutoff));
-    return query.go();
+    return (delete(tasks)..where((task) => _isCleanupCandidate(task, cutoffDay))).go();
+  }
+
+  Future<int> countCompletedTasksBefore(DateTime cutoffDay) {
+    final count = tasks.id.count();
+    final query = selectOnly(tasks)
+      ..addColumns([count])
+      ..where(_isCleanupCandidate(tasks, cutoffDay));
+    return query.map((row) => row.read(count) ?? 0).getSingle();
   }
 
   Future<void> replaceTaskTodos(int taskId, List<TaskTodo> newTodos) {
