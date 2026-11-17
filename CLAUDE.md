@@ -84,6 +84,10 @@ Rules:
 - Widgets: `ProviderScope(overrides: [...])` with fakes.
 - Every bug fix comes with a regression test.
 
+## Toolchain
+
+Flutter **3.44.6** (stable, Dart 3.12), pinned in `.github/workflows/ci.yml` (`FLUTTER_VERSION`). Use the same version locally. Upgrading Flutter (and moving from `package:flutter/material.dart` to `package:material_ui`, deprecated since 3.47) is part of #18.
+
 ## Common commands
 
 ```bash
@@ -97,6 +101,8 @@ flutter run -d windows   # or chrome, macos, linux, android, ios
 
 ## Workflow
 
-- Issues on GitHub (`finn-oe/focused_task`) describe planned work; reference the issue number in commits/PRs (`Fixes #12`).
-- Keep PRs small and focused on one issue.
+- **Start with the roadmap issue #38.** It lists the open issues in the order they should be done, which ones can run in parallel, and the rules for picking one up.
+- Every `agent-ready` issue has *Order* (depends on / blocks), *Context*, *Tasks*, *Acceptance criteria* and a *Definition of done*. Follow it, and update the spec of later issues if your work changes them.
+- Branch `issue-<number>-<slug>` from `main`, one issue per PR, `Fixes #<number>` in the PR body, tick the box in #38 after merging.
+- Never develop two database schema changes at the same time (each bumps `schemaVersion`).
 - Update `README.md` / `docs/` when behaviour or architecture changes.
