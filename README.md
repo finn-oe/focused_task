@@ -46,7 +46,7 @@ The goal is to support **all platforms Flutter offers**:
 
 ## Getting started
 
-Requirements: [Flutter](https://docs.flutter.dev/get-started/install) (stable channel, Dart ≥ 3.12).
+Requirements: [Flutter](https://docs.flutter.dev/get-started/install) 3.44.6 (stable, Dart 3.12) – the version CI uses.
 
 ```bash
 git clone https://github.com/finn-oe/focused_task.git
@@ -101,20 +101,20 @@ More detail and the rules for contributors are in [CLAUDE.md](CLAUDE.md).
 
 ## Roadmap
 
-Work is grouped into [milestones](https://github.com/finn-oe/focused_task/milestones):
+The order of all planned work is tracked in **[#38 – Roadmap: implementation order](https://github.com/finn-oe/focused_task/issues/38)**, grouped into [milestones](https://github.com/finn-oe/focused_task/milestones):
 
-1. **Stability** – date/DST bug (#11), timer & alarm bugs (#12, #13, #15, #16), retention deleting history (#14),
-   test suite + CI (#17), code cleanup (#18).
-2. **Time tracking & statistics** – focus-session log (#19), charts & planned vs. actual (#20, #4), goals & streaks (#21).
-3. **Calendar & planning** – week/month views (#22, #9), rollover of unfinished tasks (#23), recurring tasks (#24),
-   task form (#25), categories (#2), due dates (#10).
-4. **Focus & distractions** – choose/skip tasks (#26), breaks (#27), distraction tracking (#28),
-   desktop mini timer (#29), Android app blocker (#7).
-5. **All platforms & polish** – web support (#30), responsive layout & accessibility (#31), localisation (#32),
-   export/backup (#33).
+1. **Stability** ✅ – time-tracking and date bugs, tests, CI (PR #34).
+2. **Foundations** – Riverpod Notifier API (#18), localisation (#32), web (#30), focus-session log (#19),
+   navigation shell (#9), notifications (#35), integration tests (#36).
+3. **Core planner** – task form (#25), focus queue (#26), calendar views (#22), rollover (#23),
+   statistics (#20), goals & streaks (#21).
+4. **Categories, focus & habits** – categories (#2), breaks (#27), distraction tracking (#28),
+   due dates & reminders (#10), recurring tasks (#24).
+5. **Platforms & release** – desktop mini timer (#29), responsive & accessible layout (#31),
+   Android app blocker (#7), export/backup (#33), release pipeline (#37).
 
 ## Contributing
 
-Issues and pull requests are welcome. Please read [CLAUDE.md](CLAUDE.md) first – it describes the
+Issues and pull requests are welcome. Pick the next issue from the [roadmap (#38)](https://github.com/finn-oe/focused_task/issues/38) and read [CLAUDE.md](CLAUDE.md) first – it describes the
 product idea, the architecture rules and the quality bar (`flutter analyze` clean, tests passing,
 works on all platforms).
