@@ -142,4 +142,44 @@ void main() {
       });
     });
   });
+
+  group('FocusModeNotifier crash recovery', () {
+    test('records a heartbeat while a session runs', () {
+      _runFocus([buildTask(assignedDate: _today)], (async, notifier, repository, alarm) {
+        notifier.initializeForDay(_today);
+        async.flushMicrotasks();
+        async.elapse(const Duration(minutes: 2, seconds: 5));
+
+        final lastSeen = repository.task(1).lastSeenAt!;
+        expect(clock.now().difference(lastSeen), lessThanOrEqualTo(FocusModeNotifier.heartbeatInterval));
+      });
+    });
+
+    test('recovering until last activity ignores the time the app was closed', () {
+      final start = DateTime(2026, 11, 16, 20);
+      final session = buildTask(assignedDate: _today, latestStart: start).copyWith(lastSeenAt: start.add(const Duration(minutes: 40)));
+      _runFocus([session], (async, notifier, repository, alarm) {
+        notifier.recoverSessions(recovery: SessionRecovery.untilLastActivity, sessions: [session]);
+        async.flushMicrotasks();
+
+        expect(repository.task(1).isRunning, isFalse);
+        expect(Duration(milliseconds: repository.task(1).timeSpent), const Duration(minutes: 40));
+      });
+    });
+
+    test('recovering until now and discarding', () {
+      final start = DateTime(2026, 11, 17, 8);
+      final first = buildTask(id: 1, assignedDate: _today, latestStart: start);
+      final second = buildTask(id: 2, assignedDate: _today, sortOrder: 'a1', latestStart: start);
+      _runFocus([first, second], (async, notifier, repository, alarm) {
+        notifier.recoverSessions(recovery: SessionRecovery.untilNow, sessions: [first]);
+        notifier.recoverSessions(recovery: SessionRecovery.discard, sessions: [second]);
+        async.flushMicrotasks();
+
+        expect(Duration(milliseconds: repository.task(1).timeSpent), const Duration(hours: 1));
+        expect(repository.task(2).timeSpent, 0);
+        expect(repository.task(2).isRunning, isFalse);
+      });
+    });
+  });
 }

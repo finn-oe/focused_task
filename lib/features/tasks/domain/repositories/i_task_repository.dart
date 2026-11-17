@@ -31,6 +31,9 @@ abstract class ITaskRepository {
 
   Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt});
 
+  /// Marks the running session of [taskId] as alive at [at] (see [TaskEntity.lastSeenAt]).
+  Future<void> recordHeartbeat({required int taskId, required DateTime at});
+
   Future<void> completeTask({required int taskId, required DateTime completedAt});
 
   Future<void> deleteTask(int taskId);

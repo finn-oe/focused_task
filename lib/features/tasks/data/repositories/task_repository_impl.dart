@@ -87,6 +87,11 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
+  Future<void> recordHeartbeat({required int taskId, required DateTime at}) {
+    return _database.recordHeartbeat(taskId: taskId, at: at);
+  }
+
+  @override
   Future<void> completeTask({required int taskId, required DateTime completedAt}) {
     return _database.completeTask(taskId: taskId, completedAt: completedAt);
   }
@@ -136,6 +141,7 @@ class TaskRepositoryImpl implements ITaskRepository {
       timeSpent: task.timeSpent,
       latestStart: task.latestStart,
       targetDurationMinutes: task.targetDurationMinutes,
+      lastSeenAt: task.lastSeenAt,
       todos: data.todos.map((todo) => TaskTodoEntity(id: todo.id, title: todo.title, isCompleted: todo.isCompleted, sortOrder: todo.sortOrder)).toList(growable: false),
     );
   }

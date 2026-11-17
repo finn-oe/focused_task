@@ -22,7 +22,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -36,6 +36,9 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 3) {
           await m.createTable(taskTodos);
+        }
+        if (from < 4) {
+          await m.addColumn(tasks, tasks.lastSeenAt);
         }
       },
       beforeOpen: (details) async {
@@ -139,7 +142,12 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> startTaskSession({required int taskId, required DateTime startedAt}) async {
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(latestStart: Value(startedAt)));
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(latestStart: Value(startedAt), lastSeenAt: Value(startedAt)));
+  }
+
+  /// Records that the running session of [taskId] is still alive at [at].
+  Future<void> recordHeartbeat({required int taskId, required DateTime at}) async {
+    await (update(tasks)..where((task) => task.id.equals(taskId) & task.latestStart.isNotNull())).write(TasksCompanion(lastSeenAt: Value(at)));
   }
 
   Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt}) async {
@@ -152,7 +160,9 @@ class AppDatabase extends _$AppDatabase {
     final elapsed = pausedAt.difference(task.latestStart!).inMilliseconds;
     final clampedElapsed = elapsed < 0 ? 0 : elapsed;
 
-    await (update(tasks)..where((row) => row.id.equals(taskId))).write(TasksCompanion(timeSpent: Value(task.timeSpent + clampedElapsed), latestStart: const Value(null)));
+    await (update(tasks)..where((row) => row.id.equals(taskId))).write(
+      TasksCompanion(timeSpent: Value(task.timeSpent + clampedElapsed), latestStart: const Value(null), lastSeenAt: const Value(null)),
+    );
   }
 
   Future<void> completeTask({required int taskId, required DateTime completedAt}) {
@@ -163,7 +173,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<void> discardUnfinishedSession(int taskId) async {
-    await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(latestStart: Value(null)));
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(latestStart: Value(null), lastSeenAt: Value(null)));
   }
 
   /// Tasks with a session that was never closed (e.g. the app was killed while focusing).

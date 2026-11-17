@@ -30,13 +30,17 @@ Widget _app(FakeTaskRepository repository, {String initialLocation = '/focus'}) 
 void main() {
   setUp(() {
     // wakelock_plus has no implementation in widget tests.
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMessageHandler('dev.flutter.pigeon.wakelock_plus_platform_interface.WakelockPlusApi.toggle', (_) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMessageHandler('dev.flutter.pigeon.wakelock_plus_platform_interface.WakelockPlusApi.toggle', (
+      _,
+    ) async {
       return const StandardMessageCodec().encodeMessage(<Object?>[null]);
     });
   });
 
   testWidgets('system back in focus mode pauses the session and returns to plan', (tester) async {
-    final repository = FakeTaskRepository(tasks: [buildTask(title: 'Deep work', assignedDate: DateTime.now())]);
+    final repository = FakeTaskRepository(
+      tasks: [buildTask(title: 'Deep work', assignedDate: DateTime.now())],
+    );
 
     await tester.pumpWidget(_app(repository));
     await tester.pump();

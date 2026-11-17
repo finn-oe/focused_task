@@ -132,7 +132,12 @@ class FakeTaskRepository implements ITaskRepository {
 
   @override
   Future<void> startTaskSession({required int taskId, required DateTime startedAt}) async {
-    _update(taskId, (task) => task.copyWith(latestStart: startedAt));
+    _update(taskId, (task) => task.copyWith(latestStart: startedAt, lastSeenAt: startedAt));
+  }
+
+  @override
+  Future<void> recordHeartbeat({required int taskId, required DateTime at}) async {
+    _update(taskId, (task) => task.isRunning ? task.copyWith(lastSeenAt: at) : task);
   }
 
   @override

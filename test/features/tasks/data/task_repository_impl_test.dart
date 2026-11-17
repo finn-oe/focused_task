@@ -67,4 +67,27 @@ void main() {
     expect(await repository.deleteCompletedTasksOlderThanDays(30), 1);
     expect(await repository.countCompletedTasksOlderThanDays(30), 0);
   });
+
+  group('session heartbeat', () {
+    test('is set on start, updated while running and cleared on pause', () async {
+      final id = await createTask();
+      final start = DateTime(2026, 11, 17, 9);
+      await repository.startTaskSession(taskId: id, startedAt: start);
+      expect((await repository.getTaskById(id))!.lastActivityAt, start);
+
+      await repository.recordHeartbeat(taskId: id, at: start.add(const Duration(minutes: 20)));
+      expect((await repository.getTaskById(id))!.lastActivityAt, start.add(const Duration(minutes: 20)));
+
+      await repository.pauseTaskSession(taskId: id, pausedAt: start.add(const Duration(minutes: 25)));
+      final paused = (await repository.getTaskById(id))!;
+      expect(paused.lastSeenAt, isNull);
+      expect(paused.lastActivityAt, isNull);
+    });
+
+    test('is ignored for tasks without a running session', () async {
+      final id = await createTask();
+      await repository.recordHeartbeat(taskId: id, at: DateTime.now());
+      expect((await repository.getTaskById(id))!.lastSeenAt, isNull);
+    });
+  });
 }

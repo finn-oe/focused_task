@@ -123,6 +123,17 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _lastSeenAtMeta = const VerificationMeta(
+    'lastSeenAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSeenAt = GeneratedColumn<DateTime>(
+    'last_seen_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -135,6 +146,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     timeSpent,
     latestStart,
     targetDurationMinutes,
+    lastSeenAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -226,6 +238,15 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         ),
       );
     }
+    if (data.containsKey('last_seen_at')) {
+      context.handle(
+        _lastSeenAtMeta,
+        lastSeenAt.isAcceptableOrUnknown(
+          data['last_seen_at']!,
+          _lastSeenAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -275,6 +296,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         DriftSqlType.int,
         data['${effectivePrefix}target_duration_minutes'],
       ),
+      lastSeenAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_seen_at'],
+      ),
     );
   }
 
@@ -295,6 +320,9 @@ class Task extends DataClass implements Insertable<Task> {
   final int timeSpent;
   final DateTime? latestStart;
   final int? targetDurationMinutes;
+
+  /// Last time the running session was known to be alive (heartbeat). Used to recover crashed sessions.
+  final DateTime? lastSeenAt;
   const Task({
     required this.id,
     required this.title,
@@ -306,6 +334,7 @@ class Task extends DataClass implements Insertable<Task> {
     required this.timeSpent,
     this.latestStart,
     this.targetDurationMinutes,
+    this.lastSeenAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -325,6 +354,9 @@ class Task extends DataClass implements Insertable<Task> {
     }
     if (!nullToAbsent || targetDurationMinutes != null) {
       map['target_duration_minutes'] = Variable<int>(targetDurationMinutes);
+    }
+    if (!nullToAbsent || lastSeenAt != null) {
+      map['last_seen_at'] = Variable<DateTime>(lastSeenAt);
     }
     return map;
   }
@@ -347,6 +379,9 @@ class Task extends DataClass implements Insertable<Task> {
       targetDurationMinutes: targetDurationMinutes == null && nullToAbsent
           ? const Value.absent()
           : Value(targetDurationMinutes),
+      lastSeenAt: lastSeenAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSeenAt),
     );
   }
 
@@ -368,6 +403,7 @@ class Task extends DataClass implements Insertable<Task> {
       targetDurationMinutes: serializer.fromJson<int?>(
         json['targetDurationMinutes'],
       ),
+      lastSeenAt: serializer.fromJson<DateTime?>(json['lastSeenAt']),
     );
   }
   @override
@@ -384,6 +420,7 @@ class Task extends DataClass implements Insertable<Task> {
       'timeSpent': serializer.toJson<int>(timeSpent),
       'latestStart': serializer.toJson<DateTime?>(latestStart),
       'targetDurationMinutes': serializer.toJson<int?>(targetDurationMinutes),
+      'lastSeenAt': serializer.toJson<DateTime?>(lastSeenAt),
     };
   }
 
@@ -398,6 +435,7 @@ class Task extends DataClass implements Insertable<Task> {
     int? timeSpent,
     Value<DateTime?> latestStart = const Value.absent(),
     Value<int?> targetDurationMinutes = const Value.absent(),
+    Value<DateTime?> lastSeenAt = const Value.absent(),
   }) => Task(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -411,6 +449,7 @@ class Task extends DataClass implements Insertable<Task> {
     targetDurationMinutes: targetDurationMinutes.present
         ? targetDurationMinutes.value
         : this.targetDurationMinutes,
+    lastSeenAt: lastSeenAt.present ? lastSeenAt.value : this.lastSeenAt,
   );
   Task copyWithCompanion(TasksCompanion data) {
     return Task(
@@ -434,6 +473,9 @@ class Task extends DataClass implements Insertable<Task> {
       targetDurationMinutes: data.targetDurationMinutes.present
           ? data.targetDurationMinutes.value
           : this.targetDurationMinutes,
+      lastSeenAt: data.lastSeenAt.present
+          ? data.lastSeenAt.value
+          : this.lastSeenAt,
     );
   }
 
@@ -449,7 +491,8 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('priority: $priority, ')
           ..write('timeSpent: $timeSpent, ')
           ..write('latestStart: $latestStart, ')
-          ..write('targetDurationMinutes: $targetDurationMinutes')
+          ..write('targetDurationMinutes: $targetDurationMinutes, ')
+          ..write('lastSeenAt: $lastSeenAt')
           ..write(')'))
         .toString();
   }
@@ -466,6 +509,7 @@ class Task extends DataClass implements Insertable<Task> {
     timeSpent,
     latestStart,
     targetDurationMinutes,
+    lastSeenAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -480,7 +524,8 @@ class Task extends DataClass implements Insertable<Task> {
           other.priority == this.priority &&
           other.timeSpent == this.timeSpent &&
           other.latestStart == this.latestStart &&
-          other.targetDurationMinutes == this.targetDurationMinutes);
+          other.targetDurationMinutes == this.targetDurationMinutes &&
+          other.lastSeenAt == this.lastSeenAt);
 }
 
 class TasksCompanion extends UpdateCompanion<Task> {
@@ -494,6 +539,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<int> timeSpent;
   final Value<DateTime?> latestStart;
   final Value<int?> targetDurationMinutes;
+  final Value<DateTime?> lastSeenAt;
   const TasksCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -505,6 +551,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.timeSpent = const Value.absent(),
     this.latestStart = const Value.absent(),
     this.targetDurationMinutes = const Value.absent(),
+    this.lastSeenAt = const Value.absent(),
   });
   TasksCompanion.insert({
     this.id = const Value.absent(),
@@ -517,6 +564,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.timeSpent = const Value.absent(),
     this.latestStart = const Value.absent(),
     this.targetDurationMinutes = const Value.absent(),
+    this.lastSeenAt = const Value.absent(),
   }) : title = Value(title),
        assignedDate = Value(assignedDate),
        sortOrder = Value(sortOrder);
@@ -531,6 +579,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<int>? timeSpent,
     Expression<DateTime>? latestStart,
     Expression<int>? targetDurationMinutes,
+    Expression<DateTime>? lastSeenAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -544,6 +593,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (latestStart != null) 'latest_start': latestStart,
       if (targetDurationMinutes != null)
         'target_duration_minutes': targetDurationMinutes,
+      if (lastSeenAt != null) 'last_seen_at': lastSeenAt,
     });
   }
 
@@ -558,6 +608,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<int>? timeSpent,
     Value<DateTime?>? latestStart,
     Value<int?>? targetDurationMinutes,
+    Value<DateTime?>? lastSeenAt,
   }) {
     return TasksCompanion(
       id: id ?? this.id,
@@ -571,6 +622,7 @@ class TasksCompanion extends UpdateCompanion<Task> {
       latestStart: latestStart ?? this.latestStart,
       targetDurationMinutes:
           targetDurationMinutes ?? this.targetDurationMinutes,
+      lastSeenAt: lastSeenAt ?? this.lastSeenAt,
     );
   }
 
@@ -609,6 +661,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
         targetDurationMinutes.value,
       );
     }
+    if (lastSeenAt.present) {
+      map['last_seen_at'] = Variable<DateTime>(lastSeenAt.value);
+    }
     return map;
   }
 
@@ -624,7 +679,8 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('priority: $priority, ')
           ..write('timeSpent: $timeSpent, ')
           ..write('latestStart: $latestStart, ')
-          ..write('targetDurationMinutes: $targetDurationMinutes')
+          ..write('targetDurationMinutes: $targetDurationMinutes, ')
+          ..write('lastSeenAt: $lastSeenAt')
           ..write(')'))
         .toString();
   }
@@ -1021,6 +1077,7 @@ typedef $$TasksTableCreateCompanionBuilder =
       Value<int> timeSpent,
       Value<DateTime?> latestStart,
       Value<int?> targetDurationMinutes,
+      Value<DateTime?> lastSeenAt,
     });
 typedef $$TasksTableUpdateCompanionBuilder =
     TasksCompanion Function({
@@ -1034,6 +1091,7 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<int> timeSpent,
       Value<DateTime?> latestStart,
       Value<int?> targetDurationMinutes,
+      Value<DateTime?> lastSeenAt,
     });
 
 final class $$TasksTableReferences
@@ -1114,6 +1172,11 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<int> get targetDurationMinutes => $composableBuilder(
     column: $table.targetDurationMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSeenAt => $composableBuilder(
+    column: $table.lastSeenAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1201,6 +1264,11 @@ class $$TasksTableOrderingComposer
     column: $table.targetDurationMinutes,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get lastSeenAt => $composableBuilder(
+    column: $table.lastSeenAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$TasksTableAnnotationComposer
@@ -1249,6 +1317,11 @@ class $$TasksTableAnnotationComposer
 
   GeneratedColumn<int> get targetDurationMinutes => $composableBuilder(
     column: $table.targetDurationMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastSeenAt => $composableBuilder(
+    column: $table.lastSeenAt,
     builder: (column) => column,
   );
 
@@ -1316,6 +1389,7 @@ class $$TasksTableTableManager
                 Value<int> timeSpent = const Value.absent(),
                 Value<DateTime?> latestStart = const Value.absent(),
                 Value<int?> targetDurationMinutes = const Value.absent(),
+                Value<DateTime?> lastSeenAt = const Value.absent(),
               }) => TasksCompanion(
                 id: id,
                 title: title,
@@ -1327,6 +1401,7 @@ class $$TasksTableTableManager
                 timeSpent: timeSpent,
                 latestStart: latestStart,
                 targetDurationMinutes: targetDurationMinutes,
+                lastSeenAt: lastSeenAt,
               ),
           createCompanionCallback:
               ({
@@ -1340,6 +1415,7 @@ class $$TasksTableTableManager
                 Value<int> timeSpent = const Value.absent(),
                 Value<DateTime?> latestStart = const Value.absent(),
                 Value<int?> targetDurationMinutes = const Value.absent(),
+                Value<DateTime?> lastSeenAt = const Value.absent(),
               }) => TasksCompanion.insert(
                 id: id,
                 title: title,
@@ -1351,6 +1427,7 @@ class $$TasksTableTableManager
                 timeSpent: timeSpent,
                 latestStart: latestStart,
                 targetDurationMinutes: targetDurationMinutes,
+                lastSeenAt: lastSeenAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(

@@ -40,4 +40,22 @@ void main() {
     expect(repository.task(1).isCompleted, isTrue);
     expect(find.byIcon(Icons.check), findsOneWidget);
   });
+
+  testWidgets('offers to recover an unfinished session up to its last activity', (tester) async {
+    final start = DateTime.now().subtract(const Duration(hours: 8));
+    final repository = FakeTaskRepository(
+      tasks: [buildTask(title: 'Crashed task', assignedDate: DateTime.now(), latestStart: start).copyWith(lastSeenAt: start.add(const Duration(minutes: 30)))],
+    );
+
+    await tester.pumpWidget(_app(repository));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recover unfinished session?'), findsOneWidget);
+    expect(find.text('Until last activity (00:30)'), findsOneWidget);
+    await tester.tap(find.text('Until last activity (00:30)'));
+    await tester.pumpAndSettle();
+
+    expect(repository.task(1).isRunning, isFalse);
+    expect(Duration(milliseconds: repository.task(1).timeSpent), const Duration(minutes: 30));
+  });
 }

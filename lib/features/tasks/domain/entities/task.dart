@@ -37,6 +37,7 @@ class TaskEntity {
     required this.description,
     required this.latestStart,
     this.targetDurationMinutes,
+    this.lastSeenAt,
     required this.todos,
   });
 
@@ -50,9 +51,20 @@ class TaskEntity {
   final int timeSpent;
   final DateTime? latestStart;
   final int? targetDurationMinutes;
+
+  /// Last heartbeat of the running session; `null` if not running or written by an older version.
+  final DateTime? lastSeenAt;
   final List<TaskTodoEntity> todos;
 
   bool get isRunning => latestStart != null;
+
+  /// Time of the last sign of life of an unfinished session: the heartbeat, or the session start
+  /// when no heartbeat was ever written. `null` if no session is running.
+  DateTime? get lastActivityAt {
+    if (latestStart == null) return null;
+    final seen = lastSeenAt;
+    return seen != null && seen.isAfter(latestStart!) ? seen : latestStart;
+  }
 
   Duration elapsedAt(DateTime now) {
     if (latestStart == null) {
@@ -75,6 +87,7 @@ class TaskEntity {
     bool clearLatestStart = false,
     bool clearTargetDuration = false,
     int? targetDurationMinutes,
+    DateTime? lastSeenAt,
     List<TaskTodoEntity>? todos,
   }) {
     return TaskEntity(
@@ -88,6 +101,7 @@ class TaskEntity {
       timeSpent: timeSpent ?? this.timeSpent,
       latestStart: clearLatestStart ? null : latestStart ?? this.latestStart,
       targetDurationMinutes: clearTargetDuration ? null : targetDurationMinutes ?? this.targetDurationMinutes,
+      lastSeenAt: clearLatestStart ? null : lastSeenAt ?? this.lastSeenAt,
       todos: todos ?? this.todos,
     );
   }
