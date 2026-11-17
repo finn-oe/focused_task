@@ -43,7 +43,27 @@ The goal is to support **all platforms Flutter offers**:
 | iOS | ✅ builds (alarm via `alarm` package) |
 | Windows | ✅ builds and runs |
 | macOS / Linux | ⚠️ should build, not regularly tested |
-| Web | ❌ not yet – the app uses `dart:io` and native SQLite (tracked in the issues) |
+| Web | ✅ builds in CI; data is stored in the browser (IndexedDB or OPFS) |
+
+### Web
+
+On the web the database runs as SQLite compiled to WebAssembly (via `drift_flutter`). Two files in `web/` must match the
+locked package versions – CI fails if they don't:
+
+| File | Matches | Source |
+|---|---|---|
+| `web/sqlite3.wasm` | `sqlite3` 3.9.1 (see `pubspec.lock`) | `sqlite3.wasm` from the [sqlite3.dart release `sqlite3-<version>`](https://github.com/simolus3/sqlite3.dart/releases) |
+| `web/drift_worker.js` | `drift` / `sqlite3` in `pubspec.lock` | compiled from `tool/drift_worker.dart` |
+
+After upgrading `drift` or `sqlite3`:
+
+```bash
+dart compile js -O4 --no-source-maps tool/drift_worker.dart -o web/drift_worker.js && rm web/drift_worker.js.deps
+curl -L -o web/sqlite3.wasm https://github.com/simolus3/sqlite3.dart/releases/download/sqlite3-<version>/sqlite3.wasm
+```
+
+The worker is compiled locally instead of taken from the drift release, because the release build targets a different
+`sqlite3` version than the one we resolve, and mismatching files fail at runtime (`LinkError` on `WebAssembly.instantiate`).
 
 ## Getting started
 
