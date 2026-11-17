@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 
-import 'package:focused_task/core/ui/themes/dark_theme.dart';
-import 'package:focused_task/core/ui/themes/light_theme.dart';
-
 class AppThemes {
   const AppThemes._();
 
-  static ThemeData get light => buildLightTheme();
+  static const Color _seedColor = Color(0xFF2266EE);
 
-  static ThemeData get dark => buildDarkTheme();
+  static ThemeData get light => _build(Brightness.light);
+
+  static ThemeData get dark => _build(Brightness.dark);
+
+  static ThemeData _build(Brightness brightness) {
+    final base = ThemeData(
+      colorScheme: ColorScheme.fromSeed(seedColor: _seedColor, brightness: brightness),
+      useMaterial3: true,
+    );
+
+    return base.copyWith(
+      appBarTheme: base.appBarTheme.copyWith(centerTitle: false),
+      cardTheme: base.cardTheme.copyWith(elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+      floatingActionButtonTheme: base.floatingActionButtonTheme.copyWith(extendedPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12)),
+    );
+  }
 }

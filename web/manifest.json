@@ -1,6 +1,6 @@
 {
-    "name": "focused_task",
-    "short_name": "focused_task",
+    "name": "Focused Task",
+    "short_name": "Focused Task",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -1,3 +1,7 @@
+import 'package:clock/clock.dart';
+
+import 'package:focused_task/features/tasks/domain/entities/task.dart';
+
 class TaskStats {
   const TaskStats({
     required this.totalTasks,
@@ -15,16 +19,16 @@ class TaskStats {
   final int focusMinutesPerDay;
   final double completionScore;
 
-  factory TaskStats.fromTasks(Iterable<dynamic> tasks, {required int daysInRange}) {
+  factory TaskStats.fromTasks(Iterable<TaskEntity> tasks, {required int daysInRange}) {
     final taskList = tasks.toList(growable: false);
     final completedTasks = taskList.where((task) => task.isCompleted).toList(growable: false);
 
-    final now = DateTime.now();
+    final now = clock.now();
 
     final tasksWithTime = taskList.where((task) => task.elapsedAt(now).inMilliseconds > 0).toList(growable: false);
     int totalMilliseconds = 0;
     for (final task in tasksWithTime) {
-      totalMilliseconds += task.elapsedAt(now).inMilliseconds as int;
+      totalMilliseconds += task.elapsedAt(now).inMilliseconds;
     }
     final totalFocusMinutes = totalMilliseconds ~/ 60000;
     final completedCount = completedTasks.length;

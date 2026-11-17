@@ -47,4 +47,7 @@ abstract class ITaskRepository {
   Future<int> countCompletedTasksOlderThanDays(int days);
 
   Future<void> replaceTaskTodos(int taskId, List<TaskTodoEntity> newTodos);
+
+  /// Checks or unchecks a single sub-task without rewriting the others (IDs stay stable).
+  Future<void> setTodoCompletion({required int todoId, required bool isCompleted});
 }

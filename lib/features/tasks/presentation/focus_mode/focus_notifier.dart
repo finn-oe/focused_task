@@ -255,16 +255,15 @@ class FocusModeNotifier extends StateNotifier<FocusModeState> {
     final task = state.currentTask;
     if (task == null) return;
 
-    final updatedTodos = task.todos.map((todo) {
-      if (todo.id == todoId) {
-        return todo.copyWith(isCompleted: !todo.isCompleted);
-      }
-      return todo;
-    }).toList();
+    final todo = task.todos.where((todo) => todo.id == todoId).firstOrNull;
+    if (todo == null) return;
 
-    state = state.copyWith(currentTask: task.copyWith(todos: updatedTodos));
+    final isCompleted = !todo.isCompleted;
+    state = state.copyWith(
+      currentTask: task.copyWith(todos: [for (final candidate in task.todos) candidate.id == todoId ? candidate.copyWith(isCompleted: isCompleted) : candidate]),
+    );
 
-    await _repository.replaceTaskTodos(task.id, updatedTodos);
+    await _repository.setTodoCompletion(todoId: todoId, isCompleted: isCompleted);
   }
 
   Future<void> dismissAlarm() async {

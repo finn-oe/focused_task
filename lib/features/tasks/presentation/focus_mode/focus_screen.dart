@@ -6,8 +6,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/lifecycle_observer.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
-import 'package:focused_task/features/tasks/presentation/focus_mode/widgets/session_timer.dart';
-import 'package:focused_task/features/tasks/presentation/focus_mode/widgets/task_timer.dart';
+import 'package:focused_task/features/tasks/presentation/focus_mode/widgets/timer_box.dart';
 
 class FocusScreen extends ConsumerStatefulWidget {
   const FocusScreen({super.key});
@@ -42,7 +41,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     context.go('/plan');
   }
 
-  void _showAlarmDialog() async {
+  Future<void> _showAlarmDialog() async {
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -55,7 +54,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       },
     );
 
-    ref.read(focusModeNotifierProvider.notifier).dismissAlarm();
+    if (!mounted) return;
+    await ref.read(focusModeNotifierProvider.notifier).dismissAlarm();
   }
 
   @override
@@ -81,8 +81,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       onExitRequested: notifier.pauseSession,
       onBackground: () async {
         await notifier.pauseSession();
+        if (settings.enableWakelock) await WakelockPlus.disable();
         if (!context.mounted) return;
-        if (settings.enableWakelock) WakelockPlus.disable();
         context.go('/pause');
       },
       onResume: () {},

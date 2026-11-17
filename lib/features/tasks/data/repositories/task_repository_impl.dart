@@ -127,6 +127,11 @@ class TaskRepositoryImpl implements ITaskRepository {
     await _database.replaceTaskTodos(taskId, driftTodos);
   }
 
+  @override
+  Future<void> setTodoCompletion({required int todoId, required bool isCompleted}) {
+    return _database.setTodoCompletion(todoId: todoId, isCompleted: isCompleted);
+  }
+
   // Maps a joined Task + Todos object
   TaskEntity _toEntity(TaskWithTodos data) {
     final task = data.task;

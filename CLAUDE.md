@@ -42,7 +42,7 @@ Rules that follow from this:
 | Routing | `go_router` (`lib/core/routing/app_router.dart`) |
 | Persistence | Drift / SQLite (`lib/core/database/`), `shared_preferences` for settings |
 | Ordering | Fractional indexing (`lib/core/utils/fractional_indexer.dart`) |
-| Alarms | `alarm` (mobile), `audioplayers` (desktop) via `lib/core/services/alarm_service.dart` |
+| Alarms | `TargetAlarm` in `lib/core/services/target_alarm.dart`: `alarm` (mobile), timer + `audioplayers` (desktop/web) |
 
 ## Architecture
 
@@ -62,13 +62,13 @@ Rules:
 - **Dependency direction:** `presentation → domain ← data`. Presentation code depends on repository *interfaces* (`ITaskRepository`), never on `AppDatabase` or Drift row classes.
 - **Domain is pure Dart.** Entities are immutable, have `copyWith`, and contain no Flutter or Drift imports.
 - **Business logic lives in notifiers/domain**, not in widgets. Widgets render state and forward user intent.
-- **Time is injected.** Code that needs "now" should take a clock/`DateTime Function()` so it can be tested; avoid scattered `DateTime.now()` calls in new code.
+- **Time is injected.** Use `clock.now()` from `package:clock` instead of `DateTime.now()` in logic, so tests can control time with `fakeAsync` / `withClock`.
 - **Dates:** a task's day is a calendar date. Compute day boundaries with `DateTime(y, m, d + 1)`, never `+ Duration(days: 1)` (breaks on DST switches).
 - **Database changes** require bumping `schemaVersion`, a migration step in `AppDatabase.migration`, and a migration test. Regenerate code with `dart run build_runner build --delete-conflicting-outputs`; commit the generated `*.g.dart`.
 
 ## Code quality
 
-- Code must pass `flutter analyze` with **zero** issues and be formatted with `dart format` (page width is configured in `analysis_options.yaml` / IDE; keep the existing long-line style consistent).
+- Code must pass `flutter analyze` with **zero** issues and be formatted with `dart format` (page width 180 is set in `analysis_options.yaml`; generated `*.g.dart` files are excluded).
 - Prefer small, focused widgets over large `build` methods; extract private widgets instead of helper methods returning widgets.
 - No hard-coded colours – use `Theme.of(context).colorScheme`. No duplicated helpers – shared formatting lives in `lib/core/utils/`.
 - Use strong types; avoid `dynamic`.
@@ -80,7 +80,7 @@ Rules:
 
 - `flutter test` must pass before every commit.
 - Repository/database logic: test against `AppDatabase(NativeDatabase.memory())`.
-- Notifiers: test with a fake `ITaskRepository` (keep fakes in sync with the interface!).
+- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `buildTask()`); extend them when the interface grows.
 - Widgets: `ProviderScope(overrides: [...])` with fakes.
 - Every bug fix comes with a regression test.
 

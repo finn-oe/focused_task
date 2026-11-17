@@ -204,6 +204,10 @@ class AppDatabase extends _$AppDatabase {
     return query.map((row) => row.read(count) ?? 0).getSingle();
   }
 
+  Future<void> setTodoCompletion({required int todoId, required bool isCompleted}) async {
+    await (update(taskTodos)..where((todo) => todo.id.equals(todoId))).write(TaskTodosCompanion(isCompleted: Value(isCompleted)));
+  }
+
   Future<void> replaceTaskTodos(int taskId, List<TaskTodo> newTodos) {
     return transaction(() async {
       await (delete(taskTodos)..where((t) => t.taskId.equals(taskId))).go();

@@ -186,4 +186,13 @@ class FakeTaskRepository implements ITaskRepository {
     var nextTodoId = 1;
     _update(taskId, (task) => task.copyWith(todos: [for (final todo in newTodos) todo.copyWith(id: todo.id ?? nextTodoId++)]));
   }
+
+  @override
+  Future<void> setTodoCompletion({required int todoId, required bool isCompleted}) async {
+    for (final task in _tasks.values.toList()) {
+      if (task.todos.any((todo) => todo.id == todoId)) {
+        _put(task.copyWith(todos: [for (final todo in task.todos) todo.id == todoId ? todo.copyWith(isCompleted: isCompleted) : todo]));
+      }
+    }
+  }
 }

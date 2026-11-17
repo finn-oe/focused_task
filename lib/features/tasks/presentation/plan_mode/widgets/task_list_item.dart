@@ -102,7 +102,7 @@ class TaskListItem extends ConsumerWidget {
                 border: Border.all(color: isCompleted ? colorScheme.primary : colorScheme.outline),
                 color: isCompleted ? colorScheme.primary : Colors.transparent,
               ),
-              child: isCompleted ? const Icon(Icons.check, size: 18, color: Colors.white) : Icon(Icons.circle_outlined, size: 18, color: colorScheme.outline),
+              child: isCompleted ? Icon(Icons.check, size: 18, color: colorScheme.onPrimary) : Icon(Icons.circle_outlined, size: 18, color: colorScheme.outline),
             ),
           ),
         ),
@@ -120,7 +120,7 @@ class TaskListItem extends ConsumerWidget {
                 decoration: BoxDecoration(color: colorScheme.secondaryContainer, borderRadius: BorderRadius.circular(12)),
                 child: Text(
                   '$completedTodos/$totalTodos',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 0, 168, 8)),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSecondaryContainer),
                 ),
               ),
             if (isCompleted && task.timeSpent > 0)
@@ -128,7 +128,7 @@ class TaskListItem extends ConsumerWidget {
                 padding: const EdgeInsets.only(right: 8.0),
                 child: Text(
                   Duration(milliseconds: task.timeSpent).toFormattedString(),
-                  style: const TextStyle(color: Color.fromARGB(255, 0, 168, 8), fontWeight: FontWeight.w500),
+                  style: TextStyle(color: colorScheme.primary, fontWeight: FontWeight.w500),
                 ),
               ),
 
