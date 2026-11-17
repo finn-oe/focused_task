@@ -22,6 +22,9 @@ extension CalendarDate on DateTime {
   /// First day of the next month (exclusive end of this month).
   DateTime get startOfNextMonth => DateTime(year, month + 1);
 
+  /// `YYYY-MM-DD`, e.g. for URLs.
+  String get isoDate => '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+
   bool isSameDate(DateTime other) => year == other.year && month == other.month && day == other.day;
 
   /// Number of calendar days from this date to [other] (ignores the time of day and DST).
@@ -45,4 +48,13 @@ class DateRange {
 
   @override
   String toString() => 'DateRange($start – $end)';
+}
+
+/// Parses a `YYYY-MM-DD` date (see [CalendarDate.isoDate]); `null` if [value] is missing or invalid.
+DateTime? tryParseIsoDate(String? value) {
+  final match = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$').firstMatch(value ?? '');
+  if (match == null) return null;
+  final [year, month, day] = [for (var group = 1; group <= 3; group++) int.parse(match.group(group)!)];
+  final date = DateTime(year, month, day);
+  return date.year == year && date.month == month && date.day == day ? date : null;
 }

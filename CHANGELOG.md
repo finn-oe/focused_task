@@ -3,6 +3,15 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.5.0] - 2026-11-17
+
+### Added
+- Navigation between Plan, Calendar (coming soon), Statistics and Settings: bottom bar on phones, rail on tablets, sidebar on wide windows. Each view keeps its state. (#9)
+- Day navigation in the plan: previous / next day, date picker, "Today", swipe left/right, `Alt+←/→`; `Ctrl/Cmd+N` adds a task. The day is in the URL (`/plan?date=…`), so browser back and links work. (#9)
+
+### Changed
+- The plan's top bar only shows the day navigation and the "Start focus" button. (#9)
+
 ## [1.4.0] - 2026-11-17
 
 ### Added

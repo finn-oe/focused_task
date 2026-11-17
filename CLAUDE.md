@@ -39,7 +39,7 @@ Rules that follow from this:
 |---|---|
 | UI | Flutter, Material 3 via `package:material_ui` (`lib/core/ui/themes/`) |
 | State | `flutter_riverpod` 3, `Notifier`/`NotifierProvider` only (providers in `lib/core/providers/app_providers.dart`) |
-| Routing | `go_router` (`lib/core/routing/app_router.dart`) |
+| Routing | `go_router` (`lib/core/routing/app_router.dart`): `StatefulShellRoute` for Plan / Calendar / Statistics / Settings (adaptive `AppShell` in `lib/core/ui/app_shell.dart`), full-screen routes for focus and the task form. Use the `AppRoutes` constants; state that belongs in the URL goes there (e.g. `/plan?date=YYYY-MM-DD`). |
 | Persistence | Drift / SQLite (`lib/core/database/`), `shared_preferences` for settings (loaded in `main()`, exposed via `sharedPreferencesProvider`) |
 | Ordering | Fractional indexing (`lib/core/utils/fractional_indexer.dart`) |
 | Alarms | `TargetAlarm` in `lib/core/services/target_alarm.dart`: `alarm` (mobile), timer + `audioplayers` (desktop/web) |

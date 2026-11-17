@@ -21,7 +21,8 @@ void main() {
     await tester.pumpWidget(_app(FakeTaskRepository()));
     await tester.pump();
 
-    expect(find.text('Plan Mode'), findsOneWidget);
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Start focus'), findsOneWidget);
     expect(find.text('Add Task'), findsOneWidget);
     expect(find.text('No tasks for this day.'), findsOneWidget);
   });

@@ -26,23 +26,24 @@ void main() {
     final preferences = await fakePreferences({'settings.locale': 'en'});
     await tester.pumpWidget(_app(preferences));
     await tester.pumpAndSettle();
-    expect(find.text('Plan Mode'), findsOneWidget);
+    expect(find.text('Start focus'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Settings'));
+    await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Deutsch'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Einstellungen'), findsOneWidget);
+    expect(find.text('Einstellungen'), findsWidgets);
+    expect(find.text('Sprache'), findsOneWidget);
     expect(preferences.getString('settings.locale'), 'de');
 
     // "Restart": a fresh widget tree reading the same preferences.
     await tester.pumpWidget(const SizedBox());
     await tester.pumpWidget(_app(preferences));
     await tester.pumpAndSettle();
-    expect(find.text('Planen'), findsOneWidget);
+    expect(find.text('Fokus starten'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Einstellungen'));
+    await tester.tap(find.text('Einstellungen'));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.translate));
     await tester.pumpAndSettle();

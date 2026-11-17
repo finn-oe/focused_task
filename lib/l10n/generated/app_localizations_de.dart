@@ -12,6 +12,21 @@ class AppLocalizationsDe extends AppLocalizations {
   String get appTitle => 'Focused Task';
 
   @override
+  String get navPlan => 'Planen';
+
+  @override
+  String get navCalendar => 'Kalender';
+
+  @override
+  String get navStatistics => 'Statistik';
+
+  @override
+  String get navSettings => 'Einstellungen';
+
+  @override
+  String get calendarComingSoon => 'Wochen- und Monatsansicht folgen bald.';
+
+  @override
   String get commonCancel => 'Abbrechen';
 
   @override
@@ -48,24 +63,16 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get planTitle => 'Planen';
-
-  @override
-  String get planSettingsTooltip => 'Einstellungen';
-
-  @override
   String get planPickDayTooltip => 'Tag wählen';
 
   @override
-  String get planStatisticsTooltip => 'Statistik';
+  String get planPreviousDay => 'Vorheriger Tag';
 
   @override
-  String get planStartFocusTooltip => 'Fokus starten';
+  String get planNextDay => 'Nächster Tag';
 
   @override
-  String planSelectedDay(String day) {
-    return 'Ausgewählter Tag: $day';
-  }
+  String get planStartFocus => 'Fokus starten';
 
   @override
   String get planNoTasks => 'Keine Aufgaben für diesen Tag.';

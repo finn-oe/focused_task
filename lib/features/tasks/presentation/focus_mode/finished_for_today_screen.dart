@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
+import 'package:focused_task/core/routing/app_router.dart';
 
 class FinishedForTodayScreen extends StatelessWidget {
   const FinishedForTodayScreen({super.key});
@@ -14,7 +15,7 @@ class FinishedForTodayScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.finishedTitle),
-        leading: IconButton(onPressed: () => context.go('/plan'), icon: const Icon(Icons.close)),
+        leading: IconButton(onPressed: () => context.go(AppRoutes.plan), icon: const Icon(Icons.close)),
       ),
       body: Center(
         child: Padding(
@@ -33,17 +34,9 @@ class FinishedForTodayScreen extends StatelessWidget {
               const SizedBox(height: 12),
               Text(l10n.finishedMessage, style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
               const SizedBox(height: 32),
-              FilledButton.icon(
-                onPressed: () {
-                  final router = GoRouter.of(context);
-                  router.go('/plan');
-                  router.push('/stats');
-                },
-                icon: const Icon(Icons.insights_outlined),
-                label: Text(l10n.finishedViewStatistics),
-              ),
+              FilledButton.icon(onPressed: () => context.go(AppRoutes.stats), icon: const Icon(Icons.insights_outlined), label: Text(l10n.finishedViewStatistics)),
               const SizedBox(height: 12),
-              OutlinedButton.icon(onPressed: () => context.go('/plan'), icon: const Icon(Icons.assignment_outlined), label: Text(l10n.finishedBackToPlan)),
+              OutlinedButton.icon(onPressed: () => context.go(AppRoutes.plan), icon: const Icon(Icons.assignment_outlined), label: Text(l10n.finishedBackToPlan)),
             ],
           ),
         ),

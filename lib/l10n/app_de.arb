@@ -1,8 +1,11 @@
 {
   "@@locale": "de",
-
   "appTitle": "Focused Task",
-
+  "navPlan": "Planen",
+  "navCalendar": "Kalender",
+  "navStatistics": "Statistik",
+  "navSettings": "Einstellungen",
+  "calendarComingSoon": "Wochen- und Monatsansicht folgen bald.",
   "commonCancel": "Abbrechen",
   "commonSave": "Speichern",
   "commonDelete": "Löschen",
@@ -13,17 +16,13 @@
   "commonListItem": "• {item}",
   "commonMinutes": "{minutes} Min.",
   "commonPercent": "{percent} %",
-
-  "planTitle": "Planen",
-  "planSettingsTooltip": "Einstellungen",
   "planPickDayTooltip": "Tag wählen",
-  "planStatisticsTooltip": "Statistik",
-  "planStartFocusTooltip": "Fokus starten",
-  "planSelectedDay": "Ausgewählter Tag: {day}",
+  "planPreviousDay": "Vorheriger Tag",
+  "planNextDay": "Nächster Tag",
+  "planStartFocus": "Fokus starten",
   "planNoTasks": "Keine Aufgaben für diesen Tag.",
   "planLoadError": "Die Aufgaben konnten nicht geladen werden: {error}",
   "planAddTask": "Aufgabe hinzufügen",
-
   "taskMarkComplete": "Aufgabe als erledigt markieren",
   "taskMarkIncomplete": "Aufgabe als offen markieren",
   "taskNoDescription": "Keine Beschreibung",
@@ -36,7 +35,6 @@
   "taskKeepCompletedTodosHint": "Wenn aus, werden alle Unteraufgaben zurückgesetzt",
   "taskSubtractTimeSpent": "Bisherige Zeit abziehen",
   "taskSubtractTimeSpentHint": "Verkürzt die neue Zieldauer um die bereits erfasste Zeit",
-
   "taskFormAddTitle": "Aufgabe hinzufügen",
   "taskFormEditTitle": "Aufgabe bearbeiten",
   "taskFormDuplicateTooltip": "Aufgabe duplizieren",
@@ -59,7 +57,6 @@
   "taskFormSave": "Aufgabe speichern",
   "taskFormAddSubTaskTitle": "Unteraufgabe hinzufügen",
   "taskFormEditSubTaskTitle": "Unteraufgabe bearbeiten",
-
   "focusTitle": "Fokus",
   "focusExitTooltip": "Fokus beenden",
   "focusTimeIsUp": "Die Zeit ist um!",
@@ -74,17 +71,14 @@
   "focusTimerRemaining": "Verbleibend",
   "focusAlarmNotificationBody": "Du hast die Zieldauer erreicht für: {taskTitle}",
   "focusAlarmStopButton": "Alarm stoppen",
-
   "pauseTitle": "Pausiert",
   "pauseMessage": "Der Fokus wurde pausiert, weil die App im Hintergrund war.",
   "pauseResume": "Fokus fortsetzen",
-
   "finishedTitle": "Alles erledigt",
   "finishedHeadline": "Feierabend für heute!",
   "finishedMessage": "Gute Arbeit – du hast alles erledigt, was für heute geplant war.",
   "finishedViewStatistics": "Statistik ansehen",
   "finishedBackToPlan": "Zurück zum Plan",
-
   "recoveryTitle": "Unterbrochene Sitzung wiederherstellen?",
   "recoveryClosedWhileFocusing": "Die App wurde geschlossen, während du an folgenden Aufgaben gearbeitet hast:",
   "recoveryQuestion": "Wie viel dieser Zeit möchtest du behalten?",
@@ -92,7 +86,6 @@
   "recoveryDeletedTask": "(gelöschte Aufgabe)",
   "recoveryUntilNow": "Bis jetzt ({duration})",
   "recoveryUntilLastActivity": "Bis zur letzten Aktivität ({duration})",
-
   "statsTitle": "Statistik",
   "statsDay": "Tag",
   "statsWeek": "Woche",
@@ -106,7 +99,6 @@
   "statsPerDay": "Pro Tag",
   "statsRemaining": "Offen",
   "statsTaskCount": "{count, plural, =1{1 Aufgabe} other{{count} Aufgaben}}",
-
   "settingsTitle": "Einstellungen",
   "settingsAppearance": "Darstellung",
   "settingsThemeSystem": "System",
