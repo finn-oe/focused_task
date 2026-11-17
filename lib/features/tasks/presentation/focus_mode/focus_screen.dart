@@ -36,6 +36,12 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     super.dispose();
   }
 
+  Future<void> _exitToPlan() async {
+    await ref.read(focusModeNotifierProvider.notifier).exitFocus();
+    if (!mounted) return;
+    context.go('/plan');
+  }
+
   void _showAlarmDialog() async {
     await showDialog(
       context: context,
@@ -71,6 +77,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 
     return FocusLifecycleObserver(
       pauseOnBackground: settings.pauseOnBackground,
+      // Closing the desktop window must not leave the session running.
+      onExitRequested: notifier.pauseSession,
       onBackground: () async {
         await notifier.pauseSession();
         if (!context.mounted) return;
@@ -78,34 +86,30 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         context.go('/pause');
       },
       onResume: () {},
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Focus Mode'),
-          scrolledUnderElevation: 0.0,
-          surfaceTintColor: Colors.transparent,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          leading: IconButton(
-            onPressed: () async {
-              await notifier.exitFocus();
-              if (!context.mounted) return;
-              context.go('/plan');
-            },
-            icon: const Icon(Icons.close),
+      child: PopScope(
+        canPop: false,
+        // Android back gesture / browser back: end the session properly instead of leaving it running.
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _exitToPlan();
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Focus Mode'),
+            scrolledUnderElevation: 0.0,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            leading: IconButton(tooltip: 'Exit focus', onPressed: _exitToPlan, icon: const Icon(Icons.close)),
           ),
+          body: state.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _FocusBody(
+                  state: state,
+                  onComplete: () async {
+                    await notifier.completeCurrentTask();
+                  },
+                  onExit: _exitToPlan,
+                ),
         ),
-        body: state.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _FocusBody(
-                state: state,
-                onComplete: () async {
-                  await notifier.completeCurrentTask();
-                },
-                onExit: () async {
-                  await notifier.exitFocus();
-                  if (!context.mounted) return;
-                  context.go('/plan');
-                },
-              ),
       ),
     );
   }
