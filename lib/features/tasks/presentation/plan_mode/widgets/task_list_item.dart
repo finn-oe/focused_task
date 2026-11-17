@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
+import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/task_form_fields.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
@@ -149,16 +150,25 @@ class TaskListItem extends ConsumerWidget {
             if (isPast)
               IconButton(
                 tooltip: l10n.taskCopyToTodayTooltip,
+                visualDensity: VisualDensity.compact,
                 icon: const Icon(Icons.today_outlined),
                 color: isCompleted ? colorScheme.onSurfaceVariant : null,
                 onPressed: () => _showCopyToTodayDialog(context, ref, today),
               ),
             IconButton(
               tooltip: l10n.taskEditTooltip,
+              visualDensity: VisualDensity.compact,
               icon: const Icon(Icons.edit_outlined),
               color: isCompleted ? colorScheme.onSurfaceVariant : null,
               onPressed: () => context.push(AppRoutes.taskForm, extra: task),
             ),
+            if (!isCompleted)
+              IconButton(
+                tooltip: l10n.taskFocusTooltip,
+                visualDensity: VisualDensity.compact,
+                icon: Icon(Icons.play_circle_outline, color: colorScheme.primary),
+                onPressed: () => context.go(AppRoutes.focusFor(FocusRequest(task.assignedDate, startTaskId: task.id))),
+              ),
 
             ReorderableDragStartListener(
               index: index,

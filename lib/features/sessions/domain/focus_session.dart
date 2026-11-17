@@ -12,10 +12,11 @@ enum SessionKind {
   static SessionKind fromStorage(String value) => value == 'break' ? SessionKind.breakTime : SessionKind.focus;
 }
 
-/// Why a session ended. Stored by [name].
+/// Why a session ended. Stored by [name]; `skipped` = the task was moved to the end of the focus queue.
 enum EndReason {
   paused,
   completed,
+  skipped,
   exited,
   background,
   recovered,

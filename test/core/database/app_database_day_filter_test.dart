@@ -24,11 +24,9 @@ void main() {
 
       await database.createTask(TasksCompanion.insert(title: 'tomorrow task', assignedDate: tomorrow, sortOrder: 'a1'));
 
-      final next = await database.getNextIncompleteTaskForDay(today);
+      final tasks = await database.getTasksForDay(today);
 
-      expect(next, isNotNull);
-      expect(next!.title, 'today task');
-      expect(DateTime(next.assignedDate.year, next.assignedDate.month, next.assignedDate.day), today);
+      expect(tasks.map((data) => data.task.title), ['today task']);
     });
 
     test('retention cleanup only deletes completed old tasks', () async {

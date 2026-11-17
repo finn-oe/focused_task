@@ -31,12 +31,6 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
-  Future<TaskEntity?> getNextIncompleteTaskForDay(DateTime day) async {
-    final task = await _database.getNextIncompleteTaskForDay(day);
-    return task == null ? null : _taskOnlyToEntity(task);
-  }
-
-  @override
   Future<int> createTask({
     required String title,
     String? description,

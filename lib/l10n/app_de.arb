@@ -155,5 +155,17 @@
   "taskFormDiscardTitle": "Änderungen verwerfen?",
   "taskFormDiscardMessage": "Deine Änderungen an dieser Aufgabe gehen verloren.",
   "taskFormKeepEditing": "Weiter bearbeiten",
-  "taskFormDiscard": "Verwerfen"
+  "taskFormDiscard": "Verwerfen",
+  "focusSkip": "Überspringen",
+  "focusUpNext": "Als Nächstes",
+  "taskFocusTooltip": "An dieser Aufgabe arbeiten",
+  "planFocusStart": "Starten",
+  "planFocusAheadTitle": "Vorarbeiten?",
+  "planFocusAheadTomorrow": "Jetzt schon an den Aufgaben von morgen arbeiten?",
+  "planFocusAheadDate": "Jetzt an den Aufgaben vom {date} arbeiten?",
+  "planFocusMoveTitle": "Nach heute verschieben?",
+  "planFocusMoveMessage": "{count, plural, =1{Die offene Aufgabe vom {date} wird nach heute verschoben, dann startet der Fokus.} other{Die {count} offenen Aufgaben vom {date} werden nach heute verschoben, dann startet der Fokus.}}",
+  "planFocusYesterdayTitle": "Heute ist nichts offen",
+  "planFocusYesterdayMessage": "{count, plural, =1{1 Aufgabe von gestern ist noch offen. Nach heute verschieben und daran arbeiten?} other{{count} Aufgaben von gestern sind noch offen. Nach heute verschieben und daran arbeiten?}}",
+  "planFocusMoveAndStart": "Verschieben und starten"
 }

@@ -34,6 +34,34 @@ class PlanModeState {
   }
 }
 
+/// What "Start focus" in the plan should do for the shown day.
+sealed class FocusStart {
+  const FocusStart();
+}
+
+/// Start right away on [day].
+class FocusStartNow extends FocusStart {
+  const FocusStartNow(this.day);
+  final DateTime day;
+}
+
+/// [day] is in the future: ask before working ahead.
+class FocusStartAhead extends FocusStart {
+  const FocusStartAhead(this.day);
+  final DateTime day;
+}
+
+/// [day] is in the past (or it's yesterday, when today has nothing open) and has [openTasks]: offer to move them to
+/// today and focus on them.
+class FocusStartMoveToToday extends FocusStart {
+  const FocusStartMoveToToday(this.day, this.openTasks, {required this.fromYesterday});
+  final DateTime day;
+  final int openTasks;
+
+  /// Offered because today has nothing open (rather than because a past day is shown).
+  final bool fromYesterday;
+}
+
 class PlanModeNotifier extends Notifier<PlanModeState> {
   late ITaskRepository _repository;
   late IFocusSessionRepository _sessions;
@@ -154,6 +182,38 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
         todos: [for (final todo in draft.todos) TaskTodoEntity(title: todo.title, isCompleted: false, sortOrder: todo.sortOrder)],
       ),
     );
+  }
+
+  /// Decides what "Start focus" does for [day] (see [FocusStart]).
+  Future<FocusStart> focusStartFor(DateTime day) async {
+    final today = clock.now().dateOnly;
+    final shown = day.dateOnly;
+    Future<int> openOn(DateTime date) async => (await _repository.getTasksForDay(date)).where((task) => !task.isCompleted).length;
+
+    if (shown.isAfter(today)) return FocusStartAhead(shown);
+    if (shown.isBefore(today)) {
+      final open = await openOn(shown);
+      return open > 0 ? FocusStartMoveToToday(shown, open, fromYesterday: false) : FocusStartNow(today);
+    }
+    if (await openOn(today) == 0) {
+      final yesterday = today.addDays(-1);
+      final open = await openOn(yesterday);
+      if (open > 0) return FocusStartMoveToToday(yesterday, open, fromYesterday: true);
+    }
+    return FocusStartNow(today);
+  }
+
+  /// Moves the open tasks of [from] to [to] (after the tasks already there, in their order).
+  Future<void> moveOpenTasks({required DateTime from, required DateTime to}) async {
+    final open = (await _repository.getTasksForDay(from)).where((task) => !task.isCompleted);
+    final existing = await _repository.getTasksForDay(to);
+    var lastSort = existing.isEmpty ? null : existing.last.sortOrder;
+    for (final task in open) {
+      final sortOrder = FractionalIndexer.between(lastSort, null);
+      lastSort = sortOrder;
+      await _repository.updateTaskDetails(taskId: task.id, title: task.title, description: task.description, targetDurationMinutes: task.targetDurationMinutes, assignedDate: to);
+      await _repository.updateTaskOrder(taskId: task.id, sortOrder: sortOrder);
+    }
   }
 
   /// Adds manually tracked time to [task]: on its day if that is in the past, otherwise today (never in the future).

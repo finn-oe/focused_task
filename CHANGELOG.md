@@ -3,6 +3,15 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.8.0] - 2026-11-17
+
+### Added
+- A play button on every open task starts focus with that task. (#26)
+- Focus mode: **Skip** moves the current task to the end (its time is kept), an **Up next** card, and a quick "Add sub-task" field. (#26)
+
+### Changed
+- "Start focus" uses the day shown in the plan: asks before working ahead on a future day, offers to move a past day's open tasks to today, and offers yesterday's open tasks when today has nothing left. (#26)
+
 ## [1.7.0] - 2026-11-17
 
 ### Added

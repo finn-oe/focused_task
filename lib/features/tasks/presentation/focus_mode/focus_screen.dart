@@ -5,13 +5,16 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/lifecycle_observer.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/widgets/timer_box.dart';
 
 class FocusScreen extends ConsumerStatefulWidget {
-  const FocusScreen({super.key});
+  const FocusScreen({super.key, required this.request});
+
+  final FocusRequest request;
 
   @override
   ConsumerState<FocusScreen> createState() => _FocusScreenState();
@@ -22,7 +25,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(focusModeNotifierProvider.notifier).initializeForDay(DateTime.now());
+      ref.read(focusModeNotifierProvider.notifier).start(widget.request);
 
       final settings = ref.read(settingsNotifierProvider);
       if (settings.enableWakelock) {
@@ -213,16 +216,96 @@ class _FocusBody extends ConsumerWidget {
                   )
                 else
                   const Spacer(),
+                const _QuickSubTaskField(),
               ],
             ),
           ),
 
+          if (state.upNext case final next?) ...[const SizedBox(height: 12), _UpNextCard(task: next)],
           const SizedBox(height: 16),
-          FilledButton(onPressed: onComplete, child: Text(context.l10n.focusCompleteTask)),
+          Row(
+            children: [
+              if (state.upNext != null) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => ref.read(focusModeNotifierProvider.notifier).skipCurrentTask(),
+                    icon: const Icon(Icons.skip_next),
+                    label: Text(context.l10n.focusSkip),
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Expanded(
+                flex: 2,
+                child: FilledButton(onPressed: onComplete, child: Text(context.l10n.focusCompleteTask)),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           OutlinedButton(onPressed: onExit, child: Text(context.l10n.focusExit)),
         ],
       ),
+    );
+  }
+}
+
+/// "Up next": the next task in the queue.
+class _UpNextCard extends StatelessWidget {
+  const _UpNextCard({required this.task});
+
+  final TaskEntity task;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      color: theme.colorScheme.surfaceContainerLow,
+      child: ListTile(
+        dense: true,
+        leading: const Icon(Icons.queue_play_next),
+        title: Text(context.l10n.focusUpNext, style: theme.textTheme.labelMedium),
+        subtitle: Text(task.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyLarge),
+      ),
+    );
+  }
+}
+
+/// Adds a sub-task to the current task without leaving focus.
+class _QuickSubTaskField extends ConsumerStatefulWidget {
+  const _QuickSubTaskField();
+
+  @override
+  ConsumerState<_QuickSubTaskField> createState() => _QuickSubTaskFieldState();
+}
+
+class _QuickSubTaskFieldState extends ConsumerState<_QuickSubTaskField> {
+  final _controller = TextEditingController();
+  final _focus = FocusNode();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _add() async {
+    final title = _controller.text;
+    _controller.clear();
+    _focus.requestFocus();
+    await ref.read(focusModeNotifierProvider.notifier).addSubTask(title);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      focusNode: _focus,
+      textInputAction: TextInputAction.done,
+      decoration: InputDecoration(hintText: context.l10n.taskFormNewSubTask, prefixIcon: const Icon(Icons.add), isDense: true),
+      onEditingComplete: _add,
     );
   }
 }

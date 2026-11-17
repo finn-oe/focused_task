@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/core/routing/app_router.dart';
 
 class PauseScreen extends ConsumerWidget {
   const PauseScreen({super.key});
@@ -35,8 +36,9 @@ class PauseScreen extends ConsumerWidget {
                 FilledButton(
                   onPressed: () async {
                     await notifier.resumeSession();
+                    final request = ref.read(focusModeNotifierProvider).request;
                     if (context.mounted) {
-                      context.go('/focus');
+                      context.go(request == null ? AppRoutes.focus : AppRoutes.focusFor(request));
                     }
                   },
                   child: Text(context.l10n.pauseResume),

@@ -2,6 +2,7 @@ import 'package:clock/clock.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
@@ -9,6 +10,8 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
+import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/session_recovery_dialog.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
 
@@ -59,6 +62,41 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   void _nextDay() => _goToDay(_shownDay.addDays(1));
 
   void _addTask() => context.push(AppRoutes.taskForm);
+
+  /// Starts focus on the shown day; asks first when working ahead or when open tasks would move to today.
+  Future<void> _startFocus() async {
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final notifier = ref.read(planModeNotifierProvider.notifier);
+    final today = _today;
+    String date(DateTime day) => DateFormat.yMMMEd(locale).format(day);
+    Future<bool> confirm(String title, String message, String action) async {
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (context) => _ConfirmDialog(title: title, message: message, action: action),
+      );
+      return result ?? false;
+    }
+
+    final decision = await notifier.focusStartFor(_shownDay);
+    if (!mounted) return;
+    switch (decision) {
+      case FocusStartNow(:final day):
+        context.go(AppRoutes.focusFor(FocusRequest(day)));
+      case FocusStartAhead(:final day):
+        final message = day.isSameDate(today.addDays(1)) ? l10n.planFocusAheadTomorrow : l10n.planFocusAheadDate(date(day));
+        if (await confirm(l10n.planFocusAheadTitle, message, l10n.planFocusStart) && mounted) {
+          context.go(AppRoutes.focusFor(FocusRequest(day)));
+        }
+      case FocusStartMoveToToday(:final day, :final openTasks, :final fromYesterday):
+        final ok = fromYesterday
+            ? await confirm(l10n.planFocusYesterdayTitle, l10n.planFocusYesterdayMessage(openTasks), l10n.planFocusMoveAndStart)
+            : await confirm(l10n.planFocusMoveTitle, l10n.planFocusMoveMessage(openTasks, date(day)), l10n.planFocusMoveAndStart);
+        if (!ok || !mounted) return;
+        await notifier.moveOpenTasks(from: day, to: today);
+        if (mounted) context.go(AppRoutes.focusFor(FocusRequest(today)));
+    }
+  }
 
   Future<void> _pickDay() async {
     final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: _shownDay);
@@ -123,12 +161,12 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                   if (compact)
                     IconButton.filled(
                       tooltip: l10n.planStartFocus,
-                      onPressed: () => context.go(AppRoutes.focus),
+                      onPressed: _startFocus,
                       // The app bar's action icon colour would override the filled button's foreground.
                       icon: Icon(Icons.play_arrow, color: Theme.of(context).colorScheme.onPrimary),
                     )
                   else
-                    FilledButton.icon(onPressed: () => context.go(AppRoutes.focus), icon: const Icon(Icons.play_arrow), label: Text(l10n.planStartFocus)),
+                    FilledButton.icon(onPressed: _startFocus, icon: const Icon(Icons.play_arrow), label: Text(l10n.planStartFocus)),
                   const SizedBox(width: 8),
                 ],
               ),
@@ -238,6 +276,26 @@ class _DayTasks extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             child: Text(l10n.planLoadError(state.error!), style: TextStyle(color: theme.colorScheme.error)),
           ),
+      ],
+    );
+  }
+}
+
+class _ConfirmDialog extends StatelessWidget {
+  const _ConfirmDialog({required this.title, required this.message, required this.action});
+
+  final String title;
+  final String message;
+  final String action;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(title),
+      content: Text(message),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(context.l10n.commonCancel)),
+        FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(action)),
       ],
     );
   }

@@ -8,8 +8,6 @@ abstract class ITaskRepository {
 
   Future<TaskEntity?> getTaskById(int id);
 
-  Future<TaskEntity?> getNextIncompleteTaskForDay(DateTime day);
-
   Future<int> createTask({
     required String title,
     String? description,
