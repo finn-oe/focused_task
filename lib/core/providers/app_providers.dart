@@ -5,6 +5,8 @@ import 'package:focused_task/core/database/app_database.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
+import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
@@ -30,6 +32,10 @@ final targetAlarmProvider = Provider<TargetAlarm>((ref) => createTargetAlarm());
 
 final taskRepositoryProvider = Provider<ITaskRepository>((ref) {
   return TaskRepositoryImpl(ref.watch(appDatabaseProvider));
+});
+
+final focusSessionRepositoryProvider = Provider<IFocusSessionRepository>((ref) {
+  return FocusSessionRepositoryImpl(ref.watch(appDatabaseProvider));
 });
 
 final planModeNotifierProvider = NotifierProvider<PlanModeNotifier, PlanModeState>(PlanModeNotifier.new);

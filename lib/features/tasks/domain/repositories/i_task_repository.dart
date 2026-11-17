@@ -25,22 +25,14 @@ abstract class ITaskRepository {
 
   Future<void> setTaskCompletion({required int taskId, required bool isCompleted});
 
+  /// Task counts come from the tasks assigned to `[start, end]`; focus time comes from the sessions in that range, by
+  /// the time they actually happened (split at local midnight).
   Future<TaskStats> getTaskStats({required DateTime start, required DateTime end});
 
-  Future<void> startTaskSession({required int taskId, required DateTime startedAt});
-
-  Future<void> pauseTaskSession({required int taskId, required DateTime pausedAt});
-
-  /// Marks the running session of [taskId] as alive at [at] (see [TaskEntity.lastSeenAt]).
-  Future<void> recordHeartbeat({required int taskId, required DateTime at});
-
+  /// Marks the task as completed and closes its open focus session.
   Future<void> completeTask({required int taskId, required DateTime completedAt});
 
   Future<void> deleteTask(int taskId);
-
-  Future<void> discardUnfinishedSession({required int taskId});
-
-  Future<List<TaskEntity>> getRecoverableSessions();
 
   Future<int> deleteCompletedTasksOlderThanDays(int days);
 

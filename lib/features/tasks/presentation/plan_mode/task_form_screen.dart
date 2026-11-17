@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/core/utils/duration_extensions.dart';
 
 class TaskFormScreen extends ConsumerStatefulWidget {
   const TaskFormScreen({super.key, this.task});
@@ -236,6 +238,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
                 },
               ),
             ),
+            if (widget.task case final task?) ...[const SizedBox(height: 8), _TrackedTimeTile(task: task)],
           ],
         ),
       ),
@@ -316,6 +319,49 @@ class _TodoInputDialogState extends State<_TodoInputDialog> {
         TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonCancel)),
         FilledButton(onPressed: () => Navigator.of(context).pop(_controller.text), child: Text(l10n.commonSave)),
       ],
+    );
+  }
+}
+
+/// Tracked time of [task] with a button to add time manually (e.g. work done without the app).
+class _TrackedTimeTile extends ConsumerStatefulWidget {
+  const _TrackedTimeTile({required this.task});
+
+  final TaskEntity task;
+
+  @override
+  ConsumerState<_TrackedTimeTile> createState() => _TrackedTimeTileState();
+}
+
+class _TrackedTimeTileState extends ConsumerState<_TrackedTimeTile> {
+  late Duration _tracked = widget.task.elapsedAt(clock.now());
+
+  Future<void> _addTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: const TimeOfDay(hour: 0, minute: 30),
+      helpText: context.l10n.taskFormAddTimeTitle,
+      builder: (context, child) => MediaQuery(data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true), child: child!),
+    );
+    if (picked == null) return;
+    final duration = Duration(hours: picked.hour, minutes: picked.minute);
+    if (duration == Duration.zero) return;
+
+    await ref.read(planModeNotifierProvider.notifier).addManualTime(task: widget.task, duration: duration);
+    if (mounted) setState(() => _tracked += duration);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: ListTile(
+        title: Text(l10n.taskFormTrackedTime),
+        subtitle: Text(_tracked.toFormattedString()),
+        trailing: TextButton.icon(onPressed: _addTime, icon: const Icon(Icons.more_time), label: Text(l10n.taskFormAddTime)),
+      ),
     );
   }
 }

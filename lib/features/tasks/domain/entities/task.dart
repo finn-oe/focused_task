@@ -48,11 +48,15 @@ class TaskEntity {
   final String sortOrder;
   final bool isCompleted;
   final TaskPriority priority;
+
+  /// Tracked time of all closed focus sessions in milliseconds.
   final int timeSpent;
+
+  /// Start of the task's open focus session, or `null` if none is running.
   final DateTime? latestStart;
   final int? targetDurationMinutes;
 
-  /// Last heartbeat of the running session; `null` if not running or written by an older version.
+  /// Last heartbeat of the open focus session.
   final DateTime? lastSeenAt;
   final List<TaskTodoEntity> todos;
 

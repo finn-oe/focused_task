@@ -6,6 +6,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/lifecycle_observer.dart';
+import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/widgets/timer_box.dart';
 
@@ -80,9 +81,9 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     return FocusLifecycleObserver(
       pauseOnBackground: settings.pauseOnBackground,
       // Closing the desktop window must not leave the session running.
-      onExitRequested: notifier.pauseSession,
+      onExitRequested: () => notifier.pauseSession(reason: EndReason.exited),
       onBackground: () async {
-        await notifier.pauseSession();
+        await notifier.pauseSession(reason: EndReason.background);
         if (settings.enableWakelock) await WakelockPlus.disable();
         if (!context.mounted) return;
         context.go('/pause');

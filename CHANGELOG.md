@@ -3,6 +3,17 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.4.0] - 2026-11-17
+
+### Added
+- Every focus interval is recorded in a session log. (#19)
+- "Add time" in the task form to add time worked without the app. (#19)
+
+### Changed
+- Statistics count focus time on the day it was actually worked (a session over midnight is split), no longer on the task's planned day. Task counts still use the planned day. (#19)
+- Deleting a task keeps its tracked time in the statistics. (#19)
+- Existing tracked time is moved into the log on update (one entry per task at noon of its planned day); a session that was running when the app closed can still be recovered. (#19)
+
 ## [1.3.0] - 2026-11-17
 
 ### Added

@@ -10,8 +10,13 @@ import 'helpers/fake_preferences.dart';
 import 'helpers/fake_task_repository.dart';
 
 Widget _app(SharedPreferences preferences) {
+  final repository = FakeTaskRepository();
   return ProviderScope(
-    overrides: [taskRepositoryProvider.overrideWithValue(FakeTaskRepository()), sharedPreferencesProvider.overrideWithValue(preferences)],
+    overrides: [
+      taskRepositoryProvider.overrideWithValue(repository),
+      focusSessionRepositoryProvider.overrideWithValue(repository),
+      sharedPreferencesProvider.overrideWithValue(preferences),
+    ],
     child: const FocusedTaskApp(),
   );
 }

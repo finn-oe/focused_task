@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart' show Locale;
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
 
@@ -18,7 +19,14 @@ void _runFocus(List<TaskEntity> tasks, void Function(FakeAsync async, FocusModeN
   fakeAsync((async) {
     final repository = FakeTaskRepository(tasks: tasks);
     final alarm = FakeTargetAlarm();
-    final container = ProviderContainer(overrides: [taskRepositoryProvider.overrideWithValue(repository), targetAlarmProvider.overrideWithValue(alarm), _english]);
+    final container = ProviderContainer(
+      overrides: [
+        taskRepositoryProvider.overrideWithValue(repository),
+        focusSessionRepositoryProvider.overrideWithValue(repository),
+        targetAlarmProvider.overrideWithValue(alarm),
+        _english,
+      ],
+    );
     final notifier = container.read(focusModeNotifierProvider.notifier);
     body(async, notifier, repository, alarm);
     container.dispose();
@@ -155,19 +163,22 @@ void main() {
       final running = buildTask(id: 1, assignedDate: _today, latestStart: DateTime(2026, 11, 17, 8));
       final idle = buildTask(id: 2, assignedDate: _today, sortOrder: 'a1');
       _runFocus([running, idle], (async, notifier, repository, alarm) {
-        List<TaskEntity>? sessions;
+        List<FocusSession>? sessions;
         notifier.loadRecoverableSessions().then((value) => sessions = value);
         async.flushMicrotasks();
 
-        expect(sessions?.map((session) => session.id), [1]);
+        expect(sessions?.map((session) => session.taskId), [1]);
+        expect(sessions?.single.taskTitle, 'Task');
       });
     });
 
     test('stops its ticker when the provider is disposed', () {
       fakeAsync((async) {
+        final repository = FakeTaskRepository(tasks: [buildTask(assignedDate: _today)]);
         final container = ProviderContainer(
           overrides: [
-            taskRepositoryProvider.overrideWithValue(FakeTaskRepository(tasks: [buildTask(assignedDate: _today)])),
+            taskRepositoryProvider.overrideWithValue(repository),
+            focusSessionRepositoryProvider.overrideWithValue(repository),
             targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
             _english,
           ],
@@ -197,7 +208,7 @@ void main() {
       final start = DateTime(2026, 11, 16, 20);
       final session = buildTask(assignedDate: _today, latestStart: start).copyWith(lastSeenAt: start.add(const Duration(minutes: 40)));
       _runFocus([session], (async, notifier, repository, alarm) {
-        notifier.recoverSessions(recovery: SessionRecovery.untilLastActivity, sessions: [session]);
+        notifier.recoverSessions(recovery: SessionRecovery.untilLastActivity, sessions: repository.sessions);
         async.flushMicrotasks();
 
         expect(repository.task(1).isRunning, isFalse);
@@ -210,13 +221,40 @@ void main() {
       final first = buildTask(id: 1, assignedDate: _today, latestStart: start);
       final second = buildTask(id: 2, assignedDate: _today, sortOrder: 'a1', latestStart: start);
       _runFocus([first, second], (async, notifier, repository, alarm) {
-        notifier.recoverSessions(recovery: SessionRecovery.untilNow, sessions: [first]);
-        notifier.recoverSessions(recovery: SessionRecovery.discard, sessions: [second]);
+        final [firstSession, secondSession] = repository.sessions;
+        notifier.recoverSessions(recovery: SessionRecovery.untilNow, sessions: [firstSession]);
+        notifier.recoverSessions(recovery: SessionRecovery.discard, sessions: [secondSession]);
         async.flushMicrotasks();
 
         expect(Duration(milliseconds: repository.task(1).timeSpent), const Duration(hours: 1));
         expect(repository.task(2).timeSpent, 0);
         expect(repository.task(2).isRunning, isFalse);
+        expect(repository.sessions.map((session) => session.endReason), [EndReason.recovered, EndReason.discarded]);
+      });
+    });
+
+    test('pausing, exiting and completing end sessions with their reason', () {
+      _runFocus([buildTask(id: 1, assignedDate: _today), buildTask(id: 2, assignedDate: _today, sortOrder: 'a1')], (async, notifier, repository, alarm) {
+        notifier.initializeForDay(_today);
+        async.flushMicrotasks();
+        async.elapse(const Duration(minutes: 10));
+        notifier.pauseSession();
+        async.flushMicrotasks();
+        notifier.resumeSession();
+        async.flushMicrotasks();
+        async.elapse(const Duration(minutes: 5));
+        notifier.completeCurrentTask();
+        async.flushMicrotasks();
+        async.elapse(const Duration(minutes: 1));
+        notifier.exitFocus();
+        async.flushMicrotasks();
+
+        expect(repository.sessions.map((session) => (session.taskId, session.endReason, session.duration)), [
+          (1, EndReason.paused, const Duration(minutes: 10)),
+          (1, EndReason.completed, const Duration(minutes: 5)),
+          (2, EndReason.exited, const Duration(minutes: 1)),
+        ]);
+        expect(Duration(milliseconds: repository.task(1).timeSpent), const Duration(minutes: 15));
       });
     });
   });

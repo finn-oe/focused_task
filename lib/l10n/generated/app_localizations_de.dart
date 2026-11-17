@@ -162,6 +162,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get taskFormNoLimit => 'Keine Begrenzung';
 
   @override
+  String get taskFormTrackedTime => 'Erfasste Zeit';
+
+  @override
+  String get taskFormAddTime => 'Zeit hinzufügen';
+
+  @override
+  String get taskFormAddTimeTitle => 'Erfasste Zeit hinzufügen';
+
+  @override
   String taskFormTargetDurationValue(int hours, int minutes) {
     return '$hours Std. $minutes Min.';
   }
@@ -254,6 +263,9 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get recoveryDiscard => 'Verwerfen';
+
+  @override
+  String get recoveryDeletedTask => '(gelöschte Aufgabe)';
 
   @override
   String recoveryUntilNow(String duration) {

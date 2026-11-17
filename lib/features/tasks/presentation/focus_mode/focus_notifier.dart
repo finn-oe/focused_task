@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/sessions/domain/focus_session.dart';
+import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
@@ -102,8 +104,12 @@ class FocusModeState {
 
 class FocusModeNotifier extends Notifier<FocusModeState> {
   late ITaskRepository _repository;
+  late IFocusSessionRepository _sessions;
   late TargetAlarm _alarm;
   Timer? _ticker;
+
+  /// The open focus session of [FocusModeState.currentTask], or `null` while paused.
+  int? _sessionId;
   DateTime? _lastHeartbeat;
 
   /// How often a running session records that it is still alive.
@@ -112,6 +118,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
   @override
   FocusModeState build() {
     _repository = ref.watch(taskRepositoryProvider);
+    _sessions = ref.watch(focusSessionRepositoryProvider);
     _alarm = ref.watch(targetAlarmProvider);
     ref.onDispose(_stopTicker);
     return FocusModeState.initial();
@@ -161,11 +168,10 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
       return;
     }
 
-    var current = task;
-    if (!task.isRunning) {
-      await _repository.startTaskSession(taskId: task.id, startedAt: clock.now());
-      current = (await _repository.getTaskById(task.id)) ?? task;
-    }
+    // Continue the task's open session (e.g. after a crash without recovery), otherwise start a new one.
+    final open = await _sessions.openSession();
+    _sessionId = open != null && open.taskId == task.id ? open.id : (await _sessions.start(taskId: task.id, at: clock.now())).id;
+    final current = (await _repository.getTaskById(task.id)) ?? task;
 
     final now = clock.now();
     final remaining = _remainingUntilTarget(current, now);
@@ -185,7 +191,8 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     await _scheduleTargetAlarm(current, now);
   }
 
-  Future<void> pauseSession() async {
+  /// Pauses the running session; [reason] is recorded in the session log.
+  Future<void> pauseSession({EndReason reason = EndReason.paused}) async {
     final task = state.currentTask;
     if (task == null || state.isPaused) {
       return;
@@ -194,7 +201,11 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     await _alarm.cancel();
 
     final now = clock.now();
-    await _repository.pauseTaskSession(taskId: task.id, pausedAt: now);
+    final sessionId = _sessionId;
+    _sessionId = null;
+    if (sessionId != null) {
+      await _sessions.end(sessionId, now, reason);
+    }
 
     final updatedTask = await _repository.getTaskById(task.id);
     final runningMs = state.sessionStartedAt == null ? 0 : now.difference(state.sessionStartedAt!).inMilliseconds;
@@ -217,7 +228,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     }
 
     final now = clock.now();
-    await _repository.startTaskSession(taskId: task.id, startedAt: now);
+    _sessionId = (await _sessions.start(taskId: task.id, at: now)).id;
     final updatedTask = await _repository.getTaskById(task.id);
 
     _startTicker();
@@ -235,31 +246,32 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     }
 
     await _alarm.cancel();
+    _sessionId = null;
     await _repository.completeTask(taskId: task.id, completedAt: clock.now());
 
     await _loadNextTask();
   }
 
   Future<void> exitFocus() async {
-    await pauseSession();
+    await pauseSession(reason: EndReason.exited);
     await _alarm.cancel();
     _stopTicker();
     state = state.copyWith(clearCurrentTask: true, isPaused: true, clearSessionStartedAt: true, sessionBaseMs: 0, now: clock.now(), shouldShowFinishedForToday: false);
   }
 
   /// Sessions that were left running, e.g. because the app was killed while focusing.
-  Future<List<TaskEntity>> loadRecoverableSessions() => _repository.getRecoverableSessions();
+  Future<List<FocusSession>> loadRecoverableSessions() => _sessions.unfinishedSessions();
 
-  Future<void> recoverSessions({required SessionRecovery recovery, required List<TaskEntity> sessions}) async {
+  Future<void> recoverSessions({required SessionRecovery recovery, required List<FocusSession> sessions}) async {
     final now = clock.now();
     for (final session in sessions) {
       switch (recovery) {
         case SessionRecovery.untilLastActivity:
-          await _repository.pauseTaskSession(taskId: session.id, pausedAt: session.lastActivityAt ?? now);
+          await _sessions.end(session.id, session.lastActivityAt, EndReason.recovered);
         case SessionRecovery.untilNow:
-          await _repository.pauseTaskSession(taskId: session.id, pausedAt: now);
+          await _sessions.end(session.id, now, EndReason.recovered);
         case SessionRecovery.discard:
-          await _repository.discardUnfinishedSession(taskId: session.id);
+          await _sessions.end(session.id, now, EndReason.discarded);
       }
     }
   }
@@ -296,7 +308,8 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
 
     if (task != null && !state.isPaused && (_lastHeartbeat == null || now.difference(_lastHeartbeat!) >= heartbeatInterval)) {
       _lastHeartbeat = now;
-      unawaited(_repository.recordHeartbeat(taskId: task.id, at: now));
+      final sessionId = _sessionId;
+      if (sessionId != null) unawaited(_sessions.heartbeat(sessionId, now));
     }
 
     // The alarm itself is rung by [TargetAlarm]; here we only show the in-app dialog.

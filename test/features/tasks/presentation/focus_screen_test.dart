@@ -27,6 +27,7 @@ Widget _app(FakeTaskRepository repository, SharedPreferences preferences, {Strin
   return ProviderScope(
     overrides: [
       taskRepositoryProvider.overrideWithValue(repository),
+      focusSessionRepositoryProvider.overrideWithValue(repository),
       targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
       sharedPreferencesProvider.overrideWithValue(preferences),
     ],

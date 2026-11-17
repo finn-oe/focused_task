@@ -21,6 +21,8 @@ compared to reality – so you can get a little more dedicated every day.
 - **Target alarm** – rings when a task's target duration is reached (native alarm on Android/iOS, sound on desktop).
 - **Distraction guard** – optionally pauses the session when the app is minimised or the screen is locked,
   and can keep the screen awake while focusing.
+- **Session log** – every focus interval is recorded, so time counts on the day you actually worked (also across midnight).
+  Missing time can be added by hand in the task form ("Add time").
 - **Session recovery** – if the app was closed during a session, you are asked whether to keep the tracked time.
 - **Statistics** – completion rate, total focus time, average task duration and focus time per day for the
   current day, week or month.

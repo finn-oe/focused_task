@@ -52,6 +52,9 @@
   "taskFormDeleteSubTaskTooltip": "Unteraufgabe löschen",
   "taskFormTargetDuration": "Zieldauer (optional)",
   "taskFormNoLimit": "Keine Begrenzung",
+  "taskFormTrackedTime": "Erfasste Zeit",
+  "taskFormAddTime": "Zeit hinzufügen",
+  "taskFormAddTimeTitle": "Erfasste Zeit hinzufügen",
   "taskFormTargetDurationValue": "{hours} Std. {minutes} Min.",
   "taskFormSave": "Aufgabe speichern",
   "taskFormAddSubTaskTitle": "Unteraufgabe hinzufügen",
@@ -86,6 +89,7 @@
   "recoveryClosedWhileFocusing": "Die App wurde geschlossen, während du an folgenden Aufgaben gearbeitet hast:",
   "recoveryQuestion": "Wie viel dieser Zeit möchtest du behalten?",
   "recoveryDiscard": "Verwerfen",
+  "recoveryDeletedTask": "(gelöschte Aufgabe)",
   "recoveryUntilNow": "Bis jetzt ({duration})",
   "recoveryUntilLastActivity": "Bis zur letzten Aktivität ({duration})",
 

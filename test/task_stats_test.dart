@@ -8,14 +8,11 @@ import 'helpers/task_builders.dart';
 
 void main() {
   group('TaskStats', () {
-    test('computes completion, focus, and duration metrics from tasks', () {
-      final tasks = [
-        buildTask(id: 1, isCompleted: true, timeSpent: 45 * 60 * 1000),
-        buildTask(id: 2, priority: TaskPriority.medium, timeSpent: 15 * 60 * 1000),
-        buildTask(id: 3, isCompleted: true, priority: TaskPriority.high, timeSpent: 30 * 60 * 1000),
-      ];
+    test('computes completion from the planned tasks and focus metrics from the tracked time', () {
+      final tasks = [buildTask(id: 1, isCompleted: true), buildTask(id: 2, priority: TaskPriority.medium), buildTask(id: 3, isCompleted: true, priority: TaskPriority.high)];
+      const minute = Duration(minutes: 1);
 
-      final stats = TaskStats.fromTasks(tasks, daysInRange: 2);
+      final stats = TaskStats.from(tasks: tasks, focusByTask: {1: minute * 45, 2: minute * 15, 3: minute * 30}, daysInRange: 2);
 
       expect(stats.totalTasks, 3);
       expect(stats.completedTasks, 2);
@@ -25,16 +22,16 @@ void main() {
       expect(stats.focusMinutesPerDay, 45);
     });
 
-    test('includes in-progress task time in focus metrics', () {
-      final stats = TaskStats.fromTasks([buildTask(timeSpent: 45 * 60 * 1000)], daysInRange: 1);
+    test('counts focus time of tasks planned elsewhere or deleted', () {
+      final stats = TaskStats.from(tasks: const [], focusByTask: {7: const Duration(minutes: 30), null: const Duration(minutes: 10)}, daysInRange: 1);
 
-      expect(stats.totalFocusMinutes, 45);
-      expect(stats.averageTaskDurationMinutes, 45);
-      expect(stats.focusMinutesPerDay, 45);
+      expect(stats.totalTasks, 0);
+      expect(stats.totalFocusMinutes, 40);
+      expect(stats.averageTaskDurationMinutes, 20);
     });
 
     test('returns zeros for an empty range', () {
-      final stats = TaskStats.fromTasks(const [], daysInRange: 7);
+      final stats = TaskStats.from(tasks: const [], focusByTask: const {}, daysInRange: 7);
 
       expect(stats.totalTasks, 0);
       expect(stats.completionScore, 0);

@@ -11,7 +11,7 @@ import 'helpers/localized_app.dart';
 
 Widget _app(FakeTaskRepository repository) {
   return ProviderScope(
-    overrides: [taskRepositoryProvider.overrideWithValue(repository)],
+    overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
     child: localizedApp(home: const PlanScreen()),
   );
 }

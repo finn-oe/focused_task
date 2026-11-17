@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 
 import 'package:focused_task/core/utils/fractional_indexer.dart';
+import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
@@ -34,11 +35,13 @@ class PlanModeState {
 
 class PlanModeNotifier extends Notifier<PlanModeState> {
   late ITaskRepository _repository;
+  late IFocusSessionRepository _sessions;
   StreamSubscription<List<TaskEntity>>? _subscription;
 
   @override
   PlanModeState build() {
     _repository = ref.watch(taskRepositoryProvider);
+    _sessions = ref.watch(focusSessionRepositoryProvider);
     ref.onDispose(() => _subscription?.cancel());
 
     final initial = PlanModeState.initial();
@@ -125,6 +128,13 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     } else {
       await _repository.replaceTaskTodos(id, []);
     }
+  }
+
+  /// Adds manually tracked time to [task]: on its day if that is in the past, otherwise today (never in the future).
+  Future<void> addManualTime({required TaskEntity task, required Duration duration}) {
+    final today = clock.now().dateOnly;
+    final day = task.assignedDate.isBefore(today) ? task.assignedDate : today;
+    return _sessions.addManualTime(taskId: task.id, day: day, duration: duration);
   }
 
   Future<void> deleteTask(int id) async {
