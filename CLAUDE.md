@@ -109,3 +109,23 @@ flutter run -d windows   # or chrome, macos, linux, android, ios
 - Branch `issue-<number>-<slug>` from `main`, one issue per PR, `Fixes #<number>` in the PR body, tick the box in #38 after merging.
 - Never develop two database schema changes at the same time (each bumps `schemaVersion`).
 - Update `README.md` / `docs/` when behaviour or architecture changes.
+- Merge a PR only when CI is green (the `Build web` job may fail until #30). **Every merge is a release** (see below).
+
+## Releases
+
+Every merged PR ships as a new version: a Git tag, a GitHub Release and a signed Android build. Until #37 automates this, do it by hand:
+
+1. **In the PR** (before merging):
+   - Bump `version` in `pubspec.yaml` with SemVer: new feature → minor (`1.1.0` → `1.2.0`), fix / tech debt / docs → patch (`1.2.0` → `1.2.1`), incompatible data or behaviour change → major. **Always increase the build number** after `+` by one: it is the Android `versionCode` and must grow, or updates won't install.
+   - Add a section `## [x.y.z] - YYYY-MM-DD` at the top of `CHANGELOG.md` (Keep a Changelog: *Added*, *Changed*, *Fixed*, *Removed*) with user-facing changes and the issue number.
+2. **After merging** (on an up-to-date `main`):
+   ```bash
+   git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z
+   flutter build apk --release
+   flutter build appbundle --release
+   cp build/app/outputs/flutter-apk/app-release.apk focused_task-X.Y.Z.apk
+   cp build/app/outputs/bundle/release/app-release.aab focused_task-X.Y.Z.aab
+   gh release create vX.Y.Z focused_task-X.Y.Z.apk focused_task-X.Y.Z.aab --title "vX.Y.Z" --notes "<the CHANGELOG section>"
+   ```
+   Release builds are signed with `android/key.properties` + keystore, which exist only on the owner's machine. **Never** commit, print or generate them; if they are missing, stop and ask. Delete the copied `.apk`/`.aab` afterwards (`*.apk`/`*.aab` must not be committed).
+3. Tick the issue in #38.
