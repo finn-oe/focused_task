@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/lifecycle_observer.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
@@ -46,10 +47,11 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        final l10n = context.l10n;
         return AlertDialog(
-          title: const Text('Time is up!'),
-          content: const Text('You have reached your target duration for this task.'),
-          actions: [FilledButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Stop Alarm & Continue'))],
+          title: Text(l10n.focusTimeIsUp),
+          content: Text(l10n.focusTargetReached),
+          actions: [FilledButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.focusStopAlarmAndContinue))],
         );
       },
     );
@@ -94,11 +96,11 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('Focus Mode'),
+            title: Text(context.l10n.focusTitle),
             scrolledUnderElevation: 0.0,
             surfaceTintColor: Colors.transparent,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            leading: IconButton(tooltip: 'Exit focus', onPressed: _exitToPlan, icon: const Icon(Icons.close)),
+            leading: IconButton(tooltip: context.l10n.focusExitTooltip, onPressed: _exitToPlan, icon: const Icon(Icons.close)),
           ),
           body: state.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -126,8 +128,8 @@ class _FocusBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final task = state.currentTask;
     if (task == null) {
-      return const Center(
-        child: Padding(padding: EdgeInsets.all(24), child: Text('No unfinished tasks for today.')),
+      return Center(
+        child: Padding(padding: const EdgeInsets.all(24), child: Text(context.l10n.focusNoUnfinishedTasks)),
       );
     }
 
@@ -164,7 +166,7 @@ class _FocusBody extends ConsumerWidget {
                         child: LinearProgressIndicator(value: progress, minHeight: 8, borderRadius: BorderRadius.circular(8)),
                       ),
                       const SizedBox(width: 12),
-                      Text('$percentage%', style: Theme.of(context).textTheme.titleSmall),
+                      Text(context.l10n.commonPercent(percentage), style: Theme.of(context).textTheme.titleSmall),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -213,9 +215,9 @@ class _FocusBody extends ConsumerWidget {
           ),
 
           const SizedBox(height: 16),
-          FilledButton(onPressed: onComplete, child: const Text('Complete Task')),
+          FilledButton(onPressed: onComplete, child: Text(context.l10n.focusCompleteTask)),
           const SizedBox(height: 8),
-          OutlinedButton(onPressed: onExit, child: const Text('Exit Focus')),
+          OutlinedButton(onPressed: onExit, child: Text(context.l10n.focusExit)),
         ],
       ),
     );

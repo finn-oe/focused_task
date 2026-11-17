@@ -13,8 +13,8 @@ extension CalendarDate on DateTime {
   /// Local midnight at the start of the following day (exclusive end of this day).
   DateTime get nextDay => addDays(1);
 
-  /// Monday of the ISO week containing this date.
-  DateTime get startOfWeek => addDays(-(weekday - DateTime.monday));
+  /// First day of the week containing this date, for weeks starting on [firstWeekday] (a [DateTime.weekday] value).
+  DateTime startOfWeek([int firstWeekday = DateTime.monday]) => addDays(-((weekday - firstWeekday) % DateTime.daysPerWeek));
 
   /// First day of this month.
   DateTime get startOfMonth => DateTime(year, month);

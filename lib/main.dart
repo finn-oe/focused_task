@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/core/ui/themes/app_themes.dart';
@@ -24,13 +25,17 @@ class FocusedTaskApp extends ConsumerWidget {
     ref.watch(appStartupProvider);
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(settingsNotifierProvider.select((settings) => settings.themeMode));
+    final locale = ref.watch(settingsNotifierProvider.select((settings) => settings.locale));
 
     return MaterialApp.router(
-      title: 'Focused Task',
+      onGenerateTitle: (context) => context.l10n.appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppThemes.light,
       darkTheme: AppThemes.dark,
       themeMode: themeMode,
+      locale: locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: appLocalizationsDelegates,
       routerConfig: router,
     );
   }

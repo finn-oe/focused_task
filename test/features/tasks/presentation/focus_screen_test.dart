@@ -13,6 +13,7 @@ import '../../../helpers/fake_preferences.dart';
 import '../../../helpers/fake_target_alarm.dart';
 import '../../../helpers/fake_task_repository.dart';
 import '../../../helpers/task_builders.dart';
+import '../../../helpers/localized_app.dart';
 
 Widget _app(FakeTaskRepository repository, SharedPreferences preferences, {String initialLocation = '/focus'}) {
   final router = GoRouter(
@@ -29,7 +30,7 @@ Widget _app(FakeTaskRepository repository, SharedPreferences preferences, {Strin
       targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
       sharedPreferencesProvider.overrideWithValue(preferences),
     ],
-    child: MaterialApp.router(routerConfig: router),
+    child: localizedRouterApp(routerConfig: router),
   );
 }
 

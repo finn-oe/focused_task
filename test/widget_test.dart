@@ -7,11 +7,12 @@ import 'package:focused_task/features/tasks/presentation/plan_mode/plan_screen.d
 
 import 'helpers/fake_task_repository.dart';
 import 'helpers/task_builders.dart';
+import 'helpers/localized_app.dart';
 
 Widget _app(FakeTaskRepository repository) {
   return ProviderScope(
     overrides: [taskRepositoryProvider.overrideWithValue(repository)],
-    child: const MaterialApp(home: PlanScreen()),
+    child: localizedApp(home: const PlanScreen()),
   );
 }
 

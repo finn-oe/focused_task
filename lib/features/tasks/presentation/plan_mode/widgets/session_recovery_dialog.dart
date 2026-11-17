@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
@@ -32,25 +33,29 @@ class _SessionRecoveryDialog extends StatelessWidget {
     final untilLastActivity = _sum((session) => session.lastActivityAt!);
     final untilNow = _sum((_) => now);
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return AlertDialog(
-      title: const Text('Recover unfinished session?'),
+      title: Text(l10n.recoveryTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('The app was closed while you were focusing on:', style: theme.textTheme.bodyMedium),
+          Text(l10n.recoveryClosedWhileFocusing, style: theme.textTheme.bodyMedium),
           const SizedBox(height: 8),
-          for (final session in sessions) Text('• ${session.title}', style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+          for (final session in sessions) Text(l10n.commonListItem(session.title), style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 16),
-          Text('How much of that time do you want to keep?', style: theme.textTheme.bodyMedium),
+          Text(l10n.recoveryQuestion, style: theme.textTheme.bodyMedium),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(SessionRecovery.discard), child: const Text('Discard')),
+        TextButton(onPressed: () => Navigator.of(context).pop(SessionRecovery.discard), child: Text(l10n.recoveryDiscard)),
         if (untilNow - untilLastActivity >= const Duration(minutes: 1))
-          TextButton(onPressed: () => Navigator.of(context).pop(SessionRecovery.untilNow), child: Text('Until now (${untilNow.toFormattedString()})')),
-        FilledButton(onPressed: () => Navigator.of(context).pop(SessionRecovery.untilLastActivity), child: Text('Until last activity (${untilLastActivity.toFormattedString()})')),
+          TextButton(onPressed: () => Navigator.of(context).pop(SessionRecovery.untilNow), child: Text(l10n.recoveryUntilNow(untilNow.toFormattedString()))),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(SessionRecovery.untilLastActivity),
+          child: Text(l10n.recoveryUntilLastActivity(untilLastActivity.toFormattedString())),
+        ),
       ],
     );
   }

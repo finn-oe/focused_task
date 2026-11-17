@@ -5,6 +5,15 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 
+/// Localized texts of the alarm's system notification (Android / iOS).
+class AlarmNotification {
+  const AlarmNotification({required this.title, required this.body, required this.stopButton});
+
+  final String title;
+  final String body;
+  final String stopButton;
+}
+
 /// Rings when a task reaches its target duration, also while the app is in the background.
 ///
 /// At most one alarm is pending at a time: scheduling replaces the previous alarm.
@@ -12,7 +21,7 @@ abstract interface class TargetAlarm {
   Future<void> init();
 
   /// Schedules the alarm for [at], replacing any pending alarm. Times in the past ring immediately.
-  Future<void> schedule({required String taskTitle, required DateTime at});
+  Future<void> schedule({required AlarmNotification notification, required DateTime at});
 
   /// Cancels a pending alarm and stops it if it is ringing.
   Future<void> cancel();
@@ -34,7 +43,7 @@ class NativeTargetAlarm implements TargetAlarm {
   Future<void> init() => Alarm.init();
 
   @override
-  Future<void> schedule({required String taskTitle, required DateTime at}) async {
+  Future<void> schedule({required AlarmNotification notification, required DateTime at}) async {
     final now = DateTime.now();
     final safeAt = at.isAfter(now) ? at : now.add(const Duration(milliseconds: 500));
 
@@ -48,7 +57,7 @@ class NativeTargetAlarm implements TargetAlarm {
         warningNotificationOnKill: defaultTargetPlatform == TargetPlatform.iOS,
         androidFullScreenIntent: true,
         volumeSettings: const VolumeSettings.fixed(volume: null, volumeEnforced: false),
-        notificationSettings: NotificationSettings(title: 'Time is up!', body: 'You have reached your target duration for: $taskTitle', stopButton: 'Stop Alarm'),
+        notificationSettings: NotificationSettings(title: notification.title, body: notification.body, stopButton: notification.stopButton),
       ),
     );
   }
@@ -82,7 +91,7 @@ class TimerTargetAlarm implements TargetAlarm {
   Future<void> init() async {}
 
   @override
-  Future<void> schedule({required String taskTitle, required DateTime at}) async {
+  Future<void> schedule({required AlarmNotification notification, required DateTime at}) async {
     _timer?.cancel();
     final delay = at.difference(clock.now());
     _timer = Timer(delay.isNegative ? Duration.zero : delay, _ring);

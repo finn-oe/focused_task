@@ -1,4 +1,3 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,6 +7,7 @@ import 'package:focused_task/features/tasks/presentation/stats/stats_screen.dart
 
 import '../../../helpers/fake_task_repository.dart';
 import '../../../helpers/task_builders.dart';
+import '../../../helpers/localized_app.dart';
 
 void main() {
   testWidgets('shows the stats of the selected range and reloads when it changes', (tester) async {
@@ -23,19 +23,19 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [taskRepositoryProvider.overrideWithValue(repository)],
-        child: const MaterialApp(home: StatsScreen()),
+        child: localizedApp(home: const StatsScreen()),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('1/1 tasks completed'), findsOneWidget);
+    expect(find.text('1/1 task completed'), findsOneWidget);
     expect(find.text('25 min'), findsWidgets);
 
     await tester.tap(find.text('Month'));
     await tester.pumpAndSettle();
 
     final sameMonth = today.addDays(-14).month == today.month;
-    expect(find.text(sameMonth ? '1/2 tasks completed' : '1/1 tasks completed'), findsOneWidget);
+    expect(find.text(sameMonth ? '1/2 tasks completed' : '1/1 task completed'), findsOneWidget);
   });
 
   test('taskStatsProvider caches per date range', () async {

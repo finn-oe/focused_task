@@ -31,10 +31,16 @@ void main() {
       expect(DateTime(2026, 5, 4, 23, 59, 59).dateOnly, DateTime(2026, 5, 4));
     });
 
-    test('startOfWeek returns Monday', () {
-      expect(DateTime(2026, 11, 17).startOfWeek, DateTime(2026, 11, 16)); // Tuesday
-      expect(DateTime(2026, 11, 22).startOfWeek, DateTime(2026, 11, 16)); // Sunday
-      expect(DateTime(2026, 11, 16).startOfWeek, DateTime(2026, 11, 16)); // Monday
+    test('startOfWeek returns Monday by default', () {
+      expect(DateTime(2026, 11, 17).startOfWeek(), DateTime(2026, 11, 16)); // Tuesday
+      expect(DateTime(2026, 11, 22).startOfWeek(), DateTime(2026, 11, 16)); // Sunday
+      expect(DateTime(2026, 11, 16).startOfWeek(), DateTime(2026, 11, 16)); // Monday
+    });
+
+    test('startOfWeek honours a Sunday week start', () {
+      expect(DateTime(2026, 11, 17).startOfWeek(DateTime.sunday), DateTime(2026, 11, 15)); // Tuesday
+      expect(DateTime(2026, 11, 15).startOfWeek(DateTime.sunday), DateTime(2026, 11, 15)); // Sunday
+      expect(DateTime(2026, 11, 21).startOfWeek(DateTime.sunday), DateTime(2026, 11, 15)); // Saturday
     });
 
     test('calendarDaysUntil counts calendar days across DST switches', () {
@@ -48,13 +54,16 @@ void main() {
     test('covers the whole week and month, inclusive', () {
       final now = DateTime(2026, 10, 14, 15, 30);
 
-      final day = statsDateRange(StatsRange.day, now);
+      final day = statsDateRange(StatsRange.day, now, firstWeekday: DateTime.monday);
       expect((day.start, day.end), (DateTime(2026, 10, 14), DateTime(2026, 10, 14)));
 
-      final week = statsDateRange(StatsRange.week, now);
+      final week = statsDateRange(StatsRange.week, now, firstWeekday: DateTime.monday);
       expect((week.start, week.end), (DateTime(2026, 10, 12), DateTime(2026, 10, 18)));
 
-      final month = statsDateRange(StatsRange.month, now);
+      final sundayWeek = statsDateRange(StatsRange.week, now, firstWeekday: DateTime.sunday);
+      expect((sundayWeek.start, sundayWeek.end), (DateTime(2026, 10, 11), DateTime(2026, 10, 17)));
+
+      final month = statsDateRange(StatsRange.month, now, firstWeekday: DateTime.monday);
       expect((month.start, month.end), (DateTime(2026, 10, 1), DateTime(2026, 10, 31)));
     });
   });

@@ -3,6 +3,7 @@ import 'package:focused_task/core/services/target_alarm.dart';
 /// Records alarm calls; [scheduledAt] is the currently pending alarm (or `null`).
 class FakeTargetAlarm implements TargetAlarm {
   DateTime? scheduledAt;
+  AlarmNotification? notification;
   int scheduleCount = 0;
   int cancelCount = 0;
 
@@ -10,8 +11,9 @@ class FakeTargetAlarm implements TargetAlarm {
   Future<void> init() async {}
 
   @override
-  Future<void> schedule({required String taskTitle, required DateTime at}) async {
+  Future<void> schedule({required AlarmNotification notification, required DateTime at}) async {
     scheduledAt = at;
+    this.notification = notification;
     scheduleCount++;
   }
 

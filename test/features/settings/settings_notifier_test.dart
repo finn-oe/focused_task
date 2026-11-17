@@ -10,6 +10,7 @@ import 'package:focused_task/features/settings/presentation/settings_screen.dart
 import '../../helpers/fake_preferences.dart';
 import '../../helpers/fake_task_repository.dart';
 import '../../helpers/task_builders.dart';
+import '../../helpers/localized_app.dart';
 
 FakeTaskRepository _repositoryWithOldCompletedTask() {
   return FakeTaskRepository(tasks: [buildTask(isCompleted: true, assignedDate: DateTime.now().addDays(-40))]);
@@ -74,7 +75,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(home: SettingsScreen()),
+        child: localizedApp(home: const SettingsScreen()),
       ),
     );
 
@@ -90,7 +91,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(home: SettingsScreen()),
+        child: localizedApp(home: const SettingsScreen()),
       ),
     );
     await tester.tap(find.text('Clean now'));

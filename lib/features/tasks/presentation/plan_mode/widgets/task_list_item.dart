@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
@@ -20,24 +21,25 @@ class TaskListItem extends ConsumerWidget {
     final hasTodos = task.todos.isNotEmpty;
     final hasTargetDuration = task.targetDurationMinutes != null;
 
+    final l10n = context.l10n;
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Move to Today'),
+              title: Text(l10n.taskCopyToTodayTitle),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Create a copy of this task for today?'),
+                  Text(l10n.taskCopyToTodayQuestion),
                   const SizedBox(height: 16),
 
                   if (hasTodos)
                     SwitchListTile(
-                      title: const Text('Keep completed to-dos'),
-                      subtitle: const Text('If off, all to-dos will be reset'),
+                      title: Text(l10n.taskKeepCompletedTodos),
+                      subtitle: Text(l10n.taskKeepCompletedTodosHint),
                       value: keepTodoCompletion,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (value) => setState(() => keepTodoCompletion = value),
@@ -45,8 +47,8 @@ class TaskListItem extends ConsumerWidget {
 
                   if (hasTargetDuration)
                     SwitchListTile(
-                      title: const Text('Subtract time spent'),
-                      subtitle: const Text('Reduces the new target duration by the time already tracked'),
+                      title: Text(l10n.taskSubtractTimeSpent),
+                      subtitle: Text(l10n.taskSubtractTimeSpentHint),
                       value: subtractTimeSpent,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (value) => setState(() => subtractTimeSpent = value),
@@ -54,8 +56,8 @@ class TaskListItem extends ConsumerWidget {
                 ],
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-                FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Copy')),
+                TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.commonCancel)),
+                FilledButton(onPressed: () => Navigator.of(context).pop(true), child: Text(l10n.commonCopy)),
               ],
             );
           },
@@ -71,6 +73,7 @@ class TaskListItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
     final notifier = ref.read(planModeNotifierProvider.notifier);
     final isCompleted = task.isCompleted;
     final colorScheme = Theme.of(context).colorScheme;
@@ -89,7 +92,7 @@ class TaskListItem extends ConsumerWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Semantics(
-          label: isCompleted ? 'Mark task as incomplete' : 'Mark task as complete',
+          label: isCompleted ? l10n.taskMarkIncomplete : l10n.taskMarkComplete,
           button: true,
           child: GestureDetector(
             onTap: () => notifier.toggleTaskCompletion(task),
@@ -110,7 +113,7 @@ class TaskListItem extends ConsumerWidget {
           task.title,
           style: isCompleted ? TextStyle(decoration: TextDecoration.lineThrough, color: colorScheme.onSurfaceVariant) : null,
         ),
-        subtitle: Text(task.description ?? 'No description', style: isCompleted ? TextStyle(color: colorScheme.onSurfaceVariant) : null),
+        subtitle: Text(task.description ?? l10n.taskNoDescription, style: isCompleted ? TextStyle(color: colorScheme.onSurfaceVariant) : null),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -119,7 +122,7 @@ class TaskListItem extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(color: colorScheme.secondaryContainer, borderRadius: BorderRadius.circular(12)),
                 child: Text(
-                  '$completedTodos/$totalTodos',
+                  l10n.taskTodoProgress(completedTodos, totalTodos),
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSecondaryContainer),
                 ),
               ),
@@ -134,14 +137,14 @@ class TaskListItem extends ConsumerWidget {
 
             if (isPast)
               IconButton(
-                tooltip: 'Copy to Today',
+                tooltip: l10n.taskCopyToTodayTooltip,
                 icon: const Icon(Icons.today_outlined),
                 color: isCompleted ? colorScheme.onSurfaceVariant : null,
                 onPressed: () => _showCopyToTodayDialog(context, ref, today),
               )
             else
               IconButton(
-                tooltip: 'Edit Task',
+                tooltip: l10n.taskEditTooltip,
                 icon: const Icon(Icons.edit_outlined),
                 color: isCompleted ? colorScheme.onSurfaceVariant : null,
                 onPressed: () => context.push('/task-form', extra: task),

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
@@ -76,23 +77,25 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final theme = Theme.of(context);
     final notifier = ref.read(planModeNotifierProvider.notifier);
+    final targetMinutes = _targetDurationMinutes;
 
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditMode ? 'Edit Task' : 'Add Task'),
+        title: Text(_isEditMode ? l10n.taskFormEditTitle : l10n.taskFormAddTitle),
         actions: [
           if (_isEditMode)
             IconButton(
-              tooltip: 'Duplicate Task',
+              tooltip: l10n.taskFormDuplicateTooltip,
               icon: const Icon(Icons.copy_outlined),
               onPressed: () async {
                 final title = _titleController.text.trim();
                 if (title.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot duplicate a task without a title')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.taskFormDuplicateWithoutTitle)));
                   return;
                 }
 
@@ -109,7 +112,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
               },
             ),
           IconButton(
-            tooltip: 'Change Date',
+            tooltip: l10n.taskFormChangeDateTooltip,
             icon: const Icon(Icons.calendar_today_outlined),
             onPressed: () async {
               final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: _selectedDate);
@@ -121,7 +124,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
           if (_isEditMode)
             IconButton(
               icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-              tooltip: 'Delete Task',
+              tooltip: l10n.taskFormDeleteTooltip,
               onPressed: () async {
                 await notifier.deleteTask(widget.task!.id);
                 if (context.mounted) context.pop();
@@ -136,13 +139,13 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
           children: [
             TextField(
               controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: l10n.taskFormTitleLabel, border: const OutlineInputBorder()),
               autofocus: !_isEditMode,
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Description', border: OutlineInputBorder()),
+              decoration: InputDecoration(labelText: l10n.taskFormDescriptionLabel, border: const OutlineInputBorder()),
               maxLines: 4,
               minLines: 2,
             ),
@@ -150,8 +153,8 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Sub-tasks', style: theme.textTheme.titleMedium),
-                IconButton(onPressed: _showTodoDialog, icon: const Icon(Icons.add), tooltip: 'Add Sub-task'),
+                Text(l10n.taskFormSubTasks, style: theme.textTheme.titleMedium),
+                IconButton(onPressed: _showTodoDialog, icon: const Icon(Icons.add), tooltip: l10n.taskFormAddSubTaskTooltip),
               ],
             ),
             const SizedBox(height: 8),
@@ -159,7 +162,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
             if (_todos.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-                child: Text('No sub-tasks added.', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                child: Text(l10n.taskFormNoSubTasks, style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
               )
             else
               ConstrainedBox(
@@ -187,10 +190,12 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
+                            tooltip: l10n.taskFormEditSubTaskTooltip,
                             icon: const Icon(Icons.edit, size: 20),
                             onPressed: () => _showTodoDialog(editIndex: index),
                           ),
                           IconButton(
+                            tooltip: l10n.taskFormDeleteSubTaskTooltip,
                             icon: Icon(Icons.delete, size: 20, color: theme.colorScheme.error),
                             onPressed: () => setState(() => _todos.removeAt(index)),
                           ),
@@ -210,8 +215,8 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
               elevation: 0,
               color: theme.colorScheme.surfaceContainerLow,
               child: ListTile(
-                title: const Text('Target Duration (Optional)'),
-                subtitle: Text(_targetDurationMinutes == null ? 'No limit' : '${_targetDurationMinutes! ~/ 60}h ${_targetDurationMinutes! % 60}m'),
+                title: Text(l10n.taskFormTargetDuration),
+                subtitle: Text(targetMinutes == null ? l10n.taskFormNoLimit : l10n.taskFormTargetDurationValue(targetMinutes ~/ 60, targetMinutes % 60)),
                 trailing: const Icon(Icons.timer_outlined),
                 onTap: () async {
                   final initialTime = TimeOfDay(hour: (_targetDurationMinutes ?? 0) ~/ 60, minute: (_targetDurationMinutes ?? 0) % 60);
@@ -264,7 +269,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
 
               if (context.mounted) context.pop();
             },
-            child: const Padding(padding: EdgeInsets.symmetric(vertical: 16.0), child: Text('Save Task')),
+            child: Padding(padding: const EdgeInsets.symmetric(vertical: 16.0), child: Text(l10n.taskFormSave)),
           ),
         ),
       ),
@@ -298,17 +303,18 @@ class _TodoInputDialogState extends State<_TodoInputDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return AlertDialog(
-      title: Text(widget.initialTitle != null ? 'Edit sub-task' : 'Add sub-task'),
+      title: Text(widget.initialTitle != null ? l10n.taskFormEditSubTaskTitle : l10n.taskFormAddSubTaskTitle),
       content: TextField(
         controller: _controller,
         autofocus: true,
-        decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder()),
+        decoration: InputDecoration(labelText: l10n.taskFormTitleLabel, border: const OutlineInputBorder()),
         onSubmitted: (val) => Navigator.of(context).pop(val),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-        FilledButton(onPressed: () => Navigator.of(context).pop(_controller.text), child: const Text('Save')),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonCancel)),
+        FilledButton(onPressed: () => Navigator.of(context).pop(_controller.text), child: Text(l10n.commonSave)),
       ],
     );
   }

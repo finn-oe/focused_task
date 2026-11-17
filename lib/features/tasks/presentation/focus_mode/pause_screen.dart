@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 
 class PauseScreen extends ConsumerWidget {
@@ -22,14 +23,14 @@ class PauseScreen extends ConsumerWidget {
         if (!didPop) exitToPlan();
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Paused')),
+        appBar: AppBar(title: Text(context.l10n.pauseTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Focus paused while app is in background.', style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
+                Text(context.l10n.pauseMessage, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: () async {
@@ -38,10 +39,10 @@ class PauseScreen extends ConsumerWidget {
                       context.go('/focus');
                     }
                   },
-                  child: const Text('Resume Focus'),
+                  child: Text(context.l10n.pauseResume),
                 ),
                 const SizedBox(height: 8),
-                OutlinedButton(onPressed: exitToPlan, child: const Text('Exit Focus')),
+                OutlinedButton(onPressed: exitToPlan, child: Text(context.l10n.focusExit)),
               ],
             ),
           ),
