@@ -20,11 +20,12 @@ class TestApp {
   final SharedPreferences preferences;
   final FakeTargetAlarm alarm;
 
-  /// Boots the app; English unless [preferences] say otherwise.
-  static Future<TestApp> start(WidgetTester tester, {Map<String, Object> preferences = const {'settings.locale': 'en'}}) async {
+  /// Boots the app; English unless [preferences] say otherwise. [seed] fills the database before the first frame.
+  static Future<TestApp> start(WidgetTester tester, {Map<String, Object> preferences = const {'settings.locale': 'en'}, Future<void> Function(AppDatabase database)? seed}) async {
     SharedPreferences.setMockInitialValues(preferences);
     final app = TestApp._(AppDatabase(NativeDatabase.memory()), await SharedPreferences.getInstance(), FakeTargetAlarm());
     addTearDown(app.database.close);
+    await seed?.call(app.database);
     await app._pump(tester);
     return app;
   }

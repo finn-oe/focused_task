@@ -12,8 +12,10 @@ import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/rollover_sheet.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/session_recovery_dialog.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_move_feedback.dart';
 
 /// Tasks of one day. The day comes from the URL (`/plan?date=YYYY-MM-DD`, missing = today) and the plan notifier
 /// follows it, so browser back/forward and deep links work.
@@ -38,7 +40,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   void initState() {
     super.initState();
     _followRoute();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _handleRecoverableSessions());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _runStartupPrompts());
   }
 
   @override
@@ -101,6 +103,26 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
   Future<void> _pickDay() async {
     final selected = await showDatePicker(context: context, firstDate: DateTime(2020), lastDate: DateTime(2100), initialDate: _shownDay);
     if (selected != null && mounted) _goToDay(selected);
+  }
+
+  /// One prompt after the other: first unfinished focus sessions, then the daily rollover of open tasks.
+  Future<void> _runStartupPrompts() async {
+    await _handleRecoverableSessions();
+    if (mounted) await _offerRollover();
+  }
+
+  /// On the first start of a day, offers to move the open tasks of the last days to today.
+  Future<void> _offerRollover() async {
+    final notifier = ref.read(planModeNotifierProvider.notifier);
+    final tasks = await notifier.takeRolloverCandidates();
+    if (!mounted || tasks.isEmpty) return;
+
+    final today = _today;
+    final ids = await showRolloverSheet(context, tasks: tasks, today: today);
+    if (ids == null || ids.isEmpty || !mounted) return;
+
+    final feedback = TaskMoveFeedback.of(context, notifier);
+    feedback.show(await notifier.moveTasks(ids, today));
   }
 
   Future<void> _handleRecoverableSessions() async {

@@ -17,10 +17,13 @@ compared to reality – so you can get a little more dedicated every day.
 - **Navigation** – bottom bar on phones, rail on tablets, sidebar on wide windows. Switch days with ‹ ›, the date
   picker, a swipe or `Alt+←/→`; the day is part of the URL (`/plan?date=2026-11-17`). `Ctrl/Cmd+N` adds a task.
 - **Plan mode** – tasks per day with description, sub-tasks (checklist) and an optional target duration.
-  Reorder by drag & drop, mark as done, duplicate, or copy unfinished tasks from past days to today.
+  Reorder by drag & drop, mark as done or duplicate. Unfinished tasks of past days can be moved to today (or any day,
+  with undo) – their tracked time and session history stay on the days they were worked – or copied.
 - **Calendar** – week and month views (`/calendar?view=month&date=2026-11-17`). The week shows each day's tasks
   (7 columns on wide windows – long-press and drag a task to another day; an agenda with "Move to…" on phones). The
   month grid shows done/total tasks and a bar for the focus time of each day. Tap a day to open it in the plan.
+- **Daily rollover** – on the first start of a day, the app offers to move the open tasks of the last 7 days to
+  today (can be turned off in Settings → Planning).
 - **Focus mode** – works through today's open tasks in order. Shows the time spent on the current task
   (or the time remaining until the target), the overall session time, and the sub-task progress.
 - **Target alarm** – rings when a task's target duration is reached (native alarm on Android/iOS, sound and system
@@ -34,7 +37,7 @@ compared to reality – so you can get a little more dedicated every day.
 - **Statistics** – completion rate, total focus time, average task duration and focus time per day for the
   current day, week or month.
 - **Languages** – English and German; follows the system language or can be chosen in the settings.
-- **Settings** – light/dark/system theme, language, data retention, focus-mode behaviour.
+- **Settings** – light/dark/system theme, language, the daily rollover prompt, data retention, focus-mode behaviour.
 
 ### Planned
 

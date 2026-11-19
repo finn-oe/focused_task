@@ -73,6 +73,8 @@ void main() {
     expect(find.textContaining('Notifications are turned off'), findsOneWidget);
 
     notifications.grantPermission = true;
+    await tester.ensureVisible(find.text('Ask again'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Ask again'));
     await tester.pumpAndSettle();
 

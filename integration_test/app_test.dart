@@ -136,4 +136,43 @@ void main() {
     expect(find.text(toYesterday ? 'Yesterday' : 'Tomorrow'), findsOneWidget, reason: 'the plan shows the tapped day');
     expect(find.text('Weekly review'), findsOneWidget);
   });
+
+  testWidgets('unfinished tasks move to today: the daily prompt and the task menu', (tester) async {
+    final today = DateTime.now().dateOnly;
+    final yesterday = today.addDays(-1);
+    final app = await TestApp.start(
+      tester,
+      seed: (database) async {
+        final tasks = TaskRepositoryImpl(database);
+        await tasks.createTask(title: 'Write report', assignedDate: yesterday, sortOrder: 'a0');
+        await tasks.createTask(title: 'Call back', assignedDate: yesterday, sortOrder: 'a1');
+        // 20 minutes of work yesterday stay on yesterday after the move.
+        await database.addManualSession(taskId: 1, start: yesterday.add(const Duration(hours: 9)), duration: const Duration(minutes: 20));
+      },
+    );
+
+    expect(find.text('Unfinished tasks'), findsOneWidget);
+    await tester.tapAndSettle(find.widgetWithText(CheckboxListTile, 'Call back'));
+    await tester.tapAndSettle(find.text('Move 1 task to today'));
+    expect(find.text('Write report'), findsOneWidget);
+    expect(find.text('Call back'), findsNothing);
+
+    await app.restart(tester);
+    expect(find.text('Unfinished tasks'), findsNothing, reason: 'the prompt shows once per day');
+
+    await tester.tapAndSettle(find.byTooltip('Previous day'));
+    expect(find.text('Call back'), findsOneWidget);
+    await tester.tapAndSettle(find.byTooltip('Move or copy'));
+    await tester.tapAndSettle(find.text('Move to today'));
+    expect(find.text('No tasks for this day.'), findsOneWidget);
+
+    await tester.tapAndSettle(find.byTooltip('Next day'));
+    expect(find.text('Write report'), findsOneWidget);
+    expect(find.text('Call back'), findsOneWidget);
+
+    final moved = (await TaskRepositoryImpl(app.database).getTaskById(1))!;
+    expect((moved.assignedDate, Duration(milliseconds: moved.timeSpent)), (today, const Duration(minutes: 20)));
+    final sessions = await app.database.getSessionsOverlapping(yesterday, today);
+    expect(sessions, hasLength(1), reason: 'the session stays on the day it was worked');
+  });
 }

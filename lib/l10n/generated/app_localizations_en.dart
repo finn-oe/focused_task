@@ -158,16 +158,39 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get taskCopyToTodayTooltip => 'Copy to Today';
+  String get taskMoveOrCopyTooltip => 'Move or copy';
+
+  @override
+  String get taskMoveToToday => 'Move to today';
+
+  @override
+  String get taskMoveTo => 'Move to…';
+
+  @override
+  String get taskCopyTo => 'Copy to…';
+
+  @override
+  String taskMovedToDate(int count, String date) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count tasks moved to $date', one: 'Task moved to $date');
+    return '$_temp0';
+  }
+
+  @override
+  String taskMovedToToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count tasks moved to today', one: 'Task moved to today');
+    return '$_temp0';
+  }
+
+  @override
+  String taskCopyToDateTitle(String date) {
+    return 'Copy to $date';
+  }
+
+  @override
+  String get taskCopyQuestion => 'Creates a new task with the same title, details and sub-tasks. The original stays where it is.';
 
   @override
   String get taskEditTooltip => 'Edit Task';
-
-  @override
-  String get taskCopyToTodayTitle => 'Move to Today';
-
-  @override
-  String get taskCopyToTodayQuestion => 'Create a copy of this task for today?';
 
   @override
   String get taskKeepCompletedTodos => 'Keep completed to-dos';
@@ -389,6 +412,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLanguageGerman => 'Deutsch';
+
+  @override
+  String get settingsPlanning => 'Planning';
+
+  @override
+  String get settingsAskToMoveUnfinished => 'Ask to move unfinished tasks';
+
+  @override
+  String get settingsAskToMoveUnfinishedHint => 'On the first start of a day, offer to move open tasks of the last 7 days to today';
 
   @override
   String get settingsDataRetention => 'Data Retention';
@@ -641,4 +673,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planFocusMoveAndStart => 'Move and start';
+
+  @override
+  String get commonUndo => 'Undo';
+
+  @override
+  String get planRolloverTitle => 'Unfinished tasks';
+
+  @override
+  String planRolloverMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count tasks from the last few days are still open.',
+      one: '1 task from the last few days is still open.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planRolloverMove(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'Move $count tasks to today', one: 'Move 1 task to today', zero: 'Move to today');
+    return '$_temp0';
+  }
+
+  @override
+  String get planRolloverNotNow => 'Not now';
+
+  @override
+  String get planRolloverSettingsHint => 'You can turn this question off in the settings.';
 }

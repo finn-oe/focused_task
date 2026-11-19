@@ -19,6 +19,7 @@ class SettingsState {
     required this.pauseOnBackground,
     required this.enableWakelock,
     required this.isCleaning,
+    this.askToMoveUnfinished = true,
     this.notificationsDenied = false,
     this.locale,
     this.lastCleanup,
@@ -38,6 +39,9 @@ class SettingsState {
   final bool isCleaning;
   final CleanupResult? lastCleanup;
 
+  /// On the first start of a day, offer to move the open tasks of the last days to today.
+  final bool askToMoveUnfinished;
+
   /// The user declined notifications when asked; the settings show a hint.
   final bool notificationsDenied;
 
@@ -52,6 +56,7 @@ class SettingsState {
     bool? isCleaning,
     CleanupResult? lastCleanup,
     bool clearLastCleanup = false,
+    bool? askToMoveUnfinished,
     bool? notificationsDenied,
   }) {
     return SettingsState(
@@ -63,6 +68,7 @@ class SettingsState {
       enableWakelock: enableWakelock ?? this.enableWakelock,
       isCleaning: isCleaning ?? this.isCleaning,
       lastCleanup: clearLastCleanup ? null : lastCleanup ?? this.lastCleanup,
+      askToMoveUnfinished: askToMoveUnfinished ?? this.askToMoveUnfinished,
       notificationsDenied: notificationsDenied ?? this.notificationsDenied,
     );
   }

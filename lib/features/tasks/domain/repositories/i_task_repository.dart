@@ -30,6 +30,16 @@ abstract class ITaskRepository {
 
   Future<void> updateTaskOrder({required int taskId, required String sortOrder});
 
+  /// Open tasks assigned to `[start, end]` (calendar dates, inclusive), by day and then plan order.
+  Future<List<TaskEntity>> getOpenTasksBetween({required DateTime start, required DateTime end});
+
+  /// Moves the open tasks among [taskIds] to the day [to], after the tasks already there (in the given order), in one
+  /// transaction. Completed tasks and tasks already on [to] are left alone. The task keeps its id, sub-tasks, tracked
+  /// time and focus sessions; sessions stay on the day they happened.
+  ///
+  /// Returns the ids of the tasks that moved.
+  Future<List<int>> moveTasks({required List<int> taskIds, required DateTime to});
+
   Future<void> setTaskCompletion({required int taskId, required bool isCompleted});
 
   /// Task counts come from the tasks assigned to `[start, end]`; focus time comes from the sessions in that range, by

@@ -98,6 +98,8 @@ void main() {
         child: localizedApp(home: const SettingsScreen()),
       ),
     );
+    await tester.scrollUntilVisible(find.text('Clean now'), 200);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Clean now'));
     await tester.pumpAndSettle();
 
@@ -106,6 +108,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.tasks, hasLength(1));
 
+    await tester.scrollUntilVisible(find.text('Clean now'), 200);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Clean now'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Delete'));

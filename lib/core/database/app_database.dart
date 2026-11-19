@@ -6,6 +6,7 @@ import 'package:focused_task/core/database/tables/focus_sessions_table.dart';
 import 'package:focused_task/core/database/tables/tasks_table.dart';
 import 'package:focused_task/core/database/tables/task_todos_table.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/core/utils/fractional_indexer.dart';
 
 part 'app_database.g.dart';
 
@@ -173,6 +174,49 @@ class AppDatabase extends _$AppDatabase {
       ..groupBy([tasks.assignedDate]);
 
     return query.map((row) => (day: row.read(tasks.assignedDate)!, total: row.read(total) ?? 0, completed: row.read(completed) ?? 0)).get();
+  }
+
+  /// Open tasks assigned to `[start, end]` (calendar dates, inclusive), by day and then plan order.
+  Future<List<TaskWithTodos>> getOpenTasksInRange({required DateTime start, required DateTime end}) async {
+    final tasksList =
+        await (select(tasks)
+              ..where((task) => task.assignedDate.isBiggerOrEqualValue(start.dateOnly) & task.assignedDate.isSmallerThanValue(end.nextDay) & task.isCompleted.equals(false))
+              ..orderBy([(task) => OrderingTerm.asc(task.assignedDate), (task) => OrderingTerm.asc(task.sortOrder)]))
+            .get();
+
+    final result = <TaskWithTodos>[];
+    for (final task in tasksList) {
+      final todos = await (select(taskTodos)..where((t) => t.taskId.equals(task.id))).get();
+      result.add(TaskWithTodos(task, todos, await _openSessionOf(task.id)));
+    }
+    return result;
+  }
+
+  /// Moves the open tasks among [taskIds] to the day [to], after the tasks already there and in the given order, in one
+  /// transaction. Completed tasks and tasks already on [to] stay where they are. Sub-tasks and focus sessions belong to
+  /// the task, so they move with it while the sessions keep the time they happened.
+  ///
+  /// Returns the ids of the moved tasks.
+  Future<List<int>> moveTasks({required List<int> taskIds, required DateTime to}) {
+    final day = to.dateOnly;
+    return transaction(() async {
+      final target =
+          await (select(tasks)
+                ..where((task) => _isInDay(task, day))
+                ..orderBy([(task) => OrderingTerm.desc(task.sortOrder)])
+                ..limit(1))
+              .getSingleOrNull();
+      var last = target?.sortOrder;
+      final moved = <int>[];
+      for (final id in taskIds) {
+        final task = await (select(tasks)..where((t) => t.id.equals(id))).getSingleOrNull();
+        if (task == null || task.isCompleted || task.assignedDate.isSameDate(day)) continue;
+        last = FractionalIndexer.between(last, null);
+        await (update(tasks)..where((t) => t.id.equals(id))).write(TasksCompanion(assignedDate: Value(day), sortOrder: Value(last)));
+        moved.add(id);
+      }
+      return moved;
+    });
   }
 
   Future<TaskWithTodos?> getTaskById(int taskId) async {

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:clock/clock.dart';
 
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/core/utils/fractional_indexer.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/sessions/domain/focus_time.dart' as focus_time;
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
@@ -177,6 +178,33 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
   @override
   Future<void> updateTaskOrder({required int taskId, required String sortOrder}) async {
     _update(taskId, (task) => task.copyWith(sortOrder: sortOrder));
+  }
+
+  @override
+  Future<List<TaskEntity>> getOpenTasksBetween({required DateTime start, required DateTime end}) async {
+    final first = _day(start);
+    final last = _day(end);
+    final open = _tasks.values.where((task) => !task.isCompleted && !_day(task.assignedDate).isBefore(first) && !_day(task.assignedDate).isAfter(last));
+    return open.map(_withSession).toList()..sort((a, b) {
+      final byDay = a.assignedDate.compareTo(b.assignedDate);
+      return byDay != 0 ? byDay : a.sortOrder.compareTo(b.sortOrder);
+    });
+  }
+
+  @override
+  Future<List<int>> moveTasks({required List<int> taskIds, required DateTime to}) async {
+    final day = _day(to);
+    final target = _forDay(day);
+    var last = target.isEmpty ? null : target.last.sortOrder;
+    final moved = <int>[];
+    for (final id in taskIds) {
+      final task = _tasks[id];
+      if (task == null || task.isCompleted || _day(task.assignedDate) == day) continue;
+      last = FractionalIndexer.between(last, null);
+      _put(task.copyWith(assignedDate: day, sortOrder: last));
+      moved.add(id);
+    }
+    return moved;
   }
 
   @override

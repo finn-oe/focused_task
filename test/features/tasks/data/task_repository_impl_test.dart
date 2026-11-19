@@ -178,4 +178,54 @@ void main() {
       expect(await sessions.watchInRange(DateTime(2026, 11, 18), DateTime(2026, 11, 19)).first, isEmpty);
     });
   });
+
+  group('moveTasks', () {
+    final past = DateTime(2026, 11, 10);
+    final today = DateTime(2026, 11, 17);
+
+    test('keeps id, sub-tasks, tracked time and session history; the old day no longer counts the task', () async {
+      final id = await repository.createTask(title: 'Report', assignedDate: past, sortOrder: 'a0');
+      await repository.replaceTaskTodos(id, const [TaskTodoEntity(title: 'Draft', isCompleted: true, sortOrder: '00000')]);
+      await sessions.addManualTime(taskId: id, day: past, duration: const Duration(minutes: 40));
+      final todayBefore = await repository.getTaskStats(start: today, end: today);
+
+      expect(await repository.moveTasks(taskIds: [id], to: today), [id]);
+
+      final moved = (await repository.getTaskById(id))!;
+      expect(moved.assignedDate, today);
+      expect(moved.todos.map((todo) => (todo.title, todo.isCompleted)), [('Draft', true)]);
+      expect(Duration(milliseconds: moved.timeSpent), const Duration(minutes: 40));
+      expect(await sessions.focusTimeByDay(DateRange(past, today)), {past: const Duration(minutes: 40)}, reason: 'history stays on the day it was worked');
+
+      final pastStats = await repository.getTaskStats(start: past, end: past);
+      expect((pastStats.totalTasks, pastStats.totalFocusMinutes), (0, 40));
+      final todayAfter = await repository.getTaskStats(start: today, end: today);
+      expect(todayAfter.totalFocusMinutes, todayBefore.totalFocusMinutes, reason: 'moving adds no focus time to today');
+    });
+
+    test('appends after the tasks of the target day, in the given order, and skips completed tasks', () async {
+      final existing = await repository.createTask(title: 'Existing', assignedDate: today, sortOrder: 'a5');
+      final first = await repository.createTask(title: 'First', assignedDate: past, sortOrder: 'a0');
+      final second = await repository.createTask(title: 'Second', assignedDate: past.addDays(1), sortOrder: 'a0');
+      final done = await repository.createTask(title: 'Done', assignedDate: past, sortOrder: 'a1');
+      await repository.setTaskCompletion(taskId: done, isCompleted: true);
+
+      expect(await repository.moveTasks(taskIds: [first, second, done], to: today), [first, second]);
+
+      expect((await repository.getTasksForDay(today)).map((task) => task.id), [existing, first, second]);
+      expect((await repository.getTaskById(done))!.assignedDate, past, reason: 'completed tasks can only be copied');
+    });
+
+    test('getOpenTasksBetween lists open tasks by day, then plan order', () async {
+      final later = await repository.createTask(title: 'Later', assignedDate: past.addDays(2), sortOrder: 'a0');
+      final b = await repository.createTask(title: 'B', assignedDate: past, sortOrder: 'a1');
+      final a = await repository.createTask(title: 'A', assignedDate: past, sortOrder: 'a0');
+      final done = await repository.createTask(title: 'Done', assignedDate: past, sortOrder: 'a2');
+      await repository.setTaskCompletion(taskId: done, isCompleted: true);
+      await repository.createTask(title: 'Outside', assignedDate: past.addDays(-1), sortOrder: 'a0');
+
+      final open = await repository.getOpenTasksBetween(start: past, end: past.addDays(2));
+      expect(open.map((task) => task.id), [a, b, later]);
+    });
+  });
 }
