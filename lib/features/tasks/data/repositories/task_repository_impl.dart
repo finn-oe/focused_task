@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:drift/drift.dart';
 
 import 'package:focused_task/core/database/app_database.dart';
@@ -5,7 +6,8 @@ import 'package:focused_task/features/sessions/data/focus_session_repository_imp
 import 'package:focused_task/features/sessions/domain/focus_time.dart';
 import 'package:focused_task/features/tasks/domain/entities/day_summary.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
-import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
+import 'package:focused_task/features/tasks/domain/stats/stats_calculator.dart';
+import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 
@@ -105,14 +107,15 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
-  Future<TaskStats> getTaskStats({required DateTime start, required DateTime end}) async {
-    final range = DateRange(start, end);
+  Future<StatsReport> getStatsReport(StatsQuery query) async {
+    final range = query.range;
     final tasks = await _database.getTasksInRange(start: range.start, end: range.end);
-    final sessions = await _database.getSessionsOverlapping(range.start, range.end.nextDay);
-    return TaskStats.from(
+    final sessions = await _database.getSessionsWithTitlesOverlapping(range.start, range.end.nextDay);
+    return const StatsCalculator().compute(
+      query,
       tasks: tasks.map(_taskOnlyToEntity),
-      focusByTask: focusTimeByTask(sessions.map(FocusSessionRepositoryImpl.toEntity), range),
-      daysInRange: range.start.calendarDaysUntil(range.end) + 1,
+      sessions: [for (final row in sessions) FocusSessionRepositoryImpl.toEntity(row.session, taskTitle: row.taskTitle)],
+      today: clock.now(),
     );
   }
 
@@ -132,7 +135,7 @@ class TaskRepositoryImpl implements ITaskRepository {
   @override
   Future<int> countCompletedTasksOlderThanDays(int days) => _database.countCompletedTasksBefore(_retentionCutoff(days));
 
-  DateTime _retentionCutoff(int days) => DateTime.now().addDays(-(days < 1 ? 1 : days));
+  DateTime _retentionCutoff(int days) => clock.now().addDays(-(days < 1 ? 1 : days));
 
   @override
   Future<void> replaceTaskTodos(int taskId, List<TaskTodoEntity> newTodos) async {

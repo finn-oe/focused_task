@@ -272,6 +272,18 @@ abstract class AppLocalizations {
   /// **'{minutes} min'**
   String commonMinutes(int minutes);
 
+  /// No description provided for @commonHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h'**
+  String commonHours(int hours);
+
+  /// No description provided for @commonHoursMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String commonHoursMinutes(int hours, int minutes);
+
   /// No description provided for @commonPercent.
   ///
   /// In en, this message translates to:
@@ -698,23 +710,53 @@ abstract class AppLocalizations {
   /// **'Month'**
   String get statsMonth;
 
+  /// No description provided for @statsYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get statsYear;
+
   /// No description provided for @statsUnavailable.
   ///
   /// In en, this message translates to:
   /// **'No stats available yet.'**
   String get statsUnavailable;
 
-  /// No description provided for @statsCompletionScore.
+  /// No description provided for @statsPreviousPeriod.
   ///
   /// In en, this message translates to:
-  /// **'Completion score'**
-  String get statsCompletionScore;
+  /// **'Previous period'**
+  String get statsPreviousPeriod;
 
-  /// No description provided for @statsCompletionScoreValue.
+  /// No description provided for @statsNextPeriod.
   ///
   /// In en, this message translates to:
-  /// **'{score}%'**
-  String statsCompletionScoreValue(double score);
+  /// **'Next period'**
+  String get statsNextPeriod;
+
+  /// No description provided for @statsCurrentPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to current period'**
+  String get statsCurrentPeriod;
+
+  /// No description provided for @statsWeekLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} – {end}'**
+  String statsWeekLabel(String start, String end);
+
+  /// No description provided for @statsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No data for this period'**
+  String get statsEmptyTitle;
+
+  /// No description provided for @statsEmptyMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan tasks and work on them in focus mode. Your focus time, completed tasks and best hours will show up here.'**
+  String get statsEmptyMessage;
 
   /// No description provided for @statsTasksCompleted.
   ///
@@ -728,29 +770,155 @@ abstract class AppLocalizations {
   /// **'Focus time'**
   String get statsFocusTime;
 
-  /// No description provided for @statsAverageTaskDuration.
+  /// No description provided for @statsAveragePerDay.
   ///
   /// In en, this message translates to:
-  /// **'Avg. task duration'**
-  String get statsAverageTaskDuration;
+  /// **'Avg. per day'**
+  String get statsAveragePerDay;
 
-  /// No description provided for @statsPerDay.
+  /// No description provided for @statsElapsedDays.
   ///
   /// In en, this message translates to:
-  /// **'Per day'**
-  String get statsPerDay;
+  /// **'{days, plural, =0{period not started yet} =1{over 1 day so far} other{over {days} days so far}}'**
+  String statsElapsedDays(int days);
 
-  /// No description provided for @statsRemaining.
+  /// No description provided for @statsSessions.
   ///
   /// In en, this message translates to:
-  /// **'Remaining'**
-  String get statsRemaining;
+  /// **'Sessions'**
+  String get statsSessions;
 
-  /// No description provided for @statsTaskCount.
+  /// No description provided for @statsAverageSession.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 task} other{{count} tasks}}'**
-  String statsTaskCount(int count);
+  /// **'Avg. {duration} each'**
+  String statsAverageSession(String duration);
+
+  /// No description provided for @statsCompletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get statsCompletion;
+
+  /// No description provided for @statsNoTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks planned'**
+  String get statsNoTasks;
+
+  /// No description provided for @statsInterruptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Interruptions per focus hour'**
+  String get statsInterruptions;
+
+  /// No description provided for @statsInterruptionsValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{value}'**
+  String statsInterruptionsValue(double value);
+
+  /// No description provided for @statsNotTrackedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not tracked yet'**
+  String get statsNotTrackedYet;
+
+  /// No description provided for @statsNoValue.
+  ///
+  /// In en, this message translates to:
+  /// **'–'**
+  String get statsNoValue;
+
+  /// No description provided for @statsFocusPerHour.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus time per hour'**
+  String get statsFocusPerHour;
+
+  /// No description provided for @statsFocusPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus time per day'**
+  String get statsFocusPerDay;
+
+  /// No description provided for @statsFocusPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus time per month'**
+  String get statsFocusPerMonth;
+
+  /// No description provided for @statsChartTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'{label}: {duration}'**
+  String statsChartTooltip(String label, String duration);
+
+  /// No description provided for @statsHourRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{start}:00–{end}:00'**
+  String statsHourRange(String start, String end);
+
+  /// No description provided for @statsHeatmapLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{weekday} {hours}'**
+  String statsHeatmapLabel(String weekday, String hours);
+
+  /// No description provided for @statsPlannedVsActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned vs. actual'**
+  String get statsPlannedVsActual;
+
+  /// No description provided for @statsPlanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get statsPlanned;
+
+  /// No description provided for @statsTracked.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracked'**
+  String get statsTracked;
+
+  /// No description provided for @statsTargetTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 task with a target duration} other{{count} tasks with a target duration}}'**
+  String statsTargetTasks(int count);
+
+  /// No description provided for @statsNoTargets.
+  ///
+  /// In en, this message translates to:
+  /// **'Give tasks a target duration to compare your plan with the time you actually needed.'**
+  String get statsNoTargets;
+
+  /// No description provided for @statsEstimationAccuracy.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed tasks took {percent}% of their target (median).'**
+  String statsEstimationAccuracy(int percent);
+
+  /// No description provided for @statsBestHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Best focus hours'**
+  String get statsBestHours;
+
+  /// No description provided for @statsTopTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Top tasks'**
+  String get statsTopTasks;
+
+  /// No description provided for @statsDeletedTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted task'**
+  String get statsDeletedTask;
 
   /// No description provided for @settingsTitle.
   ///

@@ -6,6 +6,7 @@ import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
+import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
 void main() {
@@ -133,13 +134,14 @@ void main() {
       final session = await sessions.start(taskId: id, at: today.add(const Duration(hours: 9)));
       await sessions.end(session.id, today.add(const Duration(hours: 9, minutes: 30)), EndReason.paused);
 
-      final todayStats = await repository.getTaskStats(start: today, end: today);
-      expect(todayStats.totalFocusMinutes, 30);
-      expect(todayStats.totalTasks, 0, reason: 'task counts still use the assigned day');
+      final todayStats = await repository.getStatsReport(_dayQuery(today));
+      expect(todayStats.focusTotal, const Duration(minutes: 30));
+      expect(todayStats.tasksPlanned, 0, reason: 'task counts still use the assigned day');
+      expect(todayStats.topTasks.single.title, 'Task', reason: 'titles of tasks planned elsewhere are loaded');
 
-      final plannedDay = await repository.getTaskStats(start: today.addDays(3), end: today.addDays(3));
-      expect(plannedDay.totalFocusMinutes, 0);
-      expect(plannedDay.totalTasks, 1);
+      final plannedDay = await repository.getStatsReport(_dayQuery(today.addDays(3)));
+      expect(plannedDay.focusTotal, Duration.zero);
+      expect(plannedDay.tasksPlanned, 1);
     });
 
     test('deleting a task keeps its sessions so totals stay correct', () async {
@@ -152,7 +154,9 @@ void main() {
 
       final row = await database.select(database.focusSessions).getSingle();
       expect(row.taskId, isNull);
-      expect((await repository.getTaskStats(start: today, end: today)).totalFocusMinutes, 45);
+      final stats = await repository.getStatsReport(_dayQuery(today));
+      expect(stats.focusTotal, const Duration(minutes: 45));
+      expect(stats.topTasks.single.taskId, isNull, reason: 'shown as a deleted task');
       expect(await sessions.focusTimeByDay(DateRange(today, today)), {today: const Duration(minutes: 45)});
     });
 
@@ -187,7 +191,7 @@ void main() {
       final id = await repository.createTask(title: 'Report', assignedDate: past, sortOrder: 'a0');
       await repository.replaceTaskTodos(id, const [TaskTodoEntity(title: 'Draft', isCompleted: true, sortOrder: '00000')]);
       await sessions.addManualTime(taskId: id, day: past, duration: const Duration(minutes: 40));
-      final todayBefore = await repository.getTaskStats(start: today, end: today);
+      final todayBefore = await repository.getStatsReport(StatsQuery(range: DateRange(today, today), granularity: StatsGranularity.hour));
 
       expect(await repository.moveTasks(taskIds: [id], to: today), [id]);
 
@@ -197,10 +201,10 @@ void main() {
       expect(Duration(milliseconds: moved.timeSpent), const Duration(minutes: 40));
       expect(await sessions.focusTimeByDay(DateRange(past, today)), {past: const Duration(minutes: 40)}, reason: 'history stays on the day it was worked');
 
-      final pastStats = await repository.getTaskStats(start: past, end: past);
-      expect((pastStats.totalTasks, pastStats.totalFocusMinutes), (0, 40));
-      final todayAfter = await repository.getTaskStats(start: today, end: today);
-      expect(todayAfter.totalFocusMinutes, todayBefore.totalFocusMinutes, reason: 'moving adds no focus time to today');
+      final pastStats = await repository.getStatsReport(StatsQuery(range: DateRange(past, past), granularity: StatsGranularity.hour));
+      expect((pastStats.tasksPlanned, pastStats.focusTotal), (0, const Duration(minutes: 40)));
+      final todayAfter = await repository.getStatsReport(StatsQuery(range: DateRange(today, today), granularity: StatsGranularity.hour));
+      expect(todayAfter.focusTotal, todayBefore.focusTotal, reason: 'moving adds no focus time to today');
     });
 
     test('appends after the tasks of the target day, in the given order, and skips completed tasks', () async {
@@ -229,3 +233,5 @@ void main() {
     });
   });
 }
+
+StatsQuery _dayQuery(DateTime day) => StatsQuery(range: DateRange(day, day), granularity: StatsGranularity.hour);

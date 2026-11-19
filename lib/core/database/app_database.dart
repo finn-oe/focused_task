@@ -347,6 +347,15 @@ class AppDatabase extends _$AppDatabase {
 
   Future<List<FocusSessionRow>> getSessionsOverlapping(DateTime start, DateTime endExclusive) => _overlapping(start, endExclusive).get();
 
+  /// Sessions overlapping `[start, endExclusive)` with the titles of their tasks (`null` for deleted tasks).
+  Future<List<SessionWithTitle>> getSessionsWithTitlesOverlapping(DateTime start, DateTime endExclusive) async {
+    final query = select(focusSessions).join([leftOuterJoin(tasks, tasks.id.equalsExp(focusSessions.taskId))])
+      ..where(focusSessions.startedAt.isSmallerThanValue(endExclusive) & (focusSessions.endedAt.isNull() | focusSessions.endedAt.isBiggerThanValue(start)))
+      ..orderBy([OrderingTerm.asc(focusSessions.startedAt)]);
+    final rows = await query.get();
+    return rows.map((row) => SessionWithTitle(row.readTable(focusSessions), row.readTableOrNull(tasks)?.title)).toList();
+  }
+
   Stream<List<FocusSessionRow>> watchSessionsOverlapping(DateTime start, DateTime endExclusive) => _overlapping(start, endExclusive).watch();
 
   Future<int> deleteTask(int taskId) {

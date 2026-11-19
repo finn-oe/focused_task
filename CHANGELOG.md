@@ -3,6 +3,18 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.11.0] - 2026-11-19
+
+### Added
+- Statistics for a day, week, month or **year**, with ‹ › to browse earlier and later periods and a button back to the current one. (#20)
+- A bar chart of focus time per hour (day), per day (week, month) or per month (year); tap a bar to see its value. (#20)
+- **Planned vs. actual**: target durations vs. tracked time, and how long completed tasks took compared to their target (median). (#20)
+- **Best focus hours**: a weekday × hour heatmap, the top 5 tasks by focus time, number and average length of sessions. (#20)
+- An empty state that explains how to get statistics. (#20)
+
+### Changed
+- The average per day only counts days that have already passed, and statistics update while you focus. The cards are laid out in two columns on wide screens. (#20)
+
 ## [1.10.0] - 2026-11-19
 
 ### Added

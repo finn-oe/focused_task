@@ -37,3 +37,13 @@ String relativeDayLabel(BuildContext context, DateTime day, {required DateTime t
     _ => DateFormat.yMMMEd(Localizations.localeOf(context).toLanguageTag()).format(day),
   };
 }
+
+extension DurationLabel on AppLocalizations {
+  /// "25 min" below an hour, "1 h" / "1 h 30 min" above – for statistics, where `HH:MM` reads like a time of day.
+  String durationLabel(Duration duration) {
+    final minutes = duration.inMinutes;
+    final (hours, rest) = (minutes ~/ Duration.minutesPerHour, minutes % Duration.minutesPerHour);
+    if (hours == 0) return commonMinutes(rest);
+    return rest == 0 ? commonHours(hours) : commonHoursMinutes(hours, rest);
+  }
+}

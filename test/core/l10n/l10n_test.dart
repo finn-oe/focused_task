@@ -86,7 +86,7 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.byIcon(Icons.date_range));
+        await tester.tap(find.text(locale.languageCode == 'de' ? 'Woche' : 'Week'));
         await tester.pumpAndSettle();
 
         expect(find.text(expected), findsOneWidget);

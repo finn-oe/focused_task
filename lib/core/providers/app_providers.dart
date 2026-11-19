@@ -10,8 +10,8 @@ import 'package:focused_task/features/calendar/presentation/calendar_notifier.da
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
-import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
+import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 import 'package:focused_task/features/settings/presentation/settings_notifier.dart';
 import 'package:focused_task/features/settings/presentation/settings_state.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
@@ -61,13 +61,16 @@ final appStartupProvider = FutureProvider<void>((ref) async {
 /// Tasks and day summaries of the days the calendar shows (an inclusive date range).
 final calendarProvider = NotifierProvider.autoDispose.family<CalendarNotifier, CalendarState, DateRange>(CalendarNotifier.new);
 
-/// Statistics for an inclusive calendar-date range.
-final taskStatsProvider = FutureProvider.autoDispose.family<TaskStats, DateRange>((ref, range) {
-  return ref.watch(taskRepositoryProvider).getTaskStats(start: range.start, end: range.end);
+/// Statistics for a [StatsQuery]. Recomputed whenever a session in the range (or, with the in-memory fake, any task)
+/// changes, so the screen stays current while focus mode runs in another tab.
+final statsReportProvider = StreamProvider.autoDispose.family<StatsReport, StatsQuery>((ref, query) {
+  final tasks = ref.watch(taskRepositoryProvider);
+  final sessions = ref.watch(focusSessionRepositoryProvider);
+  return sessions.watchInRange(query.range.start, query.range.end.nextDay).asyncMap((_) => tasks.getStatsReport(query));
 });
 
 /// Period selected on the statistics screen.
-final statsRangeProvider = NotifierProvider.autoDispose<StatsRangeNotifier, StatsRange>(StatsRangeNotifier.new);
+final statsPeriodProvider = NotifierProvider.autoDispose<StatsPeriodNotifier, StatsPeriod>(StatsPeriodNotifier.new);
 
 /// Strings for code outside the widget tree (e.g. alarm notifications), in the language the app shows.
 final appLocalizationsProvider = Provider<AppLocalizations>((ref) {
