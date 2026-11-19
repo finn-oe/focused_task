@@ -1,0 +1,4 @@
+• Breaks: turn on "Work in intervals" in the settings to focus for 25 minutes, then take a short break – with a longer break after every fourth round. All lengths are adjustable.
+• A calm break screen counts down and reminds you to stand up and look away. Skip it or continue when you're ready.
+• Notifications tell you when a break starts and ends.
+• Statistics show your break time separately from your focus time.
