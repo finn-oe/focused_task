@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/ui/app_shell.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/calendar/presentation/calendar_period.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_screen.dart';
 import 'package:focused_task/features/settings/presentation/settings_screen.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
@@ -28,6 +29,9 @@ abstract final class AppRoutes {
   /// Query parameter of [plan] with the shown day (`YYYY-MM-DD`); missing = today.
   static const dateParameter = 'date';
 
+  /// Query parameter of [calendar] with the view (`week` or `month`; missing = week). The shown day is [dateParameter].
+  static const viewParameter = 'view';
+
   /// Query parameters of [focus]: the day (`YYYY-MM-DD`, missing = today) and the task to start with.
   static const dayParameter = 'day';
   static const taskParameter = 'task';
@@ -40,6 +44,11 @@ abstract final class AppRoutes {
   /// Location of the plan for [day]; today has no date parameter.
   static String planFor(DateTime day, {required DateTime today}) {
     return day.isSameDate(today) ? plan : Uri(path: plan, queryParameters: {dateParameter: day.isoDate}).toString();
+  }
+
+  /// Location of the calendar showing the [view] around [date]; today has no date parameter.
+  static String calendarFor(CalendarView view, DateTime date, {required DateTime today}) {
+    return Uri(path: calendar, queryParameters: {viewParameter: view.name, if (!date.isSameDate(today)) dateParameter: date.isoDate}).toString();
   }
 }
 
@@ -61,7 +70,15 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.plan}) {
             ],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: AppRoutes.calendar, builder: (context, state) => const CalendarScreen())],
+            routes: [
+              GoRoute(
+                path: AppRoutes.calendar,
+                builder: (context, state) {
+                  final parameters = state.uri.queryParameters;
+                  return CalendarScreen(view: CalendarView.tryParse(parameters[AppRoutes.viewParameter]), date: tryParseIsoDate(parameters[AppRoutes.dateParameter]));
+                },
+              ),
+            ],
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: AppRoutes.stats, builder: (context, state) => const StatsScreen())],

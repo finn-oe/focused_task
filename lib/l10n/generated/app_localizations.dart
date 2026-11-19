@@ -122,11 +122,101 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get navSettings;
 
-  /// No description provided for @calendarComingSoon.
+  /// No description provided for @calendarViewWeek.
   ///
   /// In en, this message translates to:
-  /// **'Week and month views are coming soon.'**
-  String get calendarComingSoon;
+  /// **'Week'**
+  String get calendarViewWeek;
+
+  /// No description provided for @calendarViewMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get calendarViewMonth;
+
+  /// No description provided for @calendarPreviousWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous week'**
+  String get calendarPreviousWeek;
+
+  /// No description provided for @calendarNextWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Next week'**
+  String get calendarNextWeek;
+
+  /// No description provided for @calendarPreviousMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get calendarPreviousMonth;
+
+  /// No description provided for @calendarNextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get calendarNextMonth;
+
+  /// No description provided for @calendarWeekRange.
+  ///
+  /// In en, this message translates to:
+  /// **'{start} – {end}'**
+  String calendarWeekRange(String start, String end);
+
+  /// No description provided for @calendarDoneOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'{completed}/{total}'**
+  String calendarDoneOfTotal(int completed, int total);
+
+  /// No description provided for @calendarTasksDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{total, plural, =1{{completed} of 1 task done} other{{completed} of {total} tasks done}}'**
+  String calendarTasksDone(int completed, int total);
+
+  /// No description provided for @calendarFocusTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus time {time}'**
+  String calendarFocusTime(String time);
+
+  /// No description provided for @calendarNoTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks'**
+  String get calendarNoTasks;
+
+  /// No description provided for @calendarOpenDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in plan'**
+  String get calendarOpenDay;
+
+  /// No description provided for @calendarMoveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to…'**
+  String get calendarMoveTo;
+
+  /// No description provided for @calendarMoveTaskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move “{title}” to'**
+  String calendarMoveTaskTitle(String title);
+
+  /// No description provided for @calendarOtherDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Other date…'**
+  String get calendarOtherDate;
+
+  /// No description provided for @calendarLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the calendar: {error}'**
+  String calendarLoadError(String error);
 
   /// No description provided for @commonCancel.
   ///

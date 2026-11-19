@@ -154,6 +154,27 @@ class AppDatabase extends _$AppDatabase {
     return query.get();
   }
 
+  /// Tasks assigned to `[start, end]` (inclusive dates), by day and then by sort order.
+  Stream<List<Task>> watchTasksInRange({required DateTime start, required DateTime end}) {
+    final query = select(tasks)
+      ..where((task) => task.assignedDate.isBiggerOrEqualValue(start.dateOnly) & task.assignedDate.isSmallerThanValue(end.nextDay))
+      ..orderBy([(task) => OrderingTerm.asc(task.assignedDate), (task) => OrderingTerm.asc(task.sortOrder)]);
+
+    return query.watch();
+  }
+
+  /// Number of tasks and of completed tasks per assigned day in `[start, end]`, in one grouped query.
+  Future<List<({DateTime day, int total, int completed})>> countTasksByDay({required DateTime start, required DateTime end}) {
+    final total = tasks.id.count();
+    final completed = tasks.id.count(filter: tasks.isCompleted.equals(true));
+    final query = selectOnly(tasks)
+      ..addColumns([tasks.assignedDate, total, completed])
+      ..where(tasks.assignedDate.isBiggerOrEqualValue(start.dateOnly) & tasks.assignedDate.isSmallerThanValue(end.nextDay))
+      ..groupBy([tasks.assignedDate]);
+
+    return query.map((row) => (day: row.read(tasks.assignedDate)!, total: row.read(total) ?? 0, completed: row.read(completed) ?? 0)).get();
+  }
+
   Future<TaskWithTodos?> getTaskById(int taskId) async {
     final task = await (select(tasks)..where((t) => t.id.equals(taskId))).getSingleOrNull();
     if (task == null) return null;

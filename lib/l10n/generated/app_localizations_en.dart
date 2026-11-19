@@ -24,7 +24,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettings => 'Settings';
 
   @override
-  String get calendarComingSoon => 'Week and month views are coming soon.';
+  String get calendarViewWeek => 'Week';
+
+  @override
+  String get calendarViewMonth => 'Month';
+
+  @override
+  String get calendarPreviousWeek => 'Previous week';
+
+  @override
+  String get calendarNextWeek => 'Next week';
+
+  @override
+  String get calendarPreviousMonth => 'Previous month';
+
+  @override
+  String get calendarNextMonth => 'Next month';
+
+  @override
+  String calendarWeekRange(String start, String end) {
+    return '$start – $end';
+  }
+
+  @override
+  String calendarDoneOfTotal(int completed, int total) {
+    return '$completed/$total';
+  }
+
+  @override
+  String calendarTasksDone(int completed, int total) {
+    String _temp0 = intl.Intl.pluralLogic(total, locale: localeName, other: '$completed of $total tasks done', one: '$completed of 1 task done');
+    return '$_temp0';
+  }
+
+  @override
+  String calendarFocusTime(String time) {
+    return 'Focus time $time';
+  }
+
+  @override
+  String get calendarNoTasks => 'No tasks';
+
+  @override
+  String get calendarOpenDay => 'Open in plan';
+
+  @override
+  String get calendarMoveTo => 'Move to…';
+
+  @override
+  String calendarMoveTaskTitle(String title) {
+    return 'Move “$title” to';
+  }
+
+  @override
+  String get calendarOtherDate => 'Other date…';
+
+  @override
+  String calendarLoadError(String error) {
+    return 'Could not load the calendar: $error';
+  }
 
   @override
   String get commonCancel => 'Cancel';

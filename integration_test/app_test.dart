@@ -3,6 +3,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/calendar/presentation/calendar_screen.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
@@ -103,5 +104,36 @@ void main() {
     await tester.tapAndSettle(find.text('Statistics').first);
 
     expect(find.text('30 min'), findsWidgets);
+  });
+  testWidgets('calendar: see the week, move a task to another day, open a day from the month', (tester) async {
+    // Phone width: the week is an agenda with "Move to…".
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final app = await TestApp.start(tester);
+    final tasks = TaskRepositoryImpl(app.database);
+    final today = DateTime.now().dateOnly;
+    final id = await tasks.createTask(title: 'Weekly review', assignedDate: today, sortOrder: 'a0');
+    await tester.pumpAndSettle();
+
+    await tester.tapAndSettle(find.text('Calendar').first);
+    expect(find.text('Weekly review'), findsOneWidget);
+
+    // Weeks start on Sunday in English, so Saturday's neighbour in the same week is the day before.
+    final toYesterday = today.weekday == DateTime.saturday;
+    final target = today.addDays(toYesterday ? -1 : 1);
+    await tester.tapAndSettle(find.descendant(of: find.byKey(ValueKey('calendar-task-$id')), matching: find.byType(PopupMenuButton<void>)));
+    await tester.tapAndSettle(find.text('Move to…'));
+    await tester.tapAndSettle(find.descendant(of: find.byType(SimpleDialog), matching: find.text(toYesterday ? 'Yesterday' : 'Tomorrow')));
+    expect((await tasks.getTaskById(id))!.assignedDate, target);
+
+    await tester.tapAndSettle(find.text('Month'));
+    final cell = find.byKey(calendarDayKey(target));
+    await tester.ensureVisible(cell);
+    expect(find.descendant(of: cell, matching: find.text('0/1')), findsOneWidget);
+
+    await tester.tapAndSettle(cell);
+    expect(find.text(toYesterday ? 'Yesterday' : 'Tomorrow'), findsOneWidget, reason: 'the plan shows the tapped day');
+    expect(find.text('Weekly review'), findsOneWidget);
   });
 }

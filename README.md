@@ -18,6 +18,9 @@ compared to reality – so you can get a little more dedicated every day.
   picker, a swipe or `Alt+←/→`; the day is part of the URL (`/plan?date=2026-11-17`). `Ctrl/Cmd+N` adds a task.
 - **Plan mode** – tasks per day with description, sub-tasks (checklist) and an optional target duration.
   Reorder by drag & drop, mark as done, duplicate, or copy unfinished tasks from past days to today.
+- **Calendar** – week and month views (`/calendar?view=month&date=2026-11-17`). The week shows each day's tasks
+  (7 columns on wide windows – long-press and drag a task to another day; an agenda with "Move to…" on phones). The
+  month grid shows done/total tasks and a bar for the focus time of each day. Tap a day to open it in the plan.
 - **Focus mode** – works through today's open tasks in order. Shows the time spent on the current task
   (or the time remaining until the target), the overall session time, and the sub-task progress.
 - **Target alarm** – rings when a task's target duration is reached (native alarm on Android/iOS, sound and system
@@ -35,7 +38,7 @@ compared to reality – so you can get a little more dedicated every day.
 
 ### Planned
 
-Calendar week/month views, a proper focus-session log, breaks (Pomodoro), distraction tracking,
+Breaks (Pomodoro), distraction tracking,
 charts, goals & streaks, recurring tasks, data export and full support for every Flutter platform.
 See [Roadmap](#roadmap).
 

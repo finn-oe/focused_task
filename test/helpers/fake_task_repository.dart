@@ -6,6 +6,7 @@ import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/sessions/domain/focus_time.dart' as focus_time;
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
+import 'package:focused_task/features/tasks/domain/entities/day_summary.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
@@ -96,6 +97,33 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
   @override
   Future<TaskEntity?> getTaskById(int id) async => _tasks.containsKey(id) ? task(id) : null;
 
+  bool _isIn(TaskEntity task, DateRange range) => !_day(task.assignedDate).isBefore(range.start) && !_day(task.assignedDate).isAfter(range.end);
+
+  List<TaskEntity> _inRangeTasks(DateRange range) {
+    return _tasks.values.where((task) => _isIn(task, range)).toList()..sort((a, b) {
+      final byDay = a.assignedDate.compareTo(b.assignedDate);
+      return byDay != 0 ? byDay : a.sortOrder.compareTo(b.sortOrder);
+    });
+  }
+
+  @override
+  Stream<List<TaskEntity>> watchTasksInRange(DateRange range) async* {
+    yield _inRangeTasks(range);
+    yield* _changes.stream.map((_) => _inRangeTasks(range));
+  }
+
+  @override
+  Future<Map<DateTime, DaySummary>> getDaySummaries(DateRange range) async {
+    final result = <DateTime, DaySummary>{};
+    for (final task in _inRangeTasks(range)) {
+      final day = _day(task.assignedDate);
+      final summary = result[day] ?? DaySummary.empty;
+      result[day] = summary.copyWith(total: summary.total + 1, completed: summary.completed + (task.isCompleted ? 1 : 0));
+    }
+    focus_time.focusTimeByDay(_sessions, range).forEach((day, time) => result[day] = (result[day] ?? DaySummary.empty).copyWith(focusTime: time));
+    return result;
+  }
+
   @override
   Future<int> createTask({
     required String title,
@@ -160,7 +188,7 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
   @override
   Future<TaskStats> getTaskStats({required DateTime start, required DateTime end}) async {
     final range = DateRange(start, end);
-    final inRange = _tasks.values.where((task) => !_day(task.assignedDate).isBefore(range.start) && !_day(task.assignedDate).isAfter(range.end));
+    final inRange = _tasks.values.where((task) => _isIn(task, range));
     return TaskStats.from(tasks: inRange, focusByTask: focus_time.focusTimeByTask(_sessions, range), daysInRange: range.start.calendarDaysUntil(range.end) + 1);
   }
 
