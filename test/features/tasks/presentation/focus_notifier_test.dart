@@ -7,16 +7,25 @@ import 'package:material_ui/material_ui.dart' show Locale;
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/goals/domain/focus_goal.dart';
+import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
 
+import '../../../helpers/fake_notification_service.dart';
 import '../../../helpers/fake_target_alarm.dart';
 import '../../../helpers/fake_task_repository.dart';
 import '../../../helpers/task_builders.dart';
 
 /// Runs [body] in fake time; the clock starts at a fixed date so tests are deterministic.
-void _runFocus(List<TaskEntity> tasks, void Function(FakeAsync async, FocusModeNotifier notifier, FakeTaskRepository repository, FakeTargetAlarm alarm) body) {
+void _runFocus(
+  List<TaskEntity> tasks,
+  void Function(FakeAsync async, FocusModeNotifier notifier, FakeTaskRepository repository, FakeTargetAlarm alarm) body, {
+  FocusGoal goal = FocusGoal.off,
+  FakeNotificationService? notifications,
+  DateTime? initialTime,
+}) {
   fakeAsync((async) {
     final repository = FakeTaskRepository(tasks: tasks);
     final alarm = FakeTargetAlarm();
@@ -25,13 +34,15 @@ void _runFocus(List<TaskEntity> tasks, void Function(FakeAsync async, FocusModeN
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         targetAlarmProvider.overrideWithValue(alarm),
+        notificationServiceProvider.overrideWithValue(notifications ?? FakeNotificationService()),
+        focusGoalProvider.overrideWithValue(goal),
         _english,
       ],
     );
     final notifier = container.read(focusModeNotifierProvider.notifier);
     body(async, notifier, repository, alarm);
     container.dispose();
-  }, initialTime: DateTime(2026, 11, 17, 9));
+  }, initialTime: initialTime ?? DateTime(2026, 11, 17, 9));
 }
 
 final _today = DateTime(2026, 11, 17);
@@ -272,6 +283,8 @@ void main() {
             taskRepositoryProvider.overrideWithValue(repository),
             focusSessionRepositoryProvider.overrideWithValue(repository),
             targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
+            notificationServiceProvider.overrideWithValue(FakeNotificationService()),
+            focusGoalProvider.overrideWithValue(FocusGoal.off),
             _english,
           ],
         );
@@ -348,6 +361,70 @@ void main() {
         ]);
         expect(Duration(milliseconds: repository.task(1).timeSpent), const Duration(minutes: 15));
       });
+    });
+  });
+
+  group('FocusModeNotifier goal notification', () {
+    const goal = FocusGoal(daily: Duration(hours: 1));
+
+    test('is scheduled for the moment the focus time of today reaches the goal', () {
+      final notifications = FakeNotificationService();
+      _runFocus([buildTask(assignedDate: _today)], goal: goal, notifications: notifications, (async, notifier, repository, alarm) {
+        repository.addManualTime(taskId: 1, day: _today, duration: const Duration(minutes: 20));
+        async.flushMicrotasks();
+        notifier.initializeForDay(_today);
+        async.flushMicrotasks();
+
+        final (notification, at) = notifications.scheduled[NotificationIds.goalReached]!;
+        expect(at, clock.now().add(const Duration(minutes: 40)));
+        expect(notification.title, 'Daily goal reached');
+        expect(notification.body, 'You focused for 1 h today.');
+      });
+    });
+
+    test('pause cancels it and resume schedules it again for the remaining time', () {
+      final notifications = FakeNotificationService();
+      _runFocus([buildTask(assignedDate: _today)], goal: goal, notifications: notifications, (async, notifier, repository, alarm) {
+        notifier.initializeForDay(_today);
+        async.flushMicrotasks();
+        async.elapse(const Duration(minutes: 10));
+
+        notifier.pauseSession();
+        async.flushMicrotasks();
+        expect(notifications.scheduled, isNot(contains(NotificationIds.goalReached)));
+
+        async.elapse(const Duration(minutes: 5));
+        notifier.resumeSession();
+        async.flushMicrotasks();
+        expect(notifications.scheduled[NotificationIds.goalReached]!.$2, clock.now().add(const Duration(minutes: 50)));
+      });
+    });
+
+    test('comes at most once a day: nothing is scheduled once the goal is reached', () {
+      final notifications = FakeNotificationService();
+      _runFocus([buildTask(assignedDate: _today)], goal: goal, notifications: notifications, (async, notifier, repository, alarm) {
+        repository.addManualTime(taskId: 1, day: _today, duration: const Duration(hours: 1));
+        async.flushMicrotasks();
+        notifier.initializeForDay(_today);
+        async.flushMicrotasks();
+
+        expect(notifications.scheduled, isEmpty);
+      });
+    });
+
+    test('nothing without a goal, on days off, or when the goal would only be reached tomorrow', () {
+      void expectNothing({required FocusGoal goal, required DateTime start}) {
+        final notifications = FakeNotificationService();
+        _runFocus([buildTask(assignedDate: start.dateOnly)], goal: goal, notifications: notifications, initialTime: start, (async, notifier, repository, alarm) {
+          notifier.initializeForDay(start.dateOnly);
+          async.flushMicrotasks();
+          expect(notifications.scheduled, isEmpty, reason: '$goal at $start');
+        });
+      }
+
+      expectNothing(goal: FocusGoal.off, start: DateTime(2026, 11, 17, 9));
+      expectNothing(goal: goal, start: DateTime(2026, 11, 21, 9)); // Saturday
+      expectNothing(goal: goal, start: DateTime(2026, 11, 17, 23, 30));
     });
   });
 }

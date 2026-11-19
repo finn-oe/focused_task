@@ -9,15 +9,29 @@ Duration focusTimeWithin(FocusSession session, DateTime from, DateTime toExclusi
   return end.isAfter(start) ? end.difference(start) : Duration.zero;
 }
 
-/// Focus time per calendar day of [range] (local midnight keys). Sessions are split at local midnight, so a session
-/// from 23:30 to 00:30 counts 30 minutes on each day. Days without focus time are omitted.
+/// Focus time per calendar day of [range] (local midnight keys, in date order). Sessions are split at local midnight,
+/// so a session from 23:30 to 00:30 counts 30 minutes on each day. Days without focus time are omitted.
+///
+/// Walks each session across the days it covers, so long ranges (e.g. the whole history for streaks) stay cheap.
 Map<DateTime, Duration> focusTimeByDay(Iterable<FocusSession> sessions, DateRange range) {
-  final result = <DateTime, Duration>{};
-  for (var day = range.start; !day.isAfter(range.end); day = day.nextDay) {
-    final total = sessions.fold(Duration.zero, (sum, session) => sum + focusTimeWithin(session, day, day.nextDay));
-    if (total > Duration.zero) result[day] = total;
+  final from = range.start;
+  final toExclusive = range.end.nextDay;
+  final totals = <DateTime, Duration>{};
+  for (final session in sessions) {
+    if (session.kind != SessionKind.focus) continue;
+    var cursor = session.startedAt.isAfter(from) ? session.startedAt : from;
+    final end = session.effectiveEnd.isBefore(toExclusive) ? session.effectiveEnd : toExclusive;
+    while (cursor.isBefore(end)) {
+      final day = cursor.dateOnly;
+      final next = day.nextDay;
+      final sliceEnd = next.isBefore(end) ? next : end;
+      final time = sliceEnd.difference(cursor);
+      totals.update(day, (sum) => sum + time, ifAbsent: () => time);
+      cursor = sliceEnd;
+    }
   }
-  return result;
+  final days = totals.keys.toList()..sort();
+  return {for (final day in days) day: totals[day]!};
 }
 
 /// Focus time per task within [range]; the `null` key collects time of deleted tasks.

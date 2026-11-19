@@ -6,6 +6,7 @@ import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/ui/charts/bar_chart.dart';
 import 'package:focused_task/core/ui/charts/heatmap_chart.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 
 /// Shown instead of the cards when a period has neither focus time nor planned tasks.
@@ -81,7 +82,7 @@ class StatsSummaryTiles extends StatelessWidget {
 }
 
 class _StatTile extends StatelessWidget {
-  const _StatTile({required this.icon, required this.title, required this.value, this.detail});
+  const _StatTile({super.key, required this.icon, required this.title, required this.value, this.detail});
 
   final IconData icon;
   final String title;
@@ -143,11 +144,13 @@ class StatsCard extends StatelessWidget {
   }
 }
 
-/// Bar chart of the focus time per hour (day), per day (week, month) or per month (year).
+/// Bar chart of the focus time per hour (day), per day (week, month) or per month (year). Per day, a dashed line
+/// marks the [dailyGoal].
 class FocusChartCard extends StatelessWidget {
-  const FocusChartCard({super.key, required this.report});
+  const FocusChartCard({super.key, required this.report, this.dailyGoal});
 
   final StatsReport report;
+  final Duration? dailyGoal;
 
   @override
   Widget build(BuildContext context) {
@@ -180,7 +183,12 @@ class FocusChartCard extends StatelessWidget {
 
     return StatsCard(
       title: title,
-      child: BarChart(key: const Key('statsFocusChart'), bars: [for (final bucket in report.buckets) bar(bucket)], semanticsLabel: title),
+      child: BarChart(
+        key: const Key('statsFocusChart'),
+        bars: [for (final bucket in report.buckets) bar(bucket)],
+        referenceValue: granularity == StatsGranularity.day && dailyGoal != null ? dailyGoal!.inSeconds / Duration.secondsPerMinute : null,
+        semanticsLabel: title,
+      ),
     );
   }
 }
@@ -314,6 +322,94 @@ class TopTasksCard extends StatelessWidget {
               value: l10n.durationLabel(task.focus),
               share: most == Duration.zero ? 0 : task.focus.inSeconds / most.inSeconds,
               color: theme.colorScheme.primary,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Current and longest streak, and the goal days per month of [year]; a hint while no goal is set.
+class StreakCards extends StatelessWidget {
+  const StreakCards({super.key, required this.status, required this.year});
+
+  final GoalStatus status;
+  final int year;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    final goal = status.goal;
+    if (!goal.isEnabled) {
+      return StatsCard(
+        title: l10n.settingsDailyGoal,
+        child: Text(l10n.statsGoalOff, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+      );
+    }
+
+    final hint = l10n.statsStreakHint(l10n.durationLabel(goal.daily!));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      spacing: 12,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 12,
+          children: [
+            Expanded(
+              child: _StatTile(
+                key: const Key('statsCurrentStreak'),
+                icon: Icons.event_available,
+                title: l10n.statsCurrentStreak,
+                value: l10n.statsStreakDays(status.streak.current),
+                detail: hint,
+              ),
+            ),
+            Expanded(
+              child: _StatTile(
+                key: const Key('statsLongestStreak'),
+                icon: Icons.history,
+                title: l10n.statsLongestStreak,
+                value: l10n.statsStreakDays(status.streak.longest),
+                detail: hint,
+              ),
+            ),
+          ],
+        ),
+        GoalDaysCard(status: status, year: year),
+      ],
+    );
+  }
+}
+
+/// Bar chart of the days per month of [year] on which the goal was reached.
+class GoalDaysCard extends StatelessWidget {
+  const GoalDaysCard({super.key, required this.status, required this.year});
+
+  final GoalStatus status;
+  final int year;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final title = l10n.statsGoalDays(DateFormat.y(locale).format(DateTime(year)));
+    final perMonth = status.goalDaysPerMonth(year);
+    final today = status.today;
+
+    return StatsCard(
+      title: title,
+      child: BarChart(
+        key: const Key('statsGoalDaysChart'),
+        semanticsLabel: title,
+        bars: [
+          for (var month = 1; month <= DateTime.monthsPerYear; month++)
+            ChartBar(
+              value: perMonth[month - 1].toDouble(),
+              label: DateFormat.MMM(locale).format(DateTime(year, month)),
+              tooltip: l10n.statsGoalDaysTooltip(DateFormat.yMMMM(locale).format(DateTime(year, month)), perMonth[month - 1]),
+              highlighted: today.year == year && today.month == month,
             ),
         ],
       ),

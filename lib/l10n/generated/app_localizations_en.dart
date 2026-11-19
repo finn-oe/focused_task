@@ -805,4 +805,96 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planRolloverSettingsHint => 'You can turn this question off in the settings.';
+
+  @override
+  String get settingsGoals => 'Goals';
+
+  @override
+  String get settingsDailyGoal => 'Daily focus goal';
+
+  @override
+  String get settingsDailyGoalHint => 'Focus time to aim for on a working day. Shown as a ring in the plan.';
+
+  @override
+  String get settingsGoalOff => 'Off';
+
+  @override
+  String get settingsWorkingDays => 'Working days';
+
+  @override
+  String get settingsWorkingDaysHint => 'Days off neither break nor extend a streak.';
+
+  @override
+  String planGoalProgress(String focus, String goal) {
+    return 'Today’s focus: $focus of $goal';
+  }
+
+  @override
+  String planGoalReached(String focus, String goal) {
+    return 'Daily goal reached: $focus of $goal';
+  }
+
+  @override
+  String get statsCurrentStreak => 'Current streak';
+
+  @override
+  String get statsLongestStreak => 'Longest streak';
+
+  @override
+  String statsStreakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count days', one: '1 day');
+    return '$_temp0';
+  }
+
+  @override
+  String statsStreakHint(String goal) {
+    return 'Working days with $goal of focus';
+  }
+
+  @override
+  String statsGoalDays(String year) {
+    return 'Goal days in $year';
+  }
+
+  @override
+  String statsGoalDaysTooltip(String month, int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count goal days', one: '1 goal day', zero: 'no goal days');
+    return '$month: $_temp0';
+  }
+
+  @override
+  String get statsGoalOff => 'Set a daily focus goal in the settings to see your streaks.';
+
+  @override
+  String get finishedSummary => 'Today';
+
+  @override
+  String get finishedFocusTime => 'Focus time';
+
+  @override
+  String get finishedTasksDone => 'Tasks done';
+
+  @override
+  String get finishedGoal => 'Daily goal';
+
+  @override
+  String finishedGoalReached(String goal) {
+    return 'Reached ($goal)';
+  }
+
+  @override
+  String finishedGoalNotReached(String focus, String goal) {
+    return 'Not reached ($focus of $goal)';
+  }
+
+  @override
+  String get finishedStreak => 'Streak';
+
+  @override
+  String get notificationGoalReachedTitle => 'Daily goal reached';
+
+  @override
+  String notificationGoalReachedBody(String goal) {
+    return 'You focused for $goal today.';
+  }
 }

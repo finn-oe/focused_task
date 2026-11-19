@@ -808,4 +808,96 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get planRolloverSettingsHint => 'Diese Frage lässt sich in den Einstellungen abschalten.';
+
+  @override
+  String get settingsGoals => 'Ziele';
+
+  @override
+  String get settingsDailyGoal => 'Tägliches Fokusziel';
+
+  @override
+  String get settingsDailyGoalHint => 'Fokuszeit, die du an einem Arbeitstag erreichen möchtest. Wird im Plan als Ring angezeigt.';
+
+  @override
+  String get settingsGoalOff => 'Aus';
+
+  @override
+  String get settingsWorkingDays => 'Arbeitstage';
+
+  @override
+  String get settingsWorkingDaysHint => 'Freie Tage unterbrechen keine Serie und verlängern sie nicht.';
+
+  @override
+  String planGoalProgress(String focus, String goal) {
+    return 'Fokus heute: $focus von $goal';
+  }
+
+  @override
+  String planGoalReached(String focus, String goal) {
+    return 'Tagesziel erreicht: $focus von $goal';
+  }
+
+  @override
+  String get statsCurrentStreak => 'Aktuelle Serie';
+
+  @override
+  String get statsLongestStreak => 'Längste Serie';
+
+  @override
+  String statsStreakDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count Tage', one: '1 Tag');
+    return '$_temp0';
+  }
+
+  @override
+  String statsStreakHint(String goal) {
+    return 'Arbeitstage mit $goal Fokus';
+  }
+
+  @override
+  String statsGoalDays(String year) {
+    return 'Zieltage $year';
+  }
+
+  @override
+  String statsGoalDaysTooltip(String month, int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count Zieltage', one: '1 Zieltag', zero: 'keine Zieltage');
+    return '$month: $_temp0';
+  }
+
+  @override
+  String get statsGoalOff => 'Lege in den Einstellungen ein tägliches Fokusziel fest, um deine Serien zu sehen.';
+
+  @override
+  String get finishedSummary => 'Heute';
+
+  @override
+  String get finishedFocusTime => 'Fokuszeit';
+
+  @override
+  String get finishedTasksDone => 'Erledigte Aufgaben';
+
+  @override
+  String get finishedGoal => 'Tagesziel';
+
+  @override
+  String finishedGoalReached(String goal) {
+    return 'Erreicht ($goal)';
+  }
+
+  @override
+  String finishedGoalNotReached(String focus, String goal) {
+    return 'Nicht erreicht ($focus von $goal)';
+  }
+
+  @override
+  String get finishedStreak => 'Serie';
+
+  @override
+  String get notificationGoalReachedTitle => 'Tagesziel erreicht';
+
+  @override
+  String notificationGoalReachedBody(String goal) {
+    return 'Du warst heute $goal fokussiert.';
+  }
 }

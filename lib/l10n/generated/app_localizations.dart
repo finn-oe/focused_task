@@ -1441,6 +1441,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can turn this question off in the settings.'**
   String get planRolloverSettingsHint;
+
+  /// No description provided for @settingsGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals'**
+  String get settingsGoals;
+
+  /// No description provided for @settingsDailyGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily focus goal'**
+  String get settingsDailyGoal;
+
+  /// No description provided for @settingsDailyGoalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus time to aim for on a working day. Shown as a ring in the plan.'**
+  String get settingsDailyGoalHint;
+
+  /// No description provided for @settingsGoalOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get settingsGoalOff;
+
+  /// No description provided for @settingsWorkingDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Working days'**
+  String get settingsWorkingDays;
+
+  /// No description provided for @settingsWorkingDaysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Days off neither break nor extend a streak.'**
+  String get settingsWorkingDaysHint;
+
+  /// No description provided for @planGoalProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s focus: {focus} of {goal}'**
+  String planGoalProgress(String focus, String goal);
+
+  /// No description provided for @planGoalReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily goal reached: {focus} of {goal}'**
+  String planGoalReached(String focus, String goal);
+
+  /// No description provided for @statsCurrentStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Current streak'**
+  String get statsCurrentStreak;
+
+  /// No description provided for @statsLongestStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest streak'**
+  String get statsLongestStreak;
+
+  /// No description provided for @statsStreakDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String statsStreakDays(int count);
+
+  /// No description provided for @statsStreakHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Working days with {goal} of focus'**
+  String statsStreakHint(String goal);
+
+  /// No description provided for @statsGoalDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal days in {year}'**
+  String statsGoalDays(String year);
+
+  /// No description provided for @statsGoalDaysTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'{month}: {count, plural, =0{no goal days} =1{1 goal day} other{{count} goal days}}'**
+  String statsGoalDaysTooltip(String month, int count);
+
+  /// No description provided for @statsGoalOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a daily focus goal in the settings to see your streaks.'**
+  String get statsGoalOff;
+
+  /// No description provided for @finishedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get finishedSummary;
+
+  /// No description provided for @finishedFocusTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus time'**
+  String get finishedFocusTime;
+
+  /// No description provided for @finishedTasksDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks done'**
+  String get finishedTasksDone;
+
+  /// No description provided for @finishedGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily goal'**
+  String get finishedGoal;
+
+  /// No description provided for @finishedGoalReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Reached ({goal})'**
+  String finishedGoalReached(String goal);
+
+  /// No description provided for @finishedGoalNotReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Not reached ({focus} of {goal})'**
+  String finishedGoalNotReached(String focus, String goal);
+
+  /// No description provided for @finishedStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get finishedStreak;
+
+  /// No description provided for @notificationGoalReachedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily goal reached'**
+  String get notificationGoalReachedTitle;
+
+  /// No description provided for @notificationGoalReachedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You focused for {goal} today.'**
+  String notificationGoalReachedBody(String goal);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

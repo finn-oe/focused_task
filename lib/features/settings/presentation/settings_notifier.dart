@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/services/notification_service.dart';
+import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/settings/presentation/settings_state.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
@@ -19,6 +20,8 @@ class SettingsNotifier extends Notifier<SettingsState> {
   static const String _pauseOnBackgroundKey = 'settings.pause_on_background';
   static const String _enableWakelockKey = 'settings.enable_wakelock';
   static const String _askToMoveUnfinishedKey = 'settings.ask_to_move_unfinished';
+  static const String _dailyGoalMinutesKey = 'settings.daily_goal_minutes';
+  static const String _workingDaysKey = 'settings.working_days';
 
   late SharedPreferences _prefs;
   late ITaskRepository _repository;
@@ -47,6 +50,43 @@ class SettingsNotifier extends Notifier<SettingsState> {
       isCleaning: false,
       askToMoveUnfinished: prefs.getBool(_askToMoveUnfinishedKey) ?? true,
       notificationsDenied: prefs.getBool(_notificationsDeniedKey) ?? false,
+      focusGoal: _loadFocusGoal(prefs),
+    );
+  }
+
+  static FocusGoal _loadFocusGoal(SharedPreferences prefs) {
+    final minutes = prefs.getInt(_dailyGoalMinutesKey) ?? 0;
+    final stored = prefs.getStringList(_workingDaysKey)?.map(int.tryParse).whereType<int>().where((day) => day >= DateTime.monday && day <= DateTime.sunday).toSet();
+    return FocusGoal(
+      daily: minutes > 0 ? Duration(minutes: minutes) : null,
+      workingDays: stored == null || stored.isEmpty ? FocusGoal.defaultWorkingDays : stored,
+    );
+  }
+
+  /// Sets the daily focus goal; `null` turns it off.
+  Future<void> setDailyGoal(Duration? goal) async {
+    final minutes = goal?.inMinutes ?? 0;
+    if (minutes > 0) {
+      await _prefs.setInt(_dailyGoalMinutesKey, minutes);
+    } else {
+      await _prefs.remove(_dailyGoalMinutesKey);
+    }
+    state = state.copyWith(
+      focusGoal: FocusGoal(
+        daily: minutes > 0 ? Duration(minutes: minutes) : null,
+        workingDays: state.focusGoal.workingDays,
+      ),
+    );
+  }
+
+  /// Makes [weekday] (a [DateTime.weekday] value) a working day or not. The last working day can't be removed.
+  Future<void> setWorkingDay(int weekday, bool isWorkingDay) async {
+    final days = {...state.focusGoal.workingDays};
+    isWorkingDay ? days.add(weekday) : days.remove(weekday);
+    if (days.isEmpty) return;
+    await _prefs.setStringList(_workingDaysKey, [for (final day in days.toList()..sort()) '$day']);
+    state = state.copyWith(
+      focusGoal: FocusGoal(daily: state.focusGoal.daily, workingDays: days),
     );
   }
 

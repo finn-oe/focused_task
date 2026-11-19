@@ -3,6 +3,16 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.12.0] - 2026-11-19
+
+### Added
+- **Daily focus goal**: choose a goal (off, 30 min … 8 h) and your working days (Mon–Fri by default) in Settings → Goals. (#21)
+- A small ring next to the date in the plan shows today's focus time against the goal; tap it to open the statistics. (#21)
+- **Streaks** in the statistics: the current and longest run of working days that reached the goal, and the goal days per month. Days off neither break nor extend a streak; today counts once the goal is reached. Past days are judged by the current goal. (#21)
+- A dashed goal line in the focus chart of a week or month. (#21)
+- "Finished for today" sums up the day: focus time, tasks done, goal reached or not, and the streak. (#21)
+- While you focus, a notification tells you when the daily goal is reached (once a day, only on working days). (#21)
+
 ## [1.11.0] - 2026-11-19
 
 ### Added

@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
@@ -124,6 +126,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
   late ITaskRepository _repository;
   late IFocusSessionRepository _sessions;
   late TargetAlarm _alarm;
+  late NotificationService _notifications;
   Timer? _ticker;
 
   /// The open focus session of [FocusModeState.currentTask], or `null` while paused.
@@ -138,6 +141,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     _repository = ref.watch(taskRepositoryProvider);
     _sessions = ref.watch(focusSessionRepositoryProvider);
     _alarm = ref.watch(targetAlarmProvider);
+    _notifications = ref.watch(notificationServiceProvider);
     ref.onDispose(_stopTicker);
     return FocusModeState.initial();
   }
@@ -166,7 +170,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     final task = state.currentTask;
     if (task == null) return;
 
-    await _alarm.cancel();
+    await _cancelReminders();
     final sessionId = _sessionId;
     _sessionId = null;
     if (sessionId != null) {
@@ -250,6 +254,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     );
 
     await _scheduleTargetAlarm(current, now);
+    await _scheduleGoalNotification(now);
   }
 
   /// Pauses the running session; [reason] is recorded in the session log.
@@ -259,7 +264,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
       return;
     }
 
-    await _alarm.cancel();
+    await _cancelReminders();
 
     final now = clock.now();
     final sessionId = _sessionId;
@@ -298,6 +303,37 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     if (updatedTask != null) {
       await _scheduleTargetAlarm(updatedTask, now);
     }
+    await _scheduleGoalNotification(now);
+  }
+
+  /// Cancels the target alarm and the goal notification; both are scheduled again when focus continues.
+  Future<void> _cancelReminders() async {
+    await _alarm.cancel();
+    await _notifications.cancel(NotificationIds.goalReached);
+  }
+
+  /// Schedules the "goal reached" notification for the moment today's focus time reaches the daily goal, if focus
+  /// continues until then. Nothing is scheduled once the goal is reached, so it comes at most once a day; also not on
+  /// days off, and not if the goal would only be reached tomorrow.
+  Future<void> _scheduleGoalNotification(DateTime now) async {
+    final goal = ref.read(focusGoalProvider);
+    final today = now.dateOnly;
+    final daily = goal.daily;
+    if (!goal.isEnabled || daily == null || !goal.isWorkingDay(today)) return;
+
+    final focusToday = (await _sessions.focusTimeByDay(DateRange(today, today)))[today] ?? Duration.zero;
+    final remaining = daily - focusToday;
+    final at = now.add(remaining);
+    if (remaining <= Duration.zero || !at.isBefore(today.nextDay)) return;
+
+    final l10n = ref.read(appLocalizationsProvider);
+    final notification = AppNotification(
+      id: NotificationIds.goalReached,
+      channel: NotificationChannel.reminders,
+      title: l10n.notificationGoalReachedTitle,
+      body: l10n.notificationGoalReachedBody(l10n.durationLabel(daily)),
+    );
+    await _notifications.schedule(notification, at);
   }
 
   Future<void> completeCurrentTask() async {
@@ -306,7 +342,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
       return;
     }
 
-    await _alarm.cancel();
+    await _cancelReminders();
     _sessionId = null;
     await _repository.completeTask(taskId: task.id, completedAt: clock.now());
     state = state.copyWith(queue: state.queue.skip(1).toList());
@@ -316,7 +352,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
 
   Future<void> exitFocus() async {
     await pauseSession(reason: EndReason.exited);
-    await _alarm.cancel();
+    await _cancelReminders();
     _stopTicker();
     state = state.copyWith(
       clearCurrentTask: true,

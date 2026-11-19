@@ -201,4 +201,35 @@ void main() {
     final sessions = await app.database.getSessionsOverlapping(yesterday, today);
     expect(sessions, hasLength(1), reason: 'the session stays on the day it was worked');
   });
+
+  testWidgets('daily goal: set it in the settings, see the ring, the summary of today and the streak', (tester) async {
+    final app = await TestApp.start(tester);
+    final tasks = TaskRepositoryImpl(app.database);
+    final id = await tasks.createTask(title: 'Write report', assignedDate: DateTime.now(), sortOrder: 'a0');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('planGoalRing')), findsNothing, reason: 'the goal is off by default');
+
+    await tester.tapAndSettle(find.text('Settings').first);
+    await tester.scrollUntilVisible(find.byKey(const Key('settingsDailyGoal')), 200, scrollable: find.byType(Scrollable).first);
+    await tester.tapAndSettle(find.byKey(const Key('settingsDailyGoal')));
+    await tester.tapAndSettle(find.text('30 min').last);
+    expect(app.preferences.getInt('settings.daily_goal_minutes'), 30);
+
+    await tester.tapAndSettle(find.text('Plan').first);
+    expect(find.byTooltip('Today’s focus: 0 min of 30 min'), findsOneWidget);
+
+    await tester.tapAndSettle(find.text('Start focus'));
+    await tester.tapAndSettle(find.text('Complete Task'));
+    expect(find.text('Finished for Today!'), findsOneWidget);
+    expect(find.text('Not reached (0 min of 30 min)'), findsOneWidget);
+    await tester.tapAndSettle(find.text('Back to Plan'));
+
+    await FocusSessionRepositoryImpl(app.database).addManualTime(taskId: id, day: DateTime.now(), duration: const Duration(minutes: 30));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Daily goal reached: 30 min of 30 min'), findsOneWidget);
+
+    await tester.tapAndSettle(find.byKey(const Key('planGoalRing')));
+    await tester.scrollUntilVisible(find.byKey(const Key('statsCurrentStreak')), 200, scrollable: find.byType(Scrollable).first);
+    expect(find.byKey(const Key('statsGoalDaysChart')), findsOneWidget);
+  });
 }
