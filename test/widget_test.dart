@@ -5,20 +5,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_screen.dart';
 
+import 'helpers/fake_preferences.dart';
 import 'helpers/fake_task_repository.dart';
 import 'helpers/task_builders.dart';
 import 'helpers/localized_app.dart';
 
-Widget _app(FakeTaskRepository repository) {
+Future<Widget> _app(FakeTaskRepository repository) async {
   return ProviderScope(
-    overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
+    overrides: [
+      taskRepositoryProvider.overrideWithValue(repository),
+      focusSessionRepositoryProvider.overrideWithValue(repository),
+      sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
+    ],
     child: localizedApp(home: const PlanScreen()),
   );
 }
 
 void main() {
   testWidgets('App boots into plan mode shell', (tester) async {
-    await tester.pumpWidget(_app(FakeTaskRepository()));
+    await tester.pumpWidget(await _app(FakeTaskRepository()));
     await tester.pump();
 
     expect(find.text('Today'), findsOneWidget);
@@ -32,7 +37,7 @@ void main() {
       tasks: [buildTask(title: 'Write tests', assignedDate: DateTime.now())],
     );
 
-    await tester.pumpWidget(_app(repository));
+    await tester.pumpWidget(await _app(repository));
     await tester.pump();
 
     expect(find.text('Write tests'), findsOneWidget);
@@ -49,7 +54,7 @@ void main() {
       tasks: [buildTask(title: 'Crashed task', assignedDate: DateTime.now(), latestStart: start).copyWith(lastSeenAt: start.add(const Duration(minutes: 30)))],
     );
 
-    await tester.pumpWidget(_app(repository));
+    await tester.pumpWidget(await _app(repository));
     await tester.pumpAndSettle();
 
     expect(find.text('Recover unfinished session?'), findsOneWidget);

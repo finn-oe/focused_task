@@ -8,6 +8,7 @@ import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/task_form_screen.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
 
+import '../../../helpers/fake_preferences.dart';
 import '../../../helpers/fake_task_repository.dart';
 import '../../../helpers/localized_app.dart';
 import '../../../helpers/task_builders.dart';
@@ -21,7 +22,11 @@ Future<FakeTaskRepository> _openForm(WidgetTester tester, {TaskEntity? task, Siz
   final repository = FakeTaskRepository(tasks: [?task]);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        taskRepositoryProvider.overrideWithValue(repository),
+        focusSessionRepositoryProvider.overrideWithValue(repository),
+        sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
+      ],
       child: localizedApp(
         home: Builder(
           builder: (context) => Scaffold(
@@ -168,12 +173,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('past tasks can be edited; Copy to Today stays available', (tester) async {
+  testWidgets('past tasks can be edited; moving and copying stay available', (tester) async {
     final past = buildTask(title: 'Yesterday', assignedDate: today.addDays(-1), priority: TaskPriority.medium);
     final repository = FakeTaskRepository(tasks: [past]);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          taskRepositoryProvider.overrideWithValue(repository),
+          focusSessionRepositoryProvider.overrideWithValue(repository),
+          sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
+        ],
         child: localizedApp(
           home: Scaffold(
             body: ReorderableListView(
@@ -186,7 +195,7 @@ void main() {
     );
 
     expect(find.byTooltip('Edit Task'), findsOneWidget);
-    expect(find.byTooltip('Copy to Today'), findsOneWidget);
+    expect(find.byTooltip('Move or copy'), findsOneWidget);
     expect(find.byIcon(Icons.flag), findsOneWidget, reason: 'medium priority shows a flag');
   });
 }

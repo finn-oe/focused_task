@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 
@@ -62,15 +63,34 @@ class FocusStartMoveToToday extends FocusStart {
   final bool fromYesterday;
 }
 
+/// Tasks that were moved to [to], as they were before (day and position), so the move can be undone.
+class TaskMove {
+  const TaskMove(this.to, this.previous);
+
+  final DateTime to;
+  final List<TaskEntity> previous;
+
+  int get count => previous.length;
+  bool get isEmpty => previous.isEmpty;
+}
+
 class PlanModeNotifier extends Notifier<PlanModeState> {
+  /// Day (`YYYY-MM-DD`) on which the rollover prompt was last offered.
+  static const String rolloverPromptedKey = 'plan.rollover_prompted_on';
+
+  /// How many past days the rollover prompt looks at.
+  static const int rolloverDays = 7;
+
   late ITaskRepository _repository;
   late IFocusSessionRepository _sessions;
+  late SharedPreferences _prefs;
   StreamSubscription<List<TaskEntity>>? _subscription;
 
   @override
   PlanModeState build() {
     _repository = ref.watch(taskRepositoryProvider);
     _sessions = ref.watch(focusSessionRepositoryProvider);
+    _prefs = ref.watch(sharedPreferencesProvider);
     ref.onDispose(() => _subscription?.cancel());
 
     final initial = PlanModeState.initial();
@@ -203,17 +223,40 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     return FocusStartNow(today);
   }
 
-  /// Moves the open tasks of [from] to [to] (after the tasks already there, in their order).
-  Future<void> moveOpenTasks({required DateTime from, required DateTime to}) async {
-    final open = (await _repository.getTasksForDay(from)).where((task) => !task.isCompleted);
-    final existing = await _repository.getTasksForDay(to);
-    var lastSort = existing.isEmpty ? null : existing.last.sortOrder;
-    for (final task in open) {
-      final sortOrder = FractionalIndexer.between(lastSort, null);
-      lastSort = sortOrder;
-      await _repository.updateTaskDetails(taskId: task.id, title: task.title, description: task.description, targetDurationMinutes: task.targetDurationMinutes, assignedDate: to);
-      await _repository.updateTaskOrder(taskId: task.id, sortOrder: sortOrder);
+  /// Moves the open tasks among [ids] to the day [to] (after the tasks already there, in the given order). Completed
+  /// tasks can't be moved, only copied. Keeps sub-tasks, tracked time and focus sessions.
+  Future<TaskMove> moveTasks(List<int> ids, DateTime to) async {
+    final before = <int, TaskEntity>{};
+    for (final id in ids) {
+      final task = await _repository.getTaskById(id);
+      if (task != null) before[id] = task;
     }
+    final moved = await _repository.moveTasks(taskIds: ids, to: to.dateOnly);
+    return TaskMove(to.dateOnly, [for (final id in moved) before[id]!]);
+  }
+
+  /// Moves the open tasks of [from] to [to] (after the tasks already there, in their order).
+  Future<TaskMove> moveOpenTasks({required DateTime from, required DateTime to}) async {
+    final open = (await _repository.getTasksForDay(from)).where((task) => !task.isCompleted);
+    return moveTasks([for (final task in open) task.id], to);
+  }
+
+  /// Puts the tasks of [move] back on their old day and position (unless they were completed in the meantime).
+  Future<void> undoMove(TaskMove move) async {
+    for (final task in move.previous) {
+      final moved = await _repository.moveTasks(taskIds: [task.id], to: task.assignedDate);
+      if (moved.isNotEmpty) await _repository.updateTaskOrder(taskId: task.id, sortOrder: task.sortOrder);
+    }
+  }
+
+  /// Open tasks of the last [rolloverDays] days to offer on the first call of a day, or nothing when the prompt was
+  /// already offered today or is turned off in the settings. Calling it counts as offering the prompt.
+  Future<List<TaskEntity>> takeRolloverCandidates() async {
+    if (!ref.read(settingsNotifierProvider).askToMoveUnfinished) return const [];
+    final today = clock.now().dateOnly;
+    if (_prefs.getString(rolloverPromptedKey) == today.isoDate) return const [];
+    await _prefs.setString(rolloverPromptedKey, today.isoDate);
+    return _repository.getOpenTasksBetween(start: today.addDays(-rolloverDays), end: today.addDays(-1));
   }
 
   /// Adds manually tracked time to [task]: on its day if that is in the past, otherwise today (never in the future).

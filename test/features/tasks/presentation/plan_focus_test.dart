@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
 
 import '../../../helpers/fake_notification_service.dart';
 import '../../../helpers/fake_preferences.dart';
@@ -23,7 +24,8 @@ Future<GoRouter> _pumpApp(WidgetTester tester, FakeTaskRepository repository, {S
       overrides: [
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
-        sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
+        // The daily rollover prompt was already offered; these tests are about "Start focus".
+        sharedPreferencesProvider.overrideWithValue(await fakePreferences({PlanModeNotifier.rolloverPromptedKey: DateTime.now().dateOnly.isoDate})),
         targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
         notificationServiceProvider.overrideWithValue(FakeNotificationService()),
       ],

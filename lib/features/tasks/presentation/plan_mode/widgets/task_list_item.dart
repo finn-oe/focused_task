@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +8,13 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/task_form_fields.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_move_feedback.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+
+/// Actions in a past task's "Move or copy" menu.
+enum _TaskMenuAction { moveToToday, moveTo, copyTo }
 
 class TaskListItem extends ConsumerWidget {
   const TaskListItem({super.key, required this.task, required this.index});
@@ -17,7 +22,36 @@ class TaskListItem extends ConsumerWidget {
   final TaskEntity task;
   final int index;
 
-  Future<void> _showCopyToTodayDialog(BuildContext context, WidgetRef ref, DateTime today) async {
+  Future<void> _onMenuAction(BuildContext context, WidgetRef ref, _TaskMenuAction action, DateTime today) async {
+    switch (action) {
+      case _TaskMenuAction.moveToToday:
+        await _moveTo(context, ref, today);
+      case _TaskMenuAction.moveTo:
+        final day = await _pickDay(context, initial: today, except: task.assignedDate);
+        if (day != null && context.mounted) await _moveTo(context, ref, day);
+      case _TaskMenuAction.copyTo:
+        final day = await _pickDay(context, initial: today);
+        if (day != null && context.mounted) await _showCopyDialog(context, ref, day, today: today);
+    }
+  }
+
+  Future<DateTime?> _pickDay(BuildContext context, {required DateTime initial, DateTime? except}) {
+    return showDatePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+      initialDate: initial,
+      selectableDayPredicate: except == null ? null : (day) => !day.isSameDate(except),
+    );
+  }
+
+  Future<void> _moveTo(BuildContext context, WidgetRef ref, DateTime day) async {
+    final notifier = ref.read(planModeNotifierProvider.notifier);
+    final feedback = TaskMoveFeedback.of(context, notifier);
+    feedback.show(await notifier.moveTasks([task.id], day));
+  }
+
+  Future<void> _showCopyDialog(BuildContext context, WidgetRef ref, DateTime day, {required DateTime today}) async {
     bool keepTodoCompletion = false;
     bool subtractTimeSpent = true;
 
@@ -25,18 +59,19 @@ class TaskListItem extends ConsumerWidget {
     final hasTargetDuration = task.targetDurationMinutes != null;
 
     final l10n = context.l10n;
+    final dayLabel = relativeDayLabel(context, day, today: today);
     final result = await showDialog<bool>(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text(l10n.taskCopyToTodayTitle),
+              title: Text(l10n.taskCopyToDateTitle(dayLabel)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.taskCopyToTodayQuestion),
+                  Text(l10n.taskCopyQuestion),
                   const SizedBox(height: 16),
 
                   if (hasTodos)
@@ -70,7 +105,7 @@ class TaskListItem extends ConsumerWidget {
 
     if (result == true) {
       final notifier = ref.read(planModeNotifierProvider.notifier);
-      await notifier.duplicateTaskToDate(task: task, date: today, keepTodoCompletion: keepTodoCompletion, subtractTimeSpent: subtractTimeSpent);
+      await notifier.duplicateTaskToDate(task: task, date: day, keepTodoCompletion: keepTodoCompletion, subtractTimeSpent: subtractTimeSpent);
     }
   }
 
@@ -86,7 +121,7 @@ class TaskListItem extends ConsumerWidget {
 
     final shouldShowProgress = totalTodos > 0 && task.timeSpent > 0 && !task.isCompleted;
 
-    final today = DateTime.now().dateOnly;
+    final today = clock.now().dateOnly;
     final isPast = task.assignedDate.dateOnly.isBefore(today);
 
     return Card(
@@ -146,14 +181,29 @@ class TaskListItem extends ConsumerWidget {
                 ),
               ),
 
-            // Past tasks can be edited too; copying them to today is the secondary action.
+            // Past tasks can be edited too; open ones can be moved (to today first), any can be copied.
             if (isPast)
-              IconButton(
-                tooltip: l10n.taskCopyToTodayTooltip,
-                visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.today_outlined),
-                color: isCompleted ? colorScheme.onSurfaceVariant : null,
-                onPressed: () => _showCopyToTodayDialog(context, ref, today),
+              PopupMenuButton<_TaskMenuAction>(
+                tooltip: l10n.taskMoveOrCopyTooltip,
+                icon: Icon(Icons.event_repeat_outlined, color: isCompleted ? colorScheme.onSurfaceVariant : null),
+                style: const ButtonStyle(visualDensity: VisualDensity.compact),
+                onSelected: (action) => _onMenuAction(context, ref, action, today),
+                itemBuilder: (context) => [
+                  if (!isCompleted) ...[
+                    PopupMenuItem(
+                      value: _TaskMenuAction.moveToToday,
+                      child: ListTile(leading: const Icon(Icons.today_outlined), title: Text(l10n.taskMoveToToday), contentPadding: EdgeInsets.zero),
+                    ),
+                    PopupMenuItem(
+                      value: _TaskMenuAction.moveTo,
+                      child: ListTile(leading: const Icon(Icons.event_outlined), title: Text(l10n.taskMoveTo), contentPadding: EdgeInsets.zero),
+                    ),
+                  ],
+                  PopupMenuItem(
+                    value: _TaskMenuAction.copyTo,
+                    child: ListTile(leading: const Icon(Icons.copy_outlined), title: Text(l10n.taskCopyTo), contentPadding: EdgeInsets.zero),
+                  ),
+                ],
               ),
             IconButton(
               tooltip: l10n.taskEditTooltip,

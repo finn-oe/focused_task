@@ -158,16 +158,39 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get taskCopyToTodayTooltip => 'Nach heute kopieren';
+  String get taskMoveOrCopyTooltip => 'Verschieben oder kopieren';
+
+  @override
+  String get taskMoveToToday => 'Nach heute verschieben';
+
+  @override
+  String get taskMoveTo => 'Verschieben nach …';
+
+  @override
+  String get taskCopyTo => 'Kopieren nach …';
+
+  @override
+  String taskMovedToDate(int count, String date) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count Aufgaben nach $date verschoben', one: 'Aufgabe nach $date verschoben');
+    return '$_temp0';
+  }
+
+  @override
+  String taskMovedToToday(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count Aufgaben nach heute verschoben', one: 'Aufgabe nach heute verschoben');
+    return '$_temp0';
+  }
+
+  @override
+  String taskCopyToDateTitle(String date) {
+    return 'Kopieren nach $date';
+  }
+
+  @override
+  String get taskCopyQuestion => 'Legt eine neue Aufgabe mit demselben Titel, denselben Details und Unteraufgaben an. Das Original bleibt, wo es ist.';
 
   @override
   String get taskEditTooltip => 'Aufgabe bearbeiten';
-
-  @override
-  String get taskCopyToTodayTitle => 'Nach heute verschieben';
-
-  @override
-  String get taskCopyToTodayQuestion => 'Eine Kopie dieser Aufgabe für heute anlegen?';
 
   @override
   String get taskKeepCompletedTodos => 'Erledigte Unteraufgaben behalten';
@@ -389,6 +412,15 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get settingsLanguageGerman => 'Deutsch';
+
+  @override
+  String get settingsPlanning => 'Planung';
+
+  @override
+  String get settingsAskToMoveUnfinished => 'Unerledigte Aufgaben verschieben?';
+
+  @override
+  String get settingsAskToMoveUnfinishedHint => 'Beim ersten Start des Tages anbieten, offene Aufgaben der letzten 7 Tage nach heute zu verschieben';
 
   @override
   String get settingsDataRetention => 'Datenaufbewahrung';
@@ -643,4 +675,34 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get planFocusMoveAndStart => 'Verschieben und starten';
+
+  @override
+  String get commonUndo => 'Rückgängig';
+
+  @override
+  String get planRolloverTitle => 'Unerledigte Aufgaben';
+
+  @override
+  String planRolloverMessage(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count Aufgaben der letzten Tage sind noch offen.', one: '1 Aufgabe der letzten Tage ist noch offen.');
+    return '$_temp0';
+  }
+
+  @override
+  String planRolloverMove(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Aufgaben nach heute verschieben',
+      one: '1 Aufgabe nach heute verschieben',
+      zero: 'Nach heute verschieben',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get planRolloverNotNow => 'Nicht jetzt';
+
+  @override
+  String get planRolloverSettingsHint => 'Diese Frage lässt sich in den Einstellungen abschalten.';
 }

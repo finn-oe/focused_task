@@ -344,29 +344,59 @@ abstract class AppLocalizations {
   /// **'{completed}/{total}'**
   String taskTodoProgress(int completed, int total);
 
-  /// No description provided for @taskCopyToTodayTooltip.
+  /// No description provided for @taskMoveOrCopyTooltip.
   ///
   /// In en, this message translates to:
-  /// **'Copy to Today'**
-  String get taskCopyToTodayTooltip;
+  /// **'Move or copy'**
+  String get taskMoveOrCopyTooltip;
+
+  /// No description provided for @taskMoveToToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to today'**
+  String get taskMoveToToday;
+
+  /// No description provided for @taskMoveTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to…'**
+  String get taskMoveTo;
+
+  /// No description provided for @taskCopyTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to…'**
+  String get taskCopyTo;
+
+  /// No description provided for @taskMovedToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Task moved to {date}} other{{count} tasks moved to {date}}}'**
+  String taskMovedToDate(int count, String date);
+
+  /// No description provided for @taskMovedToToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Task moved to today} other{{count} tasks moved to today}}'**
+  String taskMovedToToday(int count);
+
+  /// No description provided for @taskCopyToDateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to {date}'**
+  String taskCopyToDateTitle(String date);
+
+  /// No description provided for @taskCopyQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Creates a new task with the same title, details and sub-tasks. The original stays where it is.'**
+  String get taskCopyQuestion;
 
   /// No description provided for @taskEditTooltip.
   ///
   /// In en, this message translates to:
   /// **'Edit Task'**
   String get taskEditTooltip;
-
-  /// No description provided for @taskCopyToTodayTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Move to Today'**
-  String get taskCopyToTodayTitle;
-
-  /// No description provided for @taskCopyToTodayQuestion.
-  ///
-  /// In en, this message translates to:
-  /// **'Create a copy of this task for today?'**
-  String get taskCopyToTodayQuestion;
 
   /// No description provided for @taskKeepCompletedTodos.
   ///
@@ -775,6 +805,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deutsch'**
   String get settingsLanguageGerman;
+
+  /// No description provided for @settingsPlanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Planning'**
+  String get settingsPlanning;
+
+  /// No description provided for @settingsAskToMoveUnfinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask to move unfinished tasks'**
+  String get settingsAskToMoveUnfinished;
+
+  /// No description provided for @settingsAskToMoveUnfinishedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'On the first start of a day, offer to move open tasks of the last 7 days to today'**
+  String get settingsAskToMoveUnfinishedHint;
 
   /// No description provided for @settingsDataRetention.
   ///
@@ -1189,6 +1237,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Move and start'**
   String get planFocusMoveAndStart;
+
+  /// No description provided for @commonUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get commonUndo;
+
+  /// No description provided for @planRolloverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfinished tasks'**
+  String get planRolloverTitle;
+
+  /// No description provided for @planRolloverMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 task from the last few days is still open.} other{{count} tasks from the last few days are still open.}}'**
+  String planRolloverMessage(int count);
+
+  /// No description provided for @planRolloverMove.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Move to today} =1{Move 1 task to today} other{Move {count} tasks to today}}'**
+  String planRolloverMove(int count);
+
+  /// No description provided for @planRolloverNotNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get planRolloverNotNow;
+
+  /// No description provided for @planRolloverSettingsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can turn this question off in the settings.'**
+  String get planRolloverSettingsHint;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

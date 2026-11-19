@@ -3,6 +3,15 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.10.0] - 2026-11-19
+
+### Added
+- Past open tasks can be **moved** instead of only copied: the menu on a past task offers *Move to today*, *Move to…* (any day) and *Copy to…*. A move keeps the task's sub-tasks, tracked time and session history, so the old day's completion rate no longer counts it; *Undo* puts it back. Completed tasks can only be copied. (#23)
+- On the first start of a day the app offers to move the open tasks of the last 7 days to today (all checked; untick the ones to leave). Turn it off in Settings → Planning → "Ask to move unfinished tasks". (#23)
+
+### Changed
+- "Start focus" moves a past day's (or yesterday's) open tasks with the same move as the task menu. (#23)
+
 ## [1.9.0] - 2026-11-19
 
 ### Added

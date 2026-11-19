@@ -18,6 +18,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
   static const String _retentionDaysKey = 'settings.retention_days';
   static const String _pauseOnBackgroundKey = 'settings.pause_on_background';
   static const String _enableWakelockKey = 'settings.enable_wakelock';
+  static const String _askToMoveUnfinishedKey = 'settings.ask_to_move_unfinished';
 
   late SharedPreferences _prefs;
   late ITaskRepository _repository;
@@ -44,6 +45,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       pauseOnBackground: pauseOnBackground,
       enableWakelock: enableWakelock,
       isCleaning: false,
+      askToMoveUnfinished: prefs.getBool(_askToMoveUnfinishedKey) ?? true,
       notificationsDenied: prefs.getBool(_notificationsDeniedKey) ?? false,
     );
   }
@@ -110,6 +112,11 @@ class SettingsNotifier extends Notifier<SettingsState> {
   Future<void> setEnableWakelock(bool value) async {
     await _prefs.setBool(_enableWakelockKey, value);
     state = state.copyWith(enableWakelock: value);
+  }
+
+  Future<void> setAskToMoveUnfinished(bool value) async {
+    await _prefs.setBool(_askToMoveUnfinishedKey, value);
+    state = state.copyWith(askToMoveUnfinished: value);
   }
 
   Future<int> cleanNow() async {

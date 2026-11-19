@@ -91,6 +91,15 @@ class TaskRepositoryImpl implements ITaskRepository {
   }
 
   @override
+  Future<List<TaskEntity>> getOpenTasksBetween({required DateTime start, required DateTime end}) async {
+    final tasks = await _database.getOpenTasksInRange(start: start, end: end);
+    return tasks.map(_toEntity).toList(growable: false);
+  }
+
+  @override
+  Future<List<int>> moveTasks({required List<int> taskIds, required DateTime to}) => _database.moveTasks(taskIds: taskIds, to: to);
+
+  @override
   Future<void> setTaskCompletion({required int taskId, required bool isCompleted}) {
     return _database.setTaskCompletion(taskId: taskId, isCompleted: isCompleted);
   }

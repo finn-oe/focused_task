@@ -8,6 +8,7 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_screen.dart';
 import 'package:focused_task/features/tasks/presentation/stats/stats_screen.dart';
 
+import '../../helpers/fake_preferences.dart';
 import '../../helpers/fake_task_repository.dart';
 import '../../helpers/localized_app.dart';
 import '../../helpers/task_builders.dart';
@@ -34,7 +35,11 @@ void main() {
     final repository = FakeTaskRepository();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          taskRepositoryProvider.overrideWithValue(repository),
+          focusSessionRepositoryProvider.overrideWithValue(repository),
+          sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
+        ],
         child: localizedApp(home: const PlanScreen(), locale: const Locale('de')),
       ),
     );
@@ -72,7 +77,11 @@ void main() {
         );
         await tester.pumpWidget(
           ProviderScope(
-            overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
+            overrides: [
+              taskRepositoryProvider.overrideWithValue(repository),
+              focusSessionRepositoryProvider.overrideWithValue(repository),
+              sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
+            ],
             child: localizedApp(home: const StatsScreen(), locale: locale),
           ),
         );
