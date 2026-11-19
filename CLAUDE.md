@@ -62,9 +62,9 @@ Rules:
 
 - **Dependency direction:** `presentation → domain ← data`. Presentation code depends on repository *interfaces* (`ITaskRepository`), never on `AppDatabase` or Drift row classes.
 - **Domain is pure Dart.** Entities are immutable, have `copyWith`, and contain no Flutter or Drift imports.
-- **Tracked time lives in `focus_sessions`** (`lib/features/sessions/`, `IFocusSessionRepository`). Start/heartbeat/end sessions through the repository; never write `tasks.time_spent` directly – it is a cached total that `end()` / `addManualTime()` update in the same transaction. At most one session is open at a time. Statistics count focus time on the day it happened (`focusTimeByDay` splits at local midnight).
+- **Tracked time lives in `focus_sessions`** (`lib/features/sessions/`, `IFocusSessionRepository`). Start/heartbeat/end sessions through the repository; never write `tasks.time_spent` directly – it is a cached total that `end()` / `addManualTime()` update in the same transaction. At most one session is open at a time. Statistics count focus time on the day it happened (`focusTimeByDay` splits at local midnight); all statistics numbers come from the pure `StatsCalculator` (`lib/features/tasks/domain/stats/`).
 - **Business logic lives in notifiers/domain**, not in widgets. Widgets render state and forward user intent.
-- **Notifiers** extend `Notifier` and get their dependencies with `ref.watch(...)` in `build()`, never via constructors. Widgets never read `taskRepositoryProvider` directly; data a screen loads goes through a provider (e.g. `taskStatsProvider`) or a notifier method.
+- **Notifiers** extend `Notifier` and get their dependencies with `ref.watch(...)` in `build()`, never via constructors. Widgets never read `taskRepositoryProvider` directly; data a screen loads goes through a provider (e.g. `statsReportProvider`) or a notifier method.
 - **Time is injected.** Use `clock.now()` from `package:clock` instead of `DateTime.now()` in logic, so tests can control time with `fakeAsync` / `withClock`.
 - **Dates:** a task's day is a calendar date. Compute day boundaries with `DateTime(y, m, d + 1)`, never `+ Duration(days: 1)` (breaks on DST switches).
 - **Database changes** require bumping `schemaVersion`, a migration step in `AppDatabase.migration`, and a migration test. Regenerate code with `dart run build_runner build --delete-conflicting-outputs`; commit the generated `*.g.dart`.
@@ -73,7 +73,7 @@ Rules:
 
 - Code must pass `flutter analyze` with **zero** issues and be formatted with `dart format` (page width 180 is set in `analysis_options.yaml`; generated `*.g.dart` and `lib/l10n/generated/` files are excluded).
 - Prefer small, focused widgets over large `build` methods; extract private widgets instead of helper methods returning widgets.
-- No hard-coded colours – use `Theme.of(context).colorScheme`. No duplicated helpers – shared formatting lives in `lib/core/utils/`.
+- No hard-coded colours – use `Theme.of(context).colorScheme`. Charts: reuse `BarChart` / `HeatmapChart` from `lib/core/ui/charts/` (no chart package). No duplicated helpers – shared formatting lives in `lib/core/utils/`.
 - Use strong types; avoid `dynamic`.
 - No hard-coded user-facing strings – see *Strings*.
 - Destructive actions (delete, cleanup) need a confirmation or undo.

@@ -150,7 +150,7 @@ void main() {
 
   testWidgets('the old /stats and /settings routes still work', (tester) async {
     final router = await _pumpApp(tester, initialLocation: AppRoutes.stats);
-    expect(find.text('Completion score'), findsOneWidget);
+    expect(find.text('Day'), findsOneWidget);
 
     router.go(AppRoutes.settings);
     await tester.pumpAndSettle();

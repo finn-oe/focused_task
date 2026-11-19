@@ -1,7 +1,7 @@
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/tasks/domain/entities/day_summary.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
-import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
+import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 
 abstract class ITaskRepository {
   Stream<List<TaskEntity>> watchTasksForDay(DateTime day);
@@ -42,9 +42,10 @@ abstract class ITaskRepository {
 
   Future<void> setTaskCompletion({required int taskId, required bool isCompleted});
 
-  /// Task counts come from the tasks assigned to `[start, end]`; focus time comes from the sessions in that range, by
-  /// the time they actually happened (split at local midnight).
-  Future<TaskStats> getTaskStats({required DateTime start, required DateTime end});
+  /// Statistics of `query.range`: task counts come from the tasks assigned to the range; focus time comes from the
+  /// sessions in that range, by the time they actually happened (split at local midnight). Days after today don't count
+  /// for averages.
+  Future<StatsReport> getStatsReport(StatsQuery query);
 
   /// Marks the task as completed and closes its open focus session.
   Future<void> completeTask({required int taskId, required DateTime completedAt});

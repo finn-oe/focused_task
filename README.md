@@ -34,8 +34,9 @@ compared to reality – so you can get a little more dedicated every day.
 - **Session log** – every focus interval is recorded, so time counts on the day you actually worked (also across midnight).
   Missing time can be added by hand in the task form ("Add time").
 - **Session recovery** – if the app was closed during a session, you are asked whether to keep the tracked time.
-- **Statistics** – completion rate, total focus time, average task duration and focus time per day for the
-  current day, week or month.
+- **Statistics** – day, week, month or year, with ‹ › to browse past periods: focus time (total, per elapsed day,
+  sessions), completed tasks, a bar chart of focus time per hour / day / month, planned vs. tracked time with the median
+  estimation accuracy, a weekday × hour heatmap of your best focus hours and the top 5 tasks.
 - **Languages** – English and German; follows the system language or can be chosen in the settings.
 - **Settings** – light/dark/system theme, language, the daily rollover prompt, data retention, focus-mode behaviour.
 
@@ -110,13 +111,14 @@ lib/
 │   ├── providers/          # Riverpod providers (DI)
 │   ├── routing/            # go_router routes
 │   ├── services/           # platform services (alarm)
+│   ├── ui/charts/          # reusable BarChart and HeatmapChart (CustomPainter, no chart package)
 │   ├── ui/themes/          # light & dark Material 3 themes
 │   └── utils/              # formatting, fractional indexing, lifecycle observer
 └── features/
     ├── settings/           # preferences (shared_preferences)
     └── tasks/
         ├── data/           # TaskRepositoryImpl (Drift)
-        ├── domain/         # TaskEntity, TaskStats, ITaskRepository
+        ├── domain/         # TaskEntity, ITaskRepository, stats/ (StatsCalculator → StatsReport)
         └── presentation/
             ├── plan_mode/  # day list, task form
             ├── focus_mode/ # focus, pause and "finished for today" screens

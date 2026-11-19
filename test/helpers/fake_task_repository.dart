@@ -9,7 +9,8 @@ import 'package:focused_task/features/sessions/domain/focus_time.dart' as focus_
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/day_summary.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
-import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
+import 'package:focused_task/features/tasks/domain/stats/stats_calculator.dart';
+import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
 /// Simple in-memory [ITaskRepository] **and** [IFocusSessionRepository] for widget and notifier tests, so tasks and
@@ -213,11 +214,29 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
     _update(taskId, (task) => task.copyWith(isCompleted: false));
   }
 
+  /// Adds the task title like the Drift join does.
+  FocusSession _withTitle(FocusSession session) {
+    final title = _tasks[session.taskId]?.title;
+    if (title == null || session.taskTitle != null) return session;
+    return FocusSession(
+      id: session.id,
+      taskId: session.taskId,
+      kind: session.kind,
+      startedAt: session.startedAt,
+      lastSeenAt: session.lastSeenAt,
+      endedAt: session.endedAt,
+      endReason: session.endReason,
+      interruptions: session.interruptions,
+      taskTitle: title,
+    );
+  }
+
   @override
-  Future<TaskStats> getTaskStats({required DateTime start, required DateTime end}) async {
-    final range = DateRange(start, end);
-    final inRange = _tasks.values.where((task) => _isIn(task, range));
-    return TaskStats.from(tasks: inRange, focusByTask: focus_time.focusTimeByTask(_sessions, range), daysInRange: range.start.calendarDaysUntil(range.end) + 1);
+  Future<StatsReport> getStatsReport(StatsQuery query) async {
+    final range = query.range;
+    final inRange = _tasks.values.where((task) => !_day(task.assignedDate).isBefore(range.start) && !_day(task.assignedDate).isAfter(range.end));
+    final overlapping = _inRange(range.start, range.end.nextDay);
+    return const StatsCalculator().compute(query, tasks: inRange, sessions: [for (final session in overlapping) _withTitle(session)], today: clock.now());
   }
 
   @override

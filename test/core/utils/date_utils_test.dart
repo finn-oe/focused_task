@@ -65,6 +65,28 @@ void main() {
 
       final month = statsDateRange(StatsRange.month, now, firstWeekday: DateTime.monday);
       expect((month.start, month.end), (DateTime(2026, 10, 1), DateTime(2026, 10, 31)));
+
+      final year = statsDateRange(StatsRange.year, now, firstWeekday: DateTime.monday);
+      expect((year.start, year.end), (DateTime(2026), DateTime(2026, 12, 31)));
+    });
+  });
+
+  group('StatsPeriod', () {
+    test('steps by whole periods without overflowing month ends', () {
+      final jan31 = DateTime(2026, 1, 31);
+
+      expect(StatsPeriod(StatsRange.day, jan31).shift(1).anchor, DateTime(2026, 2, 1));
+      expect(StatsPeriod(StatsRange.week, jan31).shift(-1).anchor, DateTime(2026, 1, 24));
+      expect(StatsPeriod(StatsRange.month, jan31).shift(1).dates(firstWeekday: DateTime.monday), DateRange(DateTime(2026, 2, 1), DateTime(2026, 2, 28)));
+      expect(StatsPeriod(StatsRange.year, jan31).shift(-1).dates(firstWeekday: DateTime.monday), DateRange(DateTime(2025), DateTime(2025, 12, 31)));
+    });
+
+    test('a week crossing the DST switch keeps calendar days', () {
+      // Europe switches back on 2026-10-25; a week shift must land on midnight, not 23:00.
+      final period = StatsPeriod(StatsRange.week, DateTime(2026, 10, 21)).shift(1);
+
+      expect(period.anchor, DateTime(2026, 10, 28));
+      expect(period.contains(DateTime(2026, 10, 26, 0, 30), firstWeekday: DateTime.monday), isTrue);
     });
   });
 

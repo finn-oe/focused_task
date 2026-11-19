@@ -116,6 +116,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String commonHours(int hours) {
+    return '$hours h';
+  }
+
+  @override
+  String commonHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
   String commonPercent(int percent) {
     return '$percent%';
   }
@@ -349,18 +359,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsMonth => 'Month';
 
   @override
+  String get statsYear => 'Year';
+
+  @override
   String get statsUnavailable => 'No stats available yet.';
 
   @override
-  String get statsCompletionScore => 'Completion score';
+  String get statsPreviousPeriod => 'Previous period';
 
   @override
-  String statsCompletionScoreValue(double score) {
-    final intl.NumberFormat scoreNumberFormat = intl.NumberFormat.decimalPatternDigits(locale: localeName, decimalDigits: 1);
-    final String scoreString = scoreNumberFormat.format(score);
+  String get statsNextPeriod => 'Next period';
 
-    return '$scoreString%';
+  @override
+  String get statsCurrentPeriod => 'Go to current period';
+
+  @override
+  String statsWeekLabel(String start, String end) {
+    return '$start – $end';
   }
+
+  @override
+  String get statsEmptyTitle => 'No data for this period';
+
+  @override
+  String get statsEmptyMessage => 'Plan tasks and work on them in focus mode. Your focus time, completed tasks and best hours will show up here.';
 
   @override
   String statsTasksCompleted(int completed, int total) {
@@ -372,19 +394,100 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statsFocusTime => 'Focus time';
 
   @override
-  String get statsAverageTaskDuration => 'Avg. task duration';
+  String get statsAveragePerDay => 'Avg. per day';
 
   @override
-  String get statsPerDay => 'Per day';
-
-  @override
-  String get statsRemaining => 'Remaining';
-
-  @override
-  String statsTaskCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count tasks', one: '1 task');
+  String statsElapsedDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(days, locale: localeName, other: 'over $days days so far', one: 'over 1 day so far', zero: 'period not started yet');
     return '$_temp0';
   }
+
+  @override
+  String get statsSessions => 'Sessions';
+
+  @override
+  String statsAverageSession(String duration) {
+    return 'Avg. $duration each';
+  }
+
+  @override
+  String get statsCompletion => 'Completed';
+
+  @override
+  String get statsNoTasks => 'No tasks planned';
+
+  @override
+  String get statsInterruptions => 'Interruptions per focus hour';
+
+  @override
+  String statsInterruptionsValue(double value) {
+    final intl.NumberFormat valueNumberFormat = intl.NumberFormat.decimalPatternDigits(locale: localeName, decimalDigits: 1);
+    final String valueString = valueNumberFormat.format(value);
+
+    return '$valueString';
+  }
+
+  @override
+  String get statsNotTrackedYet => 'Not tracked yet';
+
+  @override
+  String get statsNoValue => '–';
+
+  @override
+  String get statsFocusPerHour => 'Focus time per hour';
+
+  @override
+  String get statsFocusPerDay => 'Focus time per day';
+
+  @override
+  String get statsFocusPerMonth => 'Focus time per month';
+
+  @override
+  String statsChartTooltip(String label, String duration) {
+    return '$label: $duration';
+  }
+
+  @override
+  String statsHourRange(String start, String end) {
+    return '$start:00–$end:00';
+  }
+
+  @override
+  String statsHeatmapLabel(String weekday, String hours) {
+    return '$weekday $hours';
+  }
+
+  @override
+  String get statsPlannedVsActual => 'Planned vs. actual';
+
+  @override
+  String get statsPlanned => 'Planned';
+
+  @override
+  String get statsTracked => 'Tracked';
+
+  @override
+  String statsTargetTasks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count tasks with a target duration', one: '1 task with a target duration');
+    return '$_temp0';
+  }
+
+  @override
+  String get statsNoTargets => 'Give tasks a target duration to compare your plan with the time you actually needed.';
+
+  @override
+  String statsEstimationAccuracy(int percent) {
+    return 'Completed tasks took $percent% of their target (median).';
+  }
+
+  @override
+  String get statsBestHours => 'Best focus hours';
+
+  @override
+  String get statsTopTasks => 'Top tasks';
+
+  @override
+  String get statsDeletedTask => 'Deleted task';
 
   @override
   String get settingsTitle => 'Settings';

@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_screen.dart';
+import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
@@ -104,6 +105,31 @@ void main() {
     await tester.tapAndSettle(find.text('Statistics').first);
 
     expect(find.text('30 min'), findsWidgets);
+    expect(find.text('Early start'), findsOneWidget, reason: 'top tasks include tasks planned on other days');
+  });
+
+  testWidgets('statistics: switch periods, navigate back and forth, see the empty state', (tester) async {
+    final app = await TestApp.start(tester);
+    final tasks = TaskRepositoryImpl(app.database);
+    final id = await tasks.createTask(title: 'Write report', assignedDate: DateTime.now(), sortOrder: 'a0', targetDurationMinutes: 60);
+    await FocusSessionRepositoryImpl(app.database).addManualTime(taskId: id, day: DateTime.now(), duration: const Duration(minutes: 90));
+
+    await tester.tapAndSettle(find.text('Statistics').first);
+    expect(find.text('1 h 30 min'), findsWidgets);
+    expect(find.text('Focus time per hour'), findsOneWidget);
+    expect(find.text('Planned vs. actual'), findsOneWidget);
+
+    await tester.tapAndSettle(find.text('Year'));
+    expect(find.text('Focus time per month'), findsOneWidget);
+    final thisYear = tester.widget<Text>(find.byKey(const Key('statsPeriodLabel'))).data;
+
+    await tester.tapAndSettle(find.byTooltip('Previous period'));
+    expect(tester.widget<Text>(find.byKey(const Key('statsPeriodLabel'))).data, '${DateTime.now().year - 1}');
+    expect(find.text('No data for this period'), findsOneWidget);
+
+    await tester.tapAndSettle(find.byTooltip('Go to current period'));
+    expect(tester.widget<Text>(find.byKey(const Key('statsPeriodLabel'))).data, thisYear);
+    expect(find.text('Write report'), findsWidgets);
   });
   testWidgets('calendar: see the week, move a task to another day, open a day from the month', (tester) async {
     // Phone width: the week is an agenda with "Move to…".

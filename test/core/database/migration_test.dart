@@ -5,6 +5,7 @@ import 'package:focused_task/core/database/app_database.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
+import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 
 const _tasksV3 = '''CREATE TABLE tasks (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -121,8 +122,8 @@ void main() {
         (1, DateTime(2026, 11, 10, 12), const Duration(minutes: 30)),
         (2, DateTime(2026, 11, 10, 12), const Duration(minutes: 10)),
       ]);
-      final stats = await TaskRepositoryImpl(database).getTaskStats(start: day, end: day);
-      expect(stats.totalFocusMinutes, 40, reason: 'totals stay the same');
+      final stats = await TaskRepositoryImpl(database).getStatsReport(StatsQuery(range: DateRange(day, day), granularity: StatsGranularity.day));
+      expect(stats.focusTotal, const Duration(minutes: 40), reason: 'totals stay the same');
     });
 
     test('a running session stays recoverable with its heartbeat', () async {
