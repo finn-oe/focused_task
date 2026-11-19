@@ -21,6 +21,7 @@ Future<ProviderContainer> _container(FakeTaskRepository repository, [Map<String,
     overrides: [
       taskRepositoryProvider.overrideWithValue(repository),
       focusSessionRepositoryProvider.overrideWithValue(repository),
+      categoryRepositoryProvider.overrideWithValue(repository),
       sharedPreferencesProvider.overrideWithValue(await fakePreferences(preferences)),
     ],
   );
@@ -73,6 +74,10 @@ void main() {
   });
 
   testWidgets('settings are shown on the first frame without a loading state', (tester) async {
+    // Tall enough that the data retention section is built without scrolling.
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final container = await _container(FakeTaskRepository(), {'settings.retention_days': 12});
     addTearDown(container.dispose);
 

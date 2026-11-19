@@ -120,6 +120,7 @@ class CalendarNotifier extends Notifier<CalendarState> {
       targetDurationMinutes: task.targetDurationMinutes,
       assignedDate: target,
       priority: task.priority,
+      categoryId: task.categoryId,
     );
     await _repository.updateTaskOrder(taskId: task.id, sortOrder: sortOrder);
   }

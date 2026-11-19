@@ -33,6 +33,7 @@ void _runFocus(
       overrides: [
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
+        categoryRepositoryProvider.overrideWithValue(repository),
         targetAlarmProvider.overrideWithValue(alarm),
         notificationServiceProvider.overrideWithValue(notifications ?? FakeNotificationService()),
         focusGoalProvider.overrideWithValue(goal),
@@ -282,6 +283,7 @@ void main() {
           overrides: [
             taskRepositoryProvider.overrideWithValue(repository),
             focusSessionRepositoryProvider.overrideWithValue(repository),
+            categoryRepositoryProvider.overrideWithValue(repository),
             targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
             notificationServiceProvider.overrideWithValue(FakeNotificationService()),
             focusGoalProvider.overrideWithValue(FocusGoal.off),

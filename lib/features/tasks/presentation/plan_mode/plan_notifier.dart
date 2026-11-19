@@ -7,32 +7,81 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 
 import 'package:focused_task/core/utils/fractional_indexer.dart';
+import 'package:focused_task/features/categories/domain/i_category_repository.dart';
+import 'package:focused_task/features/categories/domain/task_category.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_draft.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 
-class PlanModeState {
-  const PlanModeState({required this.selectedDay, required this.tasks, required this.isLoading, this.error});
+/// How the plan shows the day: the ordered list, or the board grouped by category (#2).
+enum PlanView { list, board }
 
-  factory PlanModeState.initial() {
-    return PlanModeState(selectedDay: clock.now().dateOnly, tasks: const [], isLoading: true);
+class PlanModeState {
+  const PlanModeState({required this.selectedDay, required this.tasks, required this.isLoading, this.error, this.view = PlanView.list, this.categoryFilter});
+
+  factory PlanModeState.initial({PlanView view = PlanView.list}) {
+    return PlanModeState(selectedDay: clock.now().dateOnly, tasks: const [], isLoading: true, view: view);
   }
 
   final DateTime selectedDay;
   final List<TaskEntity> tasks;
   final bool isLoading;
   final String? error;
+  final PlanView view;
 
-  PlanModeState copyWith({DateTime? selectedDay, List<TaskEntity>? tasks, bool? isLoading, String? error, bool clearError = false}) {
+  /// The list shows only the tasks of this category; `null` = all tasks.
+  final int? categoryFilter;
+
+  /// The day's tasks grouped for the board, in plan order within a group: one group per active category (also empty
+  /// ones, so tasks can be dropped there), archived categories that still have tasks here, and "no category" last.
+  List<BoardGroup> boardGroups(List<TaskCategory> categories) {
+    final known = {for (final category in categories) category.id: category};
+    final byCategory = <int?, List<TaskEntity>>{};
+    for (final task in tasks) {
+      final key = known.containsKey(task.categoryId) ? task.categoryId : null;
+      byCategory.putIfAbsent(key, () => []).add(task);
+    }
+    return [
+      for (final category in categories)
+        if (!category.archived || byCategory.containsKey(category.id)) BoardGroup(category, byCategory[category.id] ?? const []),
+      BoardGroup(null, byCategory[null] ?? const []),
+    ];
+  }
+
+  /// Tasks the list shows: all of the day, or those of [categoryFilter].
+  List<TaskEntity> get visibleTasks => categoryFilter == null ? tasks : tasks.where((task) => task.categoryId == categoryFilter).toList(growable: false);
+
+  PlanModeState copyWith({
+    DateTime? selectedDay,
+    List<TaskEntity>? tasks,
+    bool? isLoading,
+    String? error,
+    bool clearError = false,
+    PlanView? view,
+    int? categoryFilter,
+    bool clearCategoryFilter = false,
+  }) {
     return PlanModeState(
       selectedDay: selectedDay ?? this.selectedDay,
       tasks: tasks ?? this.tasks,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : error ?? this.error,
+      view: view ?? this.view,
+      categoryFilter: clearCategoryFilter ? null : categoryFilter ?? this.categoryFilter,
     );
   }
+}
+
+/// Tasks of one [category] (`null` = no category) on the board.
+class BoardGroup {
+  const BoardGroup(this.category, this.tasks);
+
+  final TaskCategory? category;
+  final List<TaskEntity> tasks;
+
+  int get openCount => tasks.where((task) => !task.isCompleted).length;
 }
 
 /// What "Start focus" in the plan should do for the shown day.
@@ -81,7 +130,11 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
   /// How many past days the rollover prompt looks at.
   static const int rolloverDays = 7;
 
+  /// The chosen [PlanView] (by name).
+  static const String viewKey = 'plan.view';
+
   late ITaskRepository _repository;
+  late ICategoryRepository _categories;
   late IFocusSessionRepository _sessions;
   late SharedPreferences _prefs;
   StreamSubscription<List<TaskEntity>>? _subscription;
@@ -91,9 +144,18 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     _repository = ref.watch(taskRepositoryProvider);
     _sessions = ref.watch(focusSessionRepositoryProvider);
     _prefs = ref.watch(sharedPreferencesProvider);
+    _categories = ref.watch(categoryRepositoryProvider);
     ref.onDispose(() => _subscription?.cancel());
+    // A filter by a category that was archived or deleted would hide tasks for no visible reason.
+    ref.listen(categoriesNotifierProvider, (_, categories) {
+      final filter = state.categoryFilter;
+      if (filter != null && !categories.isLoading && !categories.active.any((category) => category.id == filter)) {
+        state = state.copyWith(clearCategoryFilter: true);
+      }
+    });
 
-    final initial = PlanModeState.initial();
+    final view = PlanView.values.asNameMap()[_prefs.getString(viewKey)] ?? PlanView.list;
+    final initial = PlanModeState.initial(view: view);
     _subscribe(initial.selectedDay);
     return initial;
   }
@@ -128,6 +190,26 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     _bind(normalized);
   }
 
+  /// Switches between list and board; remembered across restarts.
+  Future<void> setView(PlanView view) async {
+    state = state.copyWith(view: view);
+    await _prefs.setString(viewKey, view.name);
+  }
+
+  /// Shows only the tasks of [categoryId] in the list; `null` shows all.
+  void setCategoryFilter(int? categoryId) {
+    state = categoryId == null ? state.copyWith(clearCategoryFilter: true) : state.copyWith(categoryFilter: categoryId);
+  }
+
+  /// Puts [task] into [categoryId] (`null` = no category), e.g. by dragging it to another board group.
+  Future<void> setTaskCategory(TaskEntity task, int? categoryId) async {
+    if (task.categoryId == categoryId) return;
+    state = state.copyWith(
+      tasks: [for (final candidate in state.tasks) candidate.id == task.id ? candidate.copyWith(categoryId: categoryId, clearCategory: categoryId == null) : candidate],
+    );
+    await _categories.setTaskCategory(taskId: task.id, categoryId: categoryId);
+  }
+
   Future<void> addTask({
     required String title,
     String? description,
@@ -135,6 +217,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     TaskPriority priority = TaskPriority.low,
     required List<TaskTodoEntity> todos,
     required DateTime assignedDate,
+    int? categoryId,
   }) async {
     final lastSort = state.tasks.isEmpty ? null : state.tasks.last.sortOrder;
     final nextSort = FractionalIndexer.between(lastSort, null);
@@ -146,6 +229,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       sortOrder: nextSort,
       priority: priority,
       targetDurationMinutes: targetDurationMinutes,
+      categoryId: categoryId,
     );
     if (todos.isNotEmpty) {
       await _repository.replaceTaskTodos(taskId, todos);
@@ -168,7 +252,15 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       return todo.copyWith(isCompleted: false);
     }).toList();
 
-    await addTask(title: task.title, description: task.description, targetDurationMinutes: newTargetDuration, priority: task.priority, todos: newTodos, assignedDate: date);
+    await addTask(
+      title: task.title,
+      description: task.description,
+      targetDurationMinutes: newTargetDuration,
+      priority: task.priority,
+      todos: newTodos,
+      assignedDate: date,
+      categoryId: task.categoryId,
+    );
   }
 
   /// Saves the form: updates the task with [id], or creates a new one when [id] is `null`.
@@ -181,7 +273,15 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     ];
 
     if (id == null) {
-      await addTask(title: title, description: description, targetDurationMinutes: draft.targetMinutes, priority: draft.priority, todos: todos, assignedDate: draft.date);
+      await addTask(
+        title: title,
+        description: description,
+        targetDurationMinutes: draft.targetMinutes,
+        priority: draft.priority,
+        todos: todos,
+        assignedDate: draft.date,
+        categoryId: draft.categoryId,
+      );
       return;
     }
     await _repository.updateTaskDetails(
@@ -191,6 +291,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       targetDurationMinutes: draft.targetMinutes,
       assignedDate: draft.date,
       priority: draft.priority,
+      categoryId: draft.categoryId,
     );
     await _repository.replaceTaskTodos(id, todos);
   }
@@ -270,21 +371,30 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     await _repository.deleteTask(id);
   }
 
+  /// Moves the task at [oldIndex] of the shown list ([PlanModeState.visibleTasks]) to [newIndex]. With a category
+  /// filter, the task lands between its visible neighbours; the hidden tasks keep their places.
   Future<void> reorderTask(int oldIndex, int newIndex) async {
-    if (state.tasks.isEmpty) {
+    final visible = [...state.visibleTasks];
+    if (visible.isEmpty) {
       return;
     }
-    final tasks = [...state.tasks];
-    final movedTask = tasks.removeAt(oldIndex);
-    tasks.insert(newIndex, movedTask);
+    final movedTask = visible.removeAt(oldIndex);
+    visible.insert(newIndex, movedTask);
 
-    // Optimistic UI update so it doesn't snap back
-    state = state.copyWith(tasks: tasks);
-
-    final before = newIndex > 0 ? tasks[newIndex - 1] : null;
-    final after = newIndex < tasks.length - 1 ? tasks[newIndex + 1] : null;
+    final before = newIndex > 0 ? visible[newIndex - 1] : null;
+    final after = newIndex < visible.length - 1 ? visible[newIndex + 1] : null;
 
     final nextSort = FractionalIndexer.between(before?.sortOrder, after?.sortOrder);
+
+    // Optimistic UI update so it doesn't snap back
+    final tasks = [...state.tasks.where((task) => task.id != movedTask.id)];
+    final anchor = before != null
+        ? tasks.indexWhere((task) => task.id == before.id) + 1
+        : after != null
+        ? tasks.indexWhere((task) => task.id == after.id)
+        : tasks.length;
+    tasks.insert(anchor, movedTask.copyWith(sortOrder: nextSort));
+    state = state.copyWith(tasks: tasks);
 
     await _repository.updateTaskOrder(taskId: movedTask.id, sortOrder: nextSort);
   }

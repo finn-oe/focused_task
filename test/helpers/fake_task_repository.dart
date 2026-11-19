@@ -4,6 +4,8 @@ import 'package:clock/clock.dart';
 
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/fractional_indexer.dart';
+import 'package:focused_task/features/categories/domain/i_category_repository.dart';
+import 'package:focused_task/features/categories/domain/task_category.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/sessions/domain/focus_time.dart' as focus_time;
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
@@ -13,15 +15,20 @@ import 'package:focused_task/features/tasks/domain/stats/stats_calculator.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
-/// Simple in-memory [ITaskRepository] **and** [IFocusSessionRepository] for widget and notifier tests, so tasks and
-/// sessions share one consistent store. Override both providers with the same instance.
+/// Simple in-memory [ITaskRepository], [IFocusSessionRepository] **and** [ICategoryRepository] for widget and notifier
+/// tests, so tasks, sessions and categories share one consistent store. Override all three providers with the same
+/// instance.
 ///
 /// It mirrors the behaviour of the Drift implementation closely enough for presentation-layer tests.
 /// Repository behaviour itself is tested against a real in-memory database.
 ///
 /// Seeded tasks with a `latestStart` (and `lastSeenAt`) get an open session, like data left by a crash.
-class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
-  FakeTaskRepository({List<TaskEntity> tasks = const [], List<FocusSession> sessions = const []}) {
+class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, ICategoryRepository {
+  FakeTaskRepository({List<TaskEntity> tasks = const [], List<FocusSession> sessions = const [], List<TaskCategory> categories = const []}) {
+    for (final category in categories) {
+      _categories[category.id] = category;
+    }
+    _nextCategoryId = _categories.keys.fold(0, (max, id) => id > max ? id : max) + 1;
     for (final task in tasks) {
       _tasks[task.id] = task.copyWith(clearLatestStart: true);
       final start = task.latestStart;
@@ -37,6 +44,8 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
   }
 
   final Map<int, TaskEntity> _tasks = {};
+  final Map<int, TaskCategory> _categories = {};
+  late int _nextCategoryId;
   final List<FocusSession> _sessions = [];
   final StreamController<void> _changes = StreamController<void>.broadcast();
   late int _nextId;
@@ -134,6 +143,7 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
     required String sortOrder,
     TaskPriority priority = TaskPriority.low,
     int? targetDurationMinutes,
+    int? categoryId,
   }) async {
     final id = _nextId++;
     _put(
@@ -149,6 +159,7 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
         latestStart: null,
         targetDurationMinutes: targetDurationMinutes,
         todos: const [],
+        categoryId: categoryId,
       ),
     );
     return id;
@@ -162,6 +173,7 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
     int? targetDurationMinutes,
     DateTime? assignedDate,
     TaskPriority? priority,
+    required int? categoryId,
   }) async {
     _update(
       taskId,
@@ -172,6 +184,8 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
         targetDurationMinutes: targetDurationMinutes,
         clearTargetDuration: targetDurationMinutes == null,
         assignedDate: assignedDate == null ? null : _day(assignedDate),
+        categoryId: categoryId,
+        clearCategory: categoryId == null,
       ),
     );
   }
@@ -228,6 +242,7 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
       endReason: session.endReason,
       interruptions: session.interruptions,
       taskTitle: title,
+      taskCategoryId: _tasks[session.taskId]?.categoryId,
     );
   }
 
@@ -361,5 +376,63 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository {
     );
     _sessions.add(session);
     _addTrackedTime(taskId, SessionKind.focus, duration);
+  }
+
+  // --- ICategoryRepository ------------------------------------------------------------------------------------------
+
+  /// All categories in their order.
+  List<TaskCategory> get categories => _categories.values.toList()..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
+  void _ensureUniqueName(String name, {int? exceptId}) {
+    if (_categories.values.any((category) => category.id != exceptId && category.name.toLowerCase() == name.toLowerCase())) {
+      throw DuplicateCategoryNameException(name);
+    }
+  }
+
+  @override
+  Stream<List<TaskCategory>> watchCategories() async* {
+    yield categories;
+    yield* _changes.stream.map((_) => categories);
+  }
+
+  @override
+  Future<int> createCategory({required String name, required int colorIndex}) async {
+    _ensureUniqueName(name.trim());
+    final id = _nextCategoryId++;
+    final last = categories.lastOrNull?.sortOrder;
+    _categories[id] = TaskCategory(id: id, name: name.trim(), colorIndex: colorIndex, sortOrder: FractionalIndexer.between(last, null));
+    _changes.add(null);
+    return id;
+  }
+
+  @override
+  Future<void> updateCategory(TaskCategory category) async {
+    _ensureUniqueName(category.name.trim(), exceptId: category.id);
+    final existing = _categories[category.id];
+    if (existing == null) return;
+    _categories[category.id] = existing.copyWith(name: category.name.trim(), colorIndex: category.colorIndex, archived: category.archived);
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> updateCategoryOrder({required int categoryId, required String sortOrder}) async {
+    final existing = _categories[categoryId];
+    if (existing == null) return;
+    _categories[categoryId] = existing.copyWith(sortOrder: sortOrder);
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> deleteCategory(int categoryId) async {
+    _categories.remove(categoryId);
+    for (final task in _tasks.values.where((task) => task.categoryId == categoryId).toList()) {
+      _tasks[task.id] = task.copyWith(clearCategory: true);
+    }
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> setTaskCategory({required int taskId, required int? categoryId}) async {
+    _update(taskId, (task) => task.copyWith(categoryId: categoryId, clearCategory: categoryId == null));
   }
 }

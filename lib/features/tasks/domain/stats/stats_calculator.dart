@@ -57,6 +57,7 @@ class StatsCalculator {
       focusByWeekdayHour: _focusByWeekdayHour(focusSessions, from, toExclusive),
       topTasks: _topTasks(focusSessions, range, taskList),
       interruptionsPerFocusHour: !interruptionsTracked || focusHours == 0 ? null : interruptions / focusHours,
+      focusByCategory: _focusByCategory(focusSessions, from, toExclusive, taskList),
     );
   }
 
@@ -118,6 +119,20 @@ class StatsCalculator {
     };
     final entries = focusTimeByTask(sessions, range).entries.toList()..sort((a, b) => b.value.compareTo(a.value));
     return [for (final entry in entries.take(topTaskCount)) TaskFocusTime(taskId: entry.key, title: entry.key == null ? null : titles[entry.key], focus: entry.value)];
+  }
+
+  /// The category of a session comes with it (joined from its task); tasks of the range fill in where it doesn't.
+  static List<CategoryFocusTime> _focusByCategory(List<FocusSession> sessions, DateTime from, DateTime toExclusive, List<TaskEntity> tasks) {
+    final categoryOf = {for (final task in tasks) task.id: task.categoryId};
+    final totals = <int?, Duration>{};
+    for (final session in sessions) {
+      final time = focusTimeWithin(session, from, toExclusive);
+      if (time <= Duration.zero) continue;
+      final category = session.taskCategoryId ?? categoryOf[session.taskId];
+      totals.update(category, (sum) => sum + time, ifAbsent: () => time);
+    }
+    final entries = totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return [for (final entry in entries) CategoryFocusTime(categoryId: entry.key, focus: entry.value)];
   }
 
   static PlannedVsActual _plannedVsActual(List<TaskEntity> tasks, List<FocusSession> sessions) {

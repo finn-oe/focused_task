@@ -22,6 +22,7 @@ Future<ProviderContainer> _container(FakeTaskRepository repository, [Map<String,
     overrides: [
       taskRepositoryProvider.overrideWithValue(repository),
       focusSessionRepositoryProvider.overrideWithValue(repository),
+      categoryRepositoryProvider.overrideWithValue(repository),
       sharedPreferencesProvider.overrideWithValue(await fakePreferences(preferences)),
     ],
   );
@@ -35,6 +36,7 @@ Future<void> _pumpPlan(WidgetTester tester, FakeTaskRepository repository, {requ
       overrides: [
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
+        categoryRepositoryProvider.overrideWithValue(repository),
         sharedPreferencesProvider.overrideWithValue(preferences),
         targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
         notificationServiceProvider.overrideWithValue(FakeNotificationService()),

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'package:focused_task/core/database/tables/categories_table.dart';
 import 'package:focused_task/core/database/tables/focus_sessions_table.dart';
 import 'package:focused_task/core/database/tables/tasks_table.dart';
 import 'package:focused_task/core/database/tables/task_todos_table.dart';
@@ -19,19 +20,20 @@ class TaskWithTodos {
   final FocusSessionRow? openSession;
 }
 
-/// A session with the title of its task (if the task still exists).
+/// A session with the title and category of its task (if the task still exists).
 class SessionWithTitle {
-  SessionWithTitle(this.session, this.taskTitle);
+  SessionWithTitle(this.session, this.taskTitle, [this.categoryId]);
   final FocusSessionRow session;
   final String? taskTitle;
+  final int? categoryId;
 }
 
-@DriftDatabase(tables: [Tasks, TaskTodos, FocusSessions])
+@DriftDatabase(tables: [Categories, Tasks, TaskTodos, FocusSessions])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -51,7 +53,12 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('ALTER TABLE tasks ADD COLUMN last_seen_at INTEGER NULL');
         }
         if (from < 5) {
+          // Rebuilds `tasks` in the current schema, so `category_id` (schema 6) already exists afterwards.
           await _migrateToSessionLog(m);
+        }
+        if (from < 6) {
+          await m.createTable(categories);
+          if (from >= 5) await m.addColumn(tasks, tasks.categoryId);
         }
       },
       beforeOpen: (details) async {
@@ -89,7 +96,7 @@ class AppDatabase extends _$AppDatabase {
       }
     }
 
-    await m.alterTable(TableMigration(tasks));
+    await m.alterTable(TableMigration(tasks, newColumns: [tasks.categoryId]));
   }
 
   Expression<bool> _isInDay(Tasks table, DateTime day) {
@@ -232,16 +239,29 @@ class AppDatabase extends _$AppDatabase {
     return into(tasks).insert(companion.copyWith(assignedDate: Value(normalizedAssignedDate)));
   }
 
-  Future<int> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes, DateTime? assignedDate, int? priority}) {
+  Future<int> updateTaskDetails({
+    required int taskId,
+    required String title,
+    String? description,
+    int? targetDurationMinutes,
+    DateTime? assignedDate,
+    int? priority,
+    required int? categoryId,
+  }) {
     return (update(tasks)..where((t) => t.id.equals(taskId))).write(
       TasksCompanion(
         title: Value(title),
+        categoryId: Value(categoryId),
         description: Value(description),
         targetDurationMinutes: Value(targetDurationMinutes),
         assignedDate: assignedDate != null ? Value(assignedDate.dateOnly) : const Value.absent(),
         priority: priority != null ? Value(priority) : const Value.absent(),
       ),
     );
+  }
+
+  Future<void> setTaskCategory({required int taskId, required int? categoryId}) async {
+    await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(categoryId: Value(categoryId)));
   }
 
   Future<void> updateTaskOrder({required int taskId, required String sortOrder}) async {
@@ -353,10 +373,35 @@ class AppDatabase extends _$AppDatabase {
       ..where(focusSessions.startedAt.isSmallerThanValue(endExclusive) & (focusSessions.endedAt.isNull() | focusSessions.endedAt.isBiggerThanValue(start)))
       ..orderBy([OrderingTerm.asc(focusSessions.startedAt)]);
     final rows = await query.get();
-    return rows.map((row) => SessionWithTitle(row.readTable(focusSessions), row.readTableOrNull(tasks)?.title)).toList();
+    return rows.map((row) {
+      final task = row.readTableOrNull(tasks);
+      return SessionWithTitle(row.readTable(focusSessions), task?.title, task?.categoryId);
+    }).toList();
   }
 
   Stream<List<FocusSessionRow>> watchSessionsOverlapping(DateTime start, DateTime endExclusive) => _overlapping(start, endExclusive).watch();
+
+  // --- Categories -----------------------------------------------------------------------------------------------
+
+  /// All categories (also archived ones) in their order.
+  Stream<List<CategoryRow>> watchCategories() {
+    return (select(categories)..orderBy([(category) => OrderingTerm.asc(category.sortOrder), (category) => OrderingTerm.asc(category.id)])).watch();
+  }
+
+  Future<List<CategoryRow>> getCategories() {
+    return (select(categories)..orderBy([(category) => OrderingTerm.asc(category.sortOrder), (category) => OrderingTerm.asc(category.id)])).get();
+  }
+
+  Future<int> createCategory(CategoriesCompanion companion) => into(categories).insert(companion);
+
+  Future<void> updateCategory(int id, CategoriesCompanion companion) async {
+    await (update(categories)..where((category) => category.id.equals(id))).write(companion);
+  }
+
+  /// Deletes the category; its tasks stay and become uncategorised (`ON DELETE SET NULL`).
+  Future<void> deleteCategory(int id) async {
+    await (delete(categories)..where((category) => category.id.equals(id))).go();
+  }
 
   Future<int> deleteTask(int taskId) {
     return (delete(tasks)..where((t) => t.id.equals(taskId))).go();

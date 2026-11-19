@@ -56,10 +56,10 @@ void main() {
     final id = await repository.createTask(title: 'Task', assignedDate: DateTime.now(), sortOrder: 'a0', priority: TaskPriority.medium);
     expect((await repository.getTaskById(id))!.priority, TaskPriority.medium);
 
-    await repository.updateTaskDetails(taskId: id, title: 'Task', priority: TaskPriority.high);
+    await repository.updateTaskDetails(taskId: id, title: 'Task', priority: TaskPriority.high, categoryId: null);
     expect((await repository.getTaskById(id))!.priority, TaskPriority.high);
 
-    await repository.updateTaskDetails(taskId: id, title: 'Renamed');
+    await repository.updateTaskDetails(taskId: id, title: 'Renamed', categoryId: null);
     expect((await repository.getTaskById(id))!.priority, TaskPriority.high, reason: 'omitting the priority keeps it');
   });
 

@@ -82,6 +82,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
     final state = ref.watch(focusModeNotifierProvider);
     final notifier = ref.read(focusModeNotifierProvider.notifier);
     final settings = ref.watch(settingsNotifierProvider);
+    final category = ref.watch(categoriesNotifierProvider.select((categories) => categories.byId(widget.request.categoryId)));
 
     return FocusLifecycleObserver(
       pauseOnBackground: settings.pauseOnBackground,
@@ -102,7 +103,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: Text(context.l10n.focusTitle),
+            title: Text(category == null ? context.l10n.focusTitle : context.l10n.focusTitleCategory(category.name)),
             scrolledUnderElevation: 0.0,
             surfaceTintColor: Colors.transparent,
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,

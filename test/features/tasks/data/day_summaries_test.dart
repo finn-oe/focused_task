@@ -69,7 +69,7 @@ void main() {
     final stream = repository.watchTasksInRange(week).map((tasks) => [for (final task in tasks) task.title]);
     expect(await stream.first, ['Early', 'Late', 'Tuesday']);
 
-    await repository.updateTaskDetails(taskId: late, title: 'Late', assignedDate: DateTime(2026, 2, 20));
+    await repository.updateTaskDetails(taskId: late, title: 'Late', assignedDate: DateTime(2026, 2, 20), categoryId: null);
     expect(await stream.first, ['Early', 'Tuesday']);
   });
 }

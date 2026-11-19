@@ -3,9 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
+import 'package:focused_task/core/ui/category_palette.dart';
 import 'package:focused_task/core/ui/charts/bar_chart.dart';
 import 'package:focused_task/core/ui/charts/heatmap_chart.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/categories/domain/task_category.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 
@@ -322,6 +324,46 @@ class TopTasksCard extends StatelessWidget {
               value: l10n.durationLabel(task.focus),
               share: most == Duration.zero ? 0 : task.focus.inSeconds / most.inSeconds,
               color: theme.colorScheme.primary,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Focus time per category, most first, as bars in the category colours.
+class CategoryFocusCard extends StatelessWidget {
+  const CategoryFocusCard({super.key, required this.report, required this.categoryOf});
+
+  final StatsReport report;
+
+  /// The category with an id, `null` if it doesn't exist (any more).
+  final TaskCategory? Function(int? id) categoryOf;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    final entries = report.focusByCategory;
+    if (!report.hasCategorizedFocus) return const SizedBox.shrink();
+    final most = entries.first.focus;
+
+    return StatsCard(
+      key: const Key('statsByCategory'),
+      title: l10n.statsByCategory,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 12,
+        children: [
+          for (final entry in entries)
+            _ComparisonBar(
+              label: categoryOf(entry.categoryId)?.name ?? l10n.statsNoCategory,
+              value: l10n.durationLabel(entry.focus),
+              share: most == Duration.zero ? 0 : entry.focus.inSeconds / most.inSeconds,
+              color: switch (categoryOf(entry.categoryId)) {
+                final category? => CategoryColor.of(category.colorIndex).color(context),
+                null => theme.colorScheme.outline,
+              },
             ),
         ],
       ),

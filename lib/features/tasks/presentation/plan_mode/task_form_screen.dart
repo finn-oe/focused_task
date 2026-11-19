@@ -8,6 +8,8 @@ import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_draft.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/category_picker.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/duration_picker.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/sub_task_editor.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/task_form_fields.dart';
@@ -43,10 +45,12 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
     if (task != null) {
       _initial = TaskDraft.fromTask(task);
     } else {
-      // New tasks go to the day shown in the plan, but never into the past.
+      // New tasks go to the day shown in the plan, but never into the past, and into the category the list is
+      // filtered by.
       final today = clock.now().dateOnly;
-      final planDay = ref.read(planModeNotifierProvider).selectedDay;
-      _initial = TaskDraft.empty(planDay.isBefore(today) ? today : planDay);
+      final plan = ref.read(planModeNotifierProvider);
+      final planDay = plan.selectedDay;
+      _initial = TaskDraft.empty(planDay.isBefore(today) ? today : planDay, categoryId: plan.view == PlanView.list ? plan.categoryFilter : null);
     }
     _draft = _initial;
     _titleController = TextEditingController(text: _initial.title);
@@ -146,6 +150,11 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
               DurationPicker(
                 minutes: _draft.targetMinutes,
                 onChanged: (minutes) => _update(minutes == null ? _draft.copyWith(clearTarget: true) : _draft.copyWith(targetMinutes: minutes)),
+              ),
+              _Section(title: l10n.taskFormCategory),
+              CategoryPicker(
+                categoryId: _draft.categoryId,
+                onChanged: (id) => _update(id == null ? _draft.copyWith(clearCategory: true) : _draft.copyWith(categoryId: id)),
               ),
               _Section(title: l10n.taskFormPriority),
               PrioritySelector(

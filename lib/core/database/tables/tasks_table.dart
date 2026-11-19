@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart';
 
+import 'package:focused_task/core/database/tables/categories_table.dart';
+
 class Tasks extends Table {
   IntColumn get id => integer().autoIncrement()();
 
@@ -19,4 +21,7 @@ class Tasks extends Table {
   IntColumn get timeSpent => integer().named('time_spent').withDefault(const Constant(0))();
 
   IntColumn get targetDurationMinutes => integer().nullable()();
+
+  /// Set to `NULL` when the category is deleted, so the task stays (uncategorised).
+  IntColumn get categoryId => integer().named('category_id').nullable().references(Categories, #id, onDelete: KeyAction.setNull)();
 }

@@ -8,11 +8,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
+import 'package:focused_task/core/ui/category_palette.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/goals/presentation/goal_progress_ring.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/category_board.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/rollover_sheet.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/session_recovery_dialog.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
@@ -151,6 +153,10 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
     final l10n = context.l10n;
     final today = _today;
     final shownDay = _shownDay;
+    final hasCategories = ref.watch(categoriesNotifierProvider.select((categories) => categories.active.isNotEmpty));
+    final view = ref.watch(planModeNotifierProvider.select((state) => state.view));
+    // Without categories the board would be a single group; the plan stays the plain list.
+    final showBoard = hasCategories && view == PlanView.board;
 
     return CallbackShortcuts(
       bindings: {
@@ -175,6 +181,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                 ),
                 actions: [
                   const TodayGoalRing(),
+                  if (hasCategories) _ViewToggle(board: showBoard),
                   if (!shownDay.isSameDate(today))
                     compact
                         ? IconButton(tooltip: l10n.commonToday, onPressed: () => _goToDay(today), icon: const Icon(Icons.today))
@@ -194,12 +201,82 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                   const SizedBox(width: 8),
                 ],
               ),
-              body: _DayTasks(onSwipeToPrevious: _previousDay, onSwipeToNext: _nextDay),
+              body: showBoard ? const CategoryBoard() : _DayTasks(onSwipeToPrevious: _previousDay, onSwipeToNext: _nextDay),
               floatingActionButton: FloatingActionButton.extended(onPressed: _addTask, icon: const Icon(Icons.add), label: Text(l10n.planAddTask)),
             );
           },
         ),
       ),
+    );
+  }
+}
+
+/// Switches between the list and the board.
+class _ViewToggle extends ConsumerWidget {
+  const _ViewToggle({required this.board});
+
+  final bool board;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final notifier = ref.read(planModeNotifierProvider.notifier);
+    return IconButton(
+      tooltip: board ? l10n.planShowList : l10n.planShowBoard,
+      icon: Icon(board ? Icons.view_agenda_outlined : Icons.view_kanban_outlined),
+      onPressed: () => notifier.setView(board ? PlanView.list : PlanView.board),
+    );
+  }
+}
+
+/// "All" and one chip per category; with a category selected also "Focus on …". Only shown when there are
+/// categories, so the plain list looks as before.
+class _CategoryFilterBar extends ConsumerWidget {
+  const _CategoryFilterBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final categories = ref.watch(categoriesNotifierProvider).active;
+    final state = ref.watch(planModeNotifierProvider);
+    final notifier = ref.read(planModeNotifierProvider.notifier);
+    if (categories.isEmpty) return const SizedBox.shrink();
+
+    final selected = categories.where((category) => category.id == state.categoryFilter).firstOrNull;
+    final hasOpen = state.visibleTasks.any((task) => !task.isCompleted);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+          key: const Key('planCategoryFilter'),
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+          child: Row(
+            spacing: 8,
+            children: [
+              FilterChip(label: Text(l10n.planFilterAll), selected: selected == null, showCheckmark: false, onSelected: (_) => notifier.setCategoryFilter(null)),
+              for (final category in categories)
+                FilterChip(
+                  avatar: CategoryDot(colorIndex: category.colorIndex),
+                  label: Text(category.name),
+                  selected: category.id == selected?.id,
+                  showCheckmark: false,
+                  onSelected: (isSelected) => notifier.setCategoryFilter(isSelected ? category.id : null),
+                ),
+            ],
+          ),
+        ),
+        if (selected != null && hasOpen)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+            child: TextButton.icon(
+              onPressed: () => context.go(AppRoutes.focusFor(FocusRequest(state.selectedDay, categoryId: selected.id))),
+              icon: const Icon(Icons.play_circle_outline),
+              label: Text(l10n.planFocusOnCategory(selected.name)),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -253,9 +330,11 @@ class _DayTasks extends ConsumerWidget {
 
     final now = clock.now();
     final total = state.tasks.fold(Duration.zero, (sum, task) => sum + task.elapsedAt(now));
+    final tasks = state.visibleTasks;
 
     return Column(
       children: [
+        const _CategoryFilterBar(),
         if (total > Duration.zero)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -281,15 +360,15 @@ class _DayTasks extends ConsumerWidget {
             },
             child: state.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : state.tasks.isEmpty
-                ? Center(child: Text(l10n.planNoTasks))
+                : tasks.isEmpty
+                ? Center(child: Text(state.categoryFilter == null ? l10n.planNoTasks : l10n.planNoTasksInCategory))
                 : ReorderableListView.builder(
                     padding: const EdgeInsets.only(bottom: 88), // keep the last task clear of the add button
-                    itemCount: state.tasks.length,
+                    itemCount: tasks.length,
                     onReorderItem: notifier.reorderTask,
                     buildDefaultDragHandles: false,
                     itemBuilder: (context, index) {
-                      final task = state.tasks[index];
+                      final task = tasks[index];
                       return TaskListItem(key: ValueKey(task.id), task: task, index: index);
                     },
                   ),

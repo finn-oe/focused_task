@@ -39,6 +39,7 @@ class FocusSession {
     this.endReason,
     this.interruptions = 0,
     this.taskTitle,
+    this.taskCategoryId,
   });
 
   final int id;
@@ -58,6 +59,9 @@ class FocusSession {
 
   /// Title of [taskId], if loaded with the session (e.g. for the recovery dialog).
   final String? taskTitle;
+
+  /// Category of [taskId], if loaded with the session (for the statistics per category).
+  final int? taskCategoryId;
 
   bool get isOpen => endedAt == null;
 
@@ -83,6 +87,7 @@ class FocusSession {
       endReason: endReason ?? this.endReason,
       interruptions: interruptions,
       taskTitle: taskTitle,
+      taskCategoryId: taskCategoryId,
     );
   }
 }

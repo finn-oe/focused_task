@@ -2,11 +2,11 @@ import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
 /// The editable values of a task in the form. Value equality tells whether there are unsaved changes.
 class TaskDraft {
-  const TaskDraft({required this.title, required this.description, required this.date, required this.targetMinutes, required this.priority, required this.todos});
+  const TaskDraft({required this.title, required this.description, required this.date, required this.targetMinutes, required this.priority, required this.todos, this.categoryId});
 
-  /// An empty task on [date].
-  factory TaskDraft.empty(DateTime date) {
-    return TaskDraft(title: '', description: '', date: date, targetMinutes: null, priority: TaskPriority.low, todos: const []);
+  /// An empty task on [date], optionally in [categoryId].
+  factory TaskDraft.empty(DateTime date, {int? categoryId}) {
+    return TaskDraft(title: '', description: '', date: date, targetMinutes: null, priority: TaskPriority.low, todos: const [], categoryId: categoryId);
   }
 
   factory TaskDraft.fromTask(TaskEntity task) {
@@ -17,6 +17,7 @@ class TaskDraft {
       targetMinutes: task.targetDurationMinutes,
       priority: task.priority,
       todos: List.unmodifiable(task.todos),
+      categoryId: task.categoryId,
     );
   }
 
@@ -30,9 +31,22 @@ class TaskDraft {
   final TaskPriority priority;
   final List<TaskTodoEntity> todos;
 
+  /// `null` = no category.
+  final int? categoryId;
+
   bool get hasTitle => title.trim().isNotEmpty;
 
-  TaskDraft copyWith({String? title, String? description, DateTime? date, int? targetMinutes, bool clearTarget = false, TaskPriority? priority, List<TaskTodoEntity>? todos}) {
+  TaskDraft copyWith({
+    String? title,
+    String? description,
+    DateTime? date,
+    int? targetMinutes,
+    bool clearTarget = false,
+    TaskPriority? priority,
+    List<TaskTodoEntity>? todos,
+    int? categoryId,
+    bool clearCategory = false,
+  }) {
     return TaskDraft(
       title: title ?? this.title,
       description: description ?? this.description,
@@ -40,6 +54,7 @@ class TaskDraft {
       targetMinutes: clearTarget ? null : targetMinutes ?? this.targetMinutes,
       priority: priority ?? this.priority,
       todos: todos == null ? this.todos : List.unmodifiable(todos),
+      categoryId: clearCategory ? null : categoryId ?? this.categoryId,
     );
   }
 
@@ -61,9 +76,10 @@ class TaskDraft {
         other.date.day == date.day &&
         other.targetMinutes == targetMinutes &&
         other.priority == priority &&
+        other.categoryId == categoryId &&
         _sameTodos(other.todos, todos);
   }
 
   @override
-  int get hashCode => Object.hash(title.trim(), description.trim(), date.year, date.month, date.day, targetMinutes, priority, todos.length);
+  int get hashCode => Object.hash(title.trim(), description.trim(), date.year, date.month, date.day, targetMinutes, priority, categoryId, todos.length);
 }

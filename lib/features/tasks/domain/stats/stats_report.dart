@@ -41,6 +41,15 @@ class TaskFocusTime {
   final Duration focus;
 }
 
+/// Focus time spent on the tasks of one category within the range.
+class CategoryFocusTime {
+  const CategoryFocusTime({required this.categoryId, required this.focus});
+
+  /// `null` for tasks without a category (and deleted tasks).
+  final int? categoryId;
+  final Duration focus;
+}
+
 /// Planned (target durations) vs. actual (tracked) time of the tasks with a target that are assigned to the range.
 class PlannedVsActual {
   const PlannedVsActual({required this.taskCount, required this.planned, required this.actual, required this.estimationAccuracy});
@@ -80,6 +89,7 @@ class StatsReport {
     required this.focusByWeekdayHour,
     required this.topTasks,
     required this.interruptionsPerFocusHour,
+    this.focusByCategory = const [],
   });
 
   final StatsQuery query;
@@ -114,6 +124,12 @@ class StatsReport {
 
   /// `null` while interruptions aren't recorded yet (#28) or without focus time.
   final double? interruptionsPerFocusHour;
+
+  /// Focus time per category, most first; categories without focus time in the range are left out.
+  final List<CategoryFocusTime> focusByCategory;
+
+  /// Whether any focus time of the range belongs to a category.
+  bool get hasCategorizedFocus => focusByCategory.any((entry) => entry.categoryId != null);
 
   /// Focus time on [weekday] (a [DateTime.weekday] value) in [hour] (0–23).
   Duration focusAt(int weekday, int hour) => focusByWeekdayHour[(weekday - 1) * hoursPerDay + hour];

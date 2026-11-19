@@ -24,9 +24,19 @@ abstract class ITaskRepository {
     required String sortOrder,
     TaskPriority priority = TaskPriority.low,
     int? targetDurationMinutes,
+    int? categoryId,
   });
 
-  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes, DateTime? assignedDate, TaskPriority? priority});
+  /// Saves the details of the form. [categoryId] is always written (`null` = no category).
+  Future<void> updateTaskDetails({
+    required int taskId,
+    required String title,
+    String? description,
+    int? targetDurationMinutes,
+    DateTime? assignedDate,
+    TaskPriority? priority,
+    required int? categoryId,
+  });
 
   Future<void> updateTaskOrder({required int taskId, required String sortOrder});
 

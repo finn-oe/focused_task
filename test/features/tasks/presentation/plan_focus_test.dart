@@ -24,6 +24,7 @@ Future<GoRouter> _pumpApp(WidgetTester tester, FakeTaskRepository repository, {S
       overrides: [
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
+        categoryRepositoryProvider.overrideWithValue(repository),
         // The daily rollover prompt was already offered; these tests are about "Start focus".
         sharedPreferencesProvider.overrideWithValue(await fakePreferences({PlanModeNotifier.rolloverPromptedKey: DateTime.now().dateOnly.isoDate})),
         targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),

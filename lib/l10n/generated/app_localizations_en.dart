@@ -897,4 +897,141 @@ class AppLocalizationsEn extends AppLocalizations {
   String notificationGoalReachedBody(String goal) {
     return 'You focused for $goal today.';
   }
+
+  @override
+  String get settingsCategories => 'Categories';
+
+  @override
+  String get settingsCategoriesHint => 'Group tasks, filter the plan and focus on one category.';
+
+  @override
+  String get categoriesTitle => 'Categories';
+
+  @override
+  String get categoriesEmpty => 'No categories yet. Add one to group your tasks, e.g. “Work” or “Study”.';
+
+  @override
+  String get categoriesAdd => 'Add category';
+
+  @override
+  String get categoriesNewTitle => 'New category';
+
+  @override
+  String get categoriesEditTitle => 'Edit category';
+
+  @override
+  String get categoriesNameLabel => 'Name';
+
+  @override
+  String get categoriesNameRequired => 'Please enter a name.';
+
+  @override
+  String get categoriesNameTaken => 'A category with this name already exists.';
+
+  @override
+  String get categoriesColor => 'Color';
+
+  @override
+  String get categoriesActions => 'Category actions';
+
+  @override
+  String get categoriesEdit => 'Edit';
+
+  @override
+  String get categoriesArchive => 'Archive';
+
+  @override
+  String get categoriesRestore => 'Restore';
+
+  @override
+  String get categoriesArchived => 'Archived';
+
+  @override
+  String get categoriesArchivedHint => 'Hidden in the plan and the task form. Their tasks keep the category.';
+
+  @override
+  String get categoriesDeleteTitle => 'Delete category?';
+
+  @override
+  String categoriesDeleteMessage(String name) {
+    return '“$name” will be deleted. Its tasks stay, without a category. Tracked time stays in the statistics.';
+  }
+
+  @override
+  String get categoriesReorderTooltip => 'Drag to reorder';
+
+  @override
+  String categoryColorName(String color) {
+    String _temp0 = intl.Intl.selectLogic(color, {
+      'red': 'Red',
+      'orange': 'Orange',
+      'yellow': 'Yellow',
+      'green': 'Green',
+      'teal': 'Teal',
+      'cyan': 'Cyan',
+      'blue': 'Blue',
+      'indigo': 'Indigo',
+      'purple': 'Purple',
+      'pink': 'Pink',
+      'other': 'Color',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String categoryLabel(String name) {
+    return 'Category: $name';
+  }
+
+  @override
+  String get taskFormCategory => 'Category';
+
+  @override
+  String get taskFormCategoryNone => 'None';
+
+  @override
+  String get taskFormCategoryNew => 'New';
+
+  @override
+  String get planFilterAll => 'All';
+
+  @override
+  String get planShowList => 'Show as list';
+
+  @override
+  String get planShowBoard => 'Show as board';
+
+  @override
+  String planFocusOnCategory(String name) {
+    return 'Focus on $name';
+  }
+
+  @override
+  String get planNoCategory => 'No category';
+
+  @override
+  String get planBoardDropHere => 'Drop tasks here';
+
+  @override
+  String get planBoardDragTooltip => 'Drag to another category';
+
+  @override
+  String get planNoTasksInCategory => 'No tasks in this category for this day.';
+
+  @override
+  String planCategoryOpenTasks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count open', one: '1 open', zero: 'none open');
+    return '$_temp0';
+  }
+
+  @override
+  String get statsByCategory => 'Focus time per category';
+
+  @override
+  String get statsNoCategory => 'No category';
+
+  @override
+  String focusTitleCategory(String name) {
+    return 'Focus: $name';
+  }
 }

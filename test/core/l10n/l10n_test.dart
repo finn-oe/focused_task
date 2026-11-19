@@ -38,6 +38,7 @@ void main() {
         overrides: [
           taskRepositoryProvider.overrideWithValue(repository),
           focusSessionRepositoryProvider.overrideWithValue(repository),
+          categoryRepositoryProvider.overrideWithValue(repository),
           sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
         ],
         child: localizedApp(home: const PlanScreen(), locale: const Locale('de')),
@@ -80,6 +81,7 @@ void main() {
             overrides: [
               taskRepositoryProvider.overrideWithValue(repository),
               focusSessionRepositoryProvider.overrideWithValue(repository),
+              categoryRepositoryProvider.overrideWithValue(repository),
               sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
             ],
             child: localizedApp(home: const StatsScreen(), locale: locale),

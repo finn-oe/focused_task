@@ -149,15 +149,17 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
   /// Focus on the open tasks of today.
   Future<void> initializeForDay(DateTime day) => start(FocusRequest(day));
 
-  /// Starts (or continues) focus for [request]: the open tasks of its day in plan order, rotated so the requested
-  /// task comes first. Re-entering with the same request (e.g. after a pause) keeps the current queue.
+  /// Starts (or continues) focus for [request]: the open tasks of its day (only those of its category, if it has one)
+  /// in plan order, rotated so the requested task comes first. Re-entering with the same request (e.g. after a pause)
+  /// keeps the current queue.
   Future<void> start(FocusRequest request) async {
     if (state.request == request && state.currentTask != null) {
       return;
     }
     state = state.copyWith(request: request, selectedDay: request.day, isLoading: true, clearError: true);
 
-    final open = (await _repository.getTasksForDay(request.day)).where((task) => !task.isCompleted).toList();
+    final category = request.categoryId;
+    final open = (await _repository.getTasksForDay(request.day)).where((task) => !task.isCompleted && (category == null || task.categoryId == category)).toList();
     final startIndex = open.indexWhere((task) => task.id == request.startTaskId);
     final queue = startIndex <= 0 ? open : [...open.sublist(startIndex), ...open.sublist(0, startIndex)];
     state = state.copyWith(queue: queue);

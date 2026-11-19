@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
+import 'package:focused_task/core/ui/category_palette.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/task_form_fields.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_move_feedback.dart';
@@ -123,6 +124,7 @@ class TaskListItem extends ConsumerWidget {
 
     final today = clock.now().dateOnly;
     final isPast = task.assignedDate.dateOnly.isBefore(today);
+    final category = ref.watch(categoriesNotifierProvider.select((categories) => categories.byId(task.categoryId)));
 
     return Card(
       key: ValueKey(task.id),
@@ -150,6 +152,13 @@ class TaskListItem extends ConsumerWidget {
         onTap: () => context.push(AppRoutes.taskForm, extra: task),
         title: Row(
           children: [
+            if (category != null) ...[
+              Semantics(
+                label: l10n.categoryLabel(category.name),
+                child: CategoryDot(key: ValueKey('taskCategoryDot-${task.id}'), colorIndex: category.colorIndex),
+              ),
+              const SizedBox(width: 6),
+            ],
             if (task.priority != TaskPriority.low) ...[PriorityFlag(priority: task.priority, size: 16), const SizedBox(width: 4)],
             Flexible(
               child: Text(

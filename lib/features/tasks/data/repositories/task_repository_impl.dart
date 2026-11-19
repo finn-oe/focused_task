@@ -62,6 +62,7 @@ class TaskRepositoryImpl implements ITaskRepository {
     required String sortOrder,
     TaskPriority priority = TaskPriority.low,
     int? targetDurationMinutes,
+    int? categoryId,
   }) {
     return _database.createTask(
       TasksCompanion.insert(
@@ -71,12 +72,21 @@ class TaskRepositoryImpl implements ITaskRepository {
         sortOrder: sortOrder,
         priority: Value(priority.value),
         targetDurationMinutes: Value(targetDurationMinutes),
+        categoryId: Value(categoryId),
       ),
     );
   }
 
   @override
-  Future<void> updateTaskDetails({required int taskId, required String title, String? description, int? targetDurationMinutes, DateTime? assignedDate, TaskPriority? priority}) {
+  Future<void> updateTaskDetails({
+    required int taskId,
+    required String title,
+    String? description,
+    int? targetDurationMinutes,
+    DateTime? assignedDate,
+    TaskPriority? priority,
+    required int? categoryId,
+  }) {
     return _database.updateTaskDetails(
       taskId: taskId,
       title: title,
@@ -84,6 +94,7 @@ class TaskRepositoryImpl implements ITaskRepository {
       targetDurationMinutes: targetDurationMinutes,
       assignedDate: assignedDate,
       priority: priority?.value,
+      categoryId: categoryId,
     );
   }
 
@@ -114,7 +125,7 @@ class TaskRepositoryImpl implements ITaskRepository {
     return const StatsCalculator().compute(
       query,
       tasks: tasks.map(_taskOnlyToEntity),
-      sessions: [for (final row in sessions) FocusSessionRepositoryImpl.toEntity(row.session, taskTitle: row.taskTitle)],
+      sessions: [for (final row in sessions) FocusSessionRepositoryImpl.toEntity(row.session, taskTitle: row.taskTitle, taskCategoryId: row.categoryId)],
       today: clock.now(),
     );
   }
@@ -164,6 +175,7 @@ class TaskRepositoryImpl implements ITaskRepository {
       latestStart: data.openSession?.startedAt,
       targetDurationMinutes: task.targetDurationMinutes,
       lastSeenAt: data.openSession?.lastSeenAt,
+      categoryId: task.categoryId,
       todos: data.todos.map((todo) => TaskTodoEntity(id: todo.id, title: todo.title, isCompleted: todo.isCompleted, sortOrder: todo.sortOrder)).toList(growable: false),
     );
   }

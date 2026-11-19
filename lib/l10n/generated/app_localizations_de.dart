@@ -900,4 +900,141 @@ class AppLocalizationsDe extends AppLocalizations {
   String notificationGoalReachedBody(String goal) {
     return 'Du warst heute $goal fokussiert.';
   }
+
+  @override
+  String get settingsCategories => 'Kategorien';
+
+  @override
+  String get settingsCategoriesHint => 'Aufgaben gruppieren, den Plan filtern und dich auf eine Kategorie konzentrieren.';
+
+  @override
+  String get categoriesTitle => 'Kategorien';
+
+  @override
+  String get categoriesEmpty => 'Noch keine Kategorien. Lege eine an, um deine Aufgaben zu gruppieren, z. B. „Arbeit“ oder „Studium“.';
+
+  @override
+  String get categoriesAdd => 'Kategorie hinzufügen';
+
+  @override
+  String get categoriesNewTitle => 'Neue Kategorie';
+
+  @override
+  String get categoriesEditTitle => 'Kategorie bearbeiten';
+
+  @override
+  String get categoriesNameLabel => 'Name';
+
+  @override
+  String get categoriesNameRequired => 'Bitte gib einen Namen ein.';
+
+  @override
+  String get categoriesNameTaken => 'Es gibt schon eine Kategorie mit diesem Namen.';
+
+  @override
+  String get categoriesColor => 'Farbe';
+
+  @override
+  String get categoriesActions => 'Aktionen der Kategorie';
+
+  @override
+  String get categoriesEdit => 'Bearbeiten';
+
+  @override
+  String get categoriesArchive => 'Archivieren';
+
+  @override
+  String get categoriesRestore => 'Wiederherstellen';
+
+  @override
+  String get categoriesArchived => 'Archiviert';
+
+  @override
+  String get categoriesArchivedHint => 'Im Plan und im Aufgabenformular ausgeblendet. Ihre Aufgaben behalten die Kategorie.';
+
+  @override
+  String get categoriesDeleteTitle => 'Kategorie löschen?';
+
+  @override
+  String categoriesDeleteMessage(String name) {
+    return '„$name“ wird gelöscht. Ihre Aufgaben bleiben erhalten, ohne Kategorie. Die erfasste Zeit bleibt in der Statistik.';
+  }
+
+  @override
+  String get categoriesReorderTooltip => 'Ziehen zum Sortieren';
+
+  @override
+  String categoryColorName(String color) {
+    String _temp0 = intl.Intl.selectLogic(color, {
+      'red': 'Rot',
+      'orange': 'Orange',
+      'yellow': 'Gelb',
+      'green': 'Grün',
+      'teal': 'Petrol',
+      'cyan': 'Cyan',
+      'blue': 'Blau',
+      'indigo': 'Indigo',
+      'purple': 'Lila',
+      'pink': 'Pink',
+      'other': 'Farbe',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String categoryLabel(String name) {
+    return 'Kategorie: $name';
+  }
+
+  @override
+  String get taskFormCategory => 'Kategorie';
+
+  @override
+  String get taskFormCategoryNone => 'Keine';
+
+  @override
+  String get taskFormCategoryNew => 'Neu';
+
+  @override
+  String get planFilterAll => 'Alle';
+
+  @override
+  String get planShowList => 'Als Liste anzeigen';
+
+  @override
+  String get planShowBoard => 'Als Board anzeigen';
+
+  @override
+  String planFocusOnCategory(String name) {
+    return 'Fokus auf $name';
+  }
+
+  @override
+  String get planNoCategory => 'Ohne Kategorie';
+
+  @override
+  String get planBoardDropHere => 'Aufgaben hierher ziehen';
+
+  @override
+  String get planBoardDragTooltip => 'In eine andere Kategorie ziehen';
+
+  @override
+  String get planNoTasksInCategory => 'Keine Aufgaben dieser Kategorie an diesem Tag.';
+
+  @override
+  String planCategoryOpenTasks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count offen', one: '1 offen', zero: 'keine offen');
+    return '$_temp0';
+  }
+
+  @override
+  String get statsByCategory => 'Fokuszeit pro Kategorie';
+
+  @override
+  String get statsNoCategory => 'Ohne Kategorie';
+
+  @override
+  String focusTitleCategory(String name) {
+    return 'Fokus: $name';
+  }
 }
