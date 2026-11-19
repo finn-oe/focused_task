@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'package:focused_task/core/database/app_database.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/sessions/domain/focus_time.dart';
+import 'package:focused_task/features/tasks/domain/entities/day_summary.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_stats.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
@@ -28,6 +29,27 @@ class TaskRepositoryImpl implements ITaskRepository {
   Future<TaskEntity?> getTaskById(int id) async {
     final data = await _database.getTaskById(id);
     return data == null ? null : _toEntity(data);
+  }
+
+  @override
+  Stream<List<TaskEntity>> watchTasksInRange(DateRange range) {
+    return _database.watchTasksInRange(start: range.start, end: range.end).map((tasks) => tasks.map(_taskOnlyToEntity).toList(growable: false));
+  }
+
+  @override
+  Future<Map<DateTime, DaySummary>> getDaySummaries(DateRange range) async {
+    final counts = await _database.countTasksByDay(start: range.start, end: range.end);
+    final sessions = await _database.getSessionsOverlapping(range.start, range.end.nextDay);
+    final result = <DateTime, DaySummary>{};
+    for (final row in counts) {
+      // Dates are stored at local midnight; merge defensively in case an old row has a time of day.
+      final summary = result[row.day.dateOnly] ?? DaySummary.empty;
+      result[row.day.dateOnly] = summary.copyWith(total: summary.total + row.total, completed: summary.completed + row.completed);
+    }
+    focusTimeByDay(sessions.map(FocusSessionRepositoryImpl.toEntity), range).forEach((day, time) {
+      result[day] = (result[day] ?? DaySummary.empty).copyWith(focusTime: time);
+    });
+    return result;
   }
 
   @override

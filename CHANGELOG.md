@@ -3,6 +3,13 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.9.0] - 2026-11-19
+
+### Added
+- Calendar with week and month views, ‹ › navigation and a "Today" button; the view and day are part of the URL. (#22)
+- Week view: the tasks of each day (completed ones struck through). On wide windows, long-press and drag a task to another day; on phones, use "Move to…". (#22)
+- Month view: a grid starting on your locale's first day of the week, with done/total tasks and a focus-time bar per day; today is highlighted. Tap a day to open it in the plan. (#22)
+
 ## [1.8.0] - 2026-11-17
 
 ### Added

@@ -6,6 +6,7 @@ import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/calendar/presentation/calendar_notifier.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
@@ -56,6 +57,9 @@ final appStartupProvider = FutureProvider<void>((ref) async {
   await Future<void>.value();
   await ref.read(settingsNotifierProvider.notifier).runLaunchCleanupIfNeeded();
 }, retry: (_, _) => null);
+
+/// Tasks and day summaries of the days the calendar shows (an inclusive date range).
+final calendarProvider = NotifierProvider.autoDispose.family<CalendarNotifier, CalendarState, DateRange>(CalendarNotifier.new);
 
 /// Statistics for an inclusive calendar-date range.
 final taskStatsProvider = FutureProvider.autoDispose.family<TaskStats, DateRange>((ref, range) {
