@@ -11,7 +11,16 @@ const _minute = Duration(minutes: 1);
 
 var _nextId = 1;
 
-FocusSession _session(DateTime start, Duration length, {int? taskId = 1, SessionKind kind = SessionKind.focus, bool open = false, String? title, int interruptions = 0}) {
+FocusSession _session(
+  DateTime start,
+  Duration length, {
+  int? taskId = 1,
+  SessionKind kind = SessionKind.focus,
+  bool open = false,
+  String? title,
+  int interruptions = 0,
+  int? categoryId,
+}) {
   final end = start.add(length);
   return FocusSession(
     id: _nextId++,
@@ -23,6 +32,7 @@ FocusSession _session(DateTime start, Duration length, {int? taskId = 1, Session
     endReason: open ? null : EndReason.paused,
     taskTitle: title,
     interruptions: interruptions,
+    taskCategoryId: categoryId,
   );
 }
 
@@ -188,6 +198,24 @@ void main() {
 
       expect(calculator.compute(week, tasks: const [], sessions: sessions, today: monday).interruptionsPerFocusHour, isNull);
       expect(const StatsCalculator(interruptionsTracked: true).compute(week, tasks: const [], sessions: sessions, today: monday).interruptionsPerFocusHour, 1.5);
+    });
+
+    test('focus time per category, most first; the category comes with the session or from the task', () {
+      final nine = monday.add(const Duration(hours: 9));
+      final sessions = [
+        _session(nine, _minute * 20, taskId: 1, categoryId: 7),
+        _session(nine.add(const Duration(hours: 1)), _minute * 30, taskId: 2),
+        _session(nine.add(const Duration(hours: 2)), _minute * 15, taskId: 3),
+        _session(nine.add(const Duration(hours: 3)), _minute * 10, taskId: null),
+        _session(nine.add(const Duration(hours: 4)), _minute * 60, taskId: 1, kind: SessionKind.breakTime, categoryId: 7),
+      ];
+      final tasks = [buildTask(id: 2, assignedDate: monday, categoryId: 7), buildTask(id: 3, assignedDate: monday, categoryId: 8)];
+
+      final report = calculator.compute(week, tasks: tasks, sessions: sessions, today: monday);
+
+      expect(report.focusByCategory.map((entry) => (entry.categoryId, entry.focus)), [(7, _minute * 50), (8, _minute * 15), (null, _minute * 10)]);
+      expect(report.hasCategorizedFocus, isTrue);
+      expect(calculator.compute(week, tasks: const [], sessions: [_session(nine, _minute * 5)], today: monday).hasCategorizedFocus, isFalse);
     });
   });
 }

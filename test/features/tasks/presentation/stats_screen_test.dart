@@ -34,7 +34,12 @@ Future<FakeTaskRepository> _pump(WidgetTester tester, {Size size = const Size(80
 
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository), focusGoalProvider.overrideWithValue(goal)],
+      overrides: [
+        taskRepositoryProvider.overrideWithValue(repository),
+        focusSessionRepositoryProvider.overrideWithValue(repository),
+        categoryRepositoryProvider.overrideWithValue(repository),
+        focusGoalProvider.overrideWithValue(goal),
+      ],
       child: localizedApp(home: const StatsScreen()),
     ),
   );
@@ -146,7 +151,13 @@ void main() {
 
   test('statsReportProvider caches per query', () async {
     final repository = FakeTaskRepository();
-    final container = ProviderContainer.test(overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)]);
+    final container = ProviderContainer.test(
+      overrides: [
+        taskRepositoryProvider.overrideWithValue(repository),
+        focusSessionRepositoryProvider.overrideWithValue(repository),
+        categoryRepositoryProvider.overrideWithValue(repository),
+      ],
+    );
     final today = DateTime(2026, 11, 17);
     StatsQuery query(DateTime end) => StatsQuery(range: DateRange(today, end), granularity: StatsGranularity.hour);
 

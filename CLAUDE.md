@@ -63,6 +63,7 @@ Rules:
 - **Dependency direction:** `presentation → domain ← data`. Presentation code depends on repository *interfaces* (`ITaskRepository`), never on `AppDatabase` or Drift row classes.
 - **Domain is pure Dart.** Entities are immutable, have `copyWith`, and contain no Flutter or Drift imports.
 - **Tracked time lives in `focus_sessions`** (`lib/features/sessions/`, `IFocusSessionRepository`). Start/heartbeat/end sessions through the repository; never write `tasks.time_spent` directly – it is a cached total that `end()` / `addManualTime()` update in the same transaction. At most one session is open at a time. Statistics count focus time on the day it happened (`focusTimeByDay` splits at local midnight); all statistics numbers come from the pure `StatsCalculator` (`lib/features/tasks/domain/stats/`); goal progress and streaks from the pure `StreakCalculator` (`lib/features/goals/domain/`, fed by `focusTimeByDay`).
+- **Categories** (`lib/features/categories/`, `ICategoryRepository`, `categoriesNotifierProvider`) store a palette index (`CategoryColor` in `lib/core/ui/category_palette.dart`), never a colour. Deleting a category sets its tasks' `category_id` to `NULL`; archived ones are hidden from pickers, filters and the board.
 - **Business logic lives in notifiers/domain**, not in widgets. Widgets render state and forward user intent.
 - **Notifiers** extend `Notifier` and get their dependencies with `ref.watch(...)` in `build()`, never via constructors. Widgets never read `taskRepositoryProvider` directly; data a screen loads goes through a provider (e.g. `statsReportProvider`) or a notifier method.
 - **Time is injected.** Use `clock.now()` from `package:clock` instead of `DateTime.now()` in logic, so tests can control time with `fakeAsync` / `withClock`.
@@ -92,7 +93,7 @@ Rules:
 
 - `flutter test` must pass before every commit.
 - Repository/database logic: test against `AppDatabase(NativeDatabase.memory())`.
-- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `FakeNotificationService`, `fakePreferences()`, `buildTask()`); extend them when the interface grows. `FakeTaskRepository` also implements `IFocusSessionRepository`: override `taskRepositoryProvider` **and** `focusSessionRepositoryProvider` with the same instance.
+- Notifiers/widgets: use the shared fakes in `test/helpers/` (`FakeTaskRepository`, `FakeTargetAlarm`, `FakeNotificationService`, `fakePreferences()`, `buildTask()`); extend them when the interface grows. `FakeTaskRepository` also implements `IFocusSessionRepository` and `ICategoryRepository`: override `taskRepositoryProvider`, `focusSessionRepositoryProvider` **and** `categoryRepositoryProvider` with the same instance.
 - Notifiers: `ProviderContainer(overrides: [...])` (or `ProviderContainer.test`). Widgets: `ProviderScope(overrides: [...])` with fakes. Anything that reads settings needs `sharedPreferencesProvider.overrideWithValue(await fakePreferences())`.
 - Every bug fix comes with a regression test.
 - **UI changes extend `integration_test/`** (end-to-end flows on the real app; bootstrap in `integration_test/test_app.dart`). Run them with `flutter test integration_test -d windows` (or `macos` / `linux`); CI runs them on Linux.
@@ -110,7 +111,9 @@ flutter pub get
 flutter analyze
 flutter test
 flutter test integration_test -d windows   # end-to-end flows (or -d macos / -d linux)
-dart format .
+# Format everything except generated code (CI compares *.g.dart and lib/l10n/generated with fresh generator output).
+# Never `dart format .` or `dart format lib`.
+dart format $(git ls-files -co --exclude-standard 'lib/*.dart' 'test/*.dart' 'integration_test/*.dart' 'tool/*.dart' | grep -v -e '\.g\.dart$' -e '^lib/l10n/generated/')
 dart run build_runner build --delete-conflicting-outputs   # after changing Drift tables
 flutter run -d windows   # or chrome, macos, linux, android, ios
 ```

@@ -147,9 +147,15 @@ class _StatsContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final goal = ref.watch(focusGoalProvider);
+    final categories = ref.watch(categoriesNotifierProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cards = [PlannedVsActualCard(report: report), BestHoursCard(report: report), TopTasksCard(report: report)];
+        final cards = [
+          PlannedVsActualCard(report: report),
+          BestHoursCard(report: report),
+          TopTasksCard(report: report),
+          if (report.hasCategorizedFocus) CategoryFocusCard(report: report, categoryOf: categories.byId),
+        ];
         final twoColumns = constraints.maxWidth >= _twoColumnWidth;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

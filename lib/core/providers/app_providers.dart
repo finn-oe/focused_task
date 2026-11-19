@@ -8,6 +8,9 @@ import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_notifier.dart';
+import 'package:focused_task/features/categories/data/category_repository_impl.dart';
+import 'package:focused_task/features/categories/domain/i_category_repository.dart';
+import 'package:focused_task/features/categories/presentation/categories_notifier.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/sessions/domain/focus_time.dart';
@@ -45,6 +48,13 @@ final taskRepositoryProvider = Provider<ITaskRepository>((ref) {
 final focusSessionRepositoryProvider = Provider<IFocusSessionRepository>((ref) {
   return FocusSessionRepositoryImpl(ref.watch(appDatabaseProvider));
 });
+
+final categoryRepositoryProvider = Provider<ICategoryRepository>((ref) {
+  return CategoryRepositoryImpl(ref.watch(appDatabaseProvider));
+});
+
+/// All task categories (#2), also archived ones, and the actions to manage them.
+final categoriesNotifierProvider = NotifierProvider<CategoriesNotifier, CategoriesState>(CategoriesNotifier.new);
 
 final planModeNotifierProvider = NotifierProvider<PlanModeNotifier, PlanModeState>(PlanModeNotifier.new);
 

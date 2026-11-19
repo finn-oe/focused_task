@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_screen.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
+import 'package:focused_task/features/settings/presentation/settings_screen.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
@@ -24,7 +25,8 @@ void main() {
     await tester.tapAndSettle(find.text('25 min'));
     final newSubTask = find.widgetWithText(TextField, 'Add sub-task');
     for (final subTask in ['Outline', 'Draft']) {
-      await tester.ensureVisible(newSubTask);
+      // The form is a lazy list: scroll until the field is built.
+      await tester.scrollUntilVisible(newSubTask, 200, scrollable: find.byType(Scrollable).first);
       await tester.enterText(newSubTask, subTask);
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
@@ -203,6 +205,10 @@ void main() {
   });
 
   testWidgets('daily goal: set it in the settings, see the ring, the summary of today and the streak', (tester) async {
+    // Tall enough for the goal dropdown and its menu; the desktop window size differs per machine.
+    tester.view.physicalSize = const Size(1000, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final app = await TestApp.start(tester);
     final tasks = TaskRepositoryImpl(app.database);
     final id = await tasks.createTask(title: 'Write report', assignedDate: DateTime.now(), sortOrder: 'a0');
@@ -210,7 +216,12 @@ void main() {
     expect(find.byKey(const Key('planGoalRing')), findsNothing, reason: 'the goal is off by default');
 
     await tester.tapAndSettle(find.text('Settings').first);
-    await tester.scrollUntilVisible(find.byKey(const Key('settingsDailyGoal')), 200, scrollable: find.byType(Scrollable).first);
+    // Scroll past the dropdown, so its menu has room to open.
+    await tester.scrollUntilVisible(
+      find.text('Working days'),
+      200,
+      scrollable: find.descendant(of: find.byType(SettingsScreen), matching: find.byType(Scrollable)).first,
+    );
     await tester.tapAndSettle(find.byKey(const Key('settingsDailyGoal')));
     await tester.tapAndSettle(find.text('30 min').last);
     expect(app.preferences.getInt('settings.daily_goal_minutes'), 30);
@@ -231,5 +242,46 @@ void main() {
     await tester.tapAndSettle(find.byKey(const Key('planGoalRing')));
     await tester.scrollUntilVisible(find.byKey(const Key('statsCurrentStreak')), 200, scrollable: find.byType(Scrollable).first);
     expect(find.byKey(const Key('statsGoalDaysChart')), findsOneWidget);
+  });
+
+  testWidgets('categories: create one, give a task its category, filter, board and focus on the category', (tester) async {
+    final app = await TestApp.start(tester);
+    final tasks = TaskRepositoryImpl(app.database);
+    await tasks.createTask(title: 'Groceries', assignedDate: DateTime.now(), sortOrder: 'a0');
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Show as board'), findsNothing, reason: 'the plan stays a plain list without categories');
+
+    await tester.tapAndSettle(find.text('Settings').first);
+    await tester.tapAndSettle(find.text('Categories'));
+    await tester.tapAndSettle(find.text('Add category'));
+    await tester.enterTextInField('Name', 'Work');
+    await tester.tapAndSettle(find.text('Save'));
+    expect(find.text('Work'), findsOneWidget);
+
+    await tester.tapAndSettle(find.text('Plan').first);
+    await tester.tapAndSettle(find.text('Add Task'));
+    await tester.enterTextInField('Title', 'Write report');
+    await tester.tapAndSettle(find.widgetWithText(ChoiceChip, 'Work'));
+    await tester.tapAndSettle(find.text('Save Task'));
+
+    await tester.tapAndSettle(find.widgetWithText(FilterChip, 'Work'));
+    expect(find.text('Write report'), findsOneWidget);
+    expect(find.text('Groceries'), findsNothing);
+    await tester.tapAndSettle(find.widgetWithText(FilterChip, 'All'));
+    expect(find.text('Groceries'), findsOneWidget);
+
+    await tester.tapAndSettle(find.byTooltip('Show as board'));
+    expect(find.text('No category'), findsOneWidget);
+    await tester.tapAndSettle(find.byTooltip('Focus on Work'));
+    expect(find.text('Focus: Work'), findsOneWidget);
+    expect(find.text('Write report'), findsOneWidget);
+
+    await tester.tapAndSettle(find.text('Complete Task'));
+    expect(find.text('Finished for Today!'), findsOneWidget, reason: 'the queue had only the Work task');
+    final remaining = await tasks.getTasksForDay(DateTime.now());
+    expect(remaining.map((task) => (task.title, task.isCompleted)), [('Groceries', false), ('Write report', true)]);
+
+    await app.restart(tester);
+    expect(find.byTooltip('Show as list'), findsOneWidget, reason: 'the board view is remembered');
   });
 }

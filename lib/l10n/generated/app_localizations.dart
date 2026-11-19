@@ -1585,6 +1585,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You focused for {goal} today.'**
   String notificationGoalReachedBody(String goal);
+
+  /// No description provided for @settingsCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get settingsCategories;
+
+  /// No description provided for @settingsCategoriesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Group tasks, filter the plan and focus on one category.'**
+  String get settingsCategoriesHint;
+
+  /// No description provided for @categoriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categoriesTitle;
+
+  /// No description provided for @categoriesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories yet. Add one to group your tasks, e.g. “Work” or “Study”.'**
+  String get categoriesEmpty;
+
+  /// No description provided for @categoriesAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get categoriesAdd;
+
+  /// No description provided for @categoriesNewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New category'**
+  String get categoriesNewTitle;
+
+  /// No description provided for @categoriesEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit category'**
+  String get categoriesEditTitle;
+
+  /// No description provided for @categoriesNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get categoriesNameLabel;
+
+  /// No description provided for @categoriesNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a name.'**
+  String get categoriesNameRequired;
+
+  /// No description provided for @categoriesNameTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'A category with this name already exists.'**
+  String get categoriesNameTaken;
+
+  /// No description provided for @categoriesColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get categoriesColor;
+
+  /// No description provided for @categoriesActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Category actions'**
+  String get categoriesActions;
+
+  /// No description provided for @categoriesEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get categoriesEdit;
+
+  /// No description provided for @categoriesArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get categoriesArchive;
+
+  /// No description provided for @categoriesRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get categoriesRestore;
+
+  /// No description provided for @categoriesArchived.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived'**
+  String get categoriesArchived;
+
+  /// No description provided for @categoriesArchivedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hidden in the plan and the task form. Their tasks keep the category.'**
+  String get categoriesArchivedHint;
+
+  /// No description provided for @categoriesDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category?'**
+  String get categoriesDeleteTitle;
+
+  /// No description provided for @categoriesDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” will be deleted. Its tasks stay, without a category. Tracked time stays in the statistics.'**
+  String categoriesDeleteMessage(String name);
+
+  /// No description provided for @categoriesReorderTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to reorder'**
+  String get categoriesReorderTooltip;
+
+  /// No description provided for @categoryColorName.
+  ///
+  /// In en, this message translates to:
+  /// **'{color, select, red{Red} orange{Orange} yellow{Yellow} green{Green} teal{Teal} cyan{Cyan} blue{Blue} indigo{Indigo} purple{Purple} pink{Pink} other{Color}}'**
+  String categoryColorName(String color);
+
+  /// No description provided for @categoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category: {name}'**
+  String categoryLabel(String name);
+
+  /// No description provided for @taskFormCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get taskFormCategory;
+
+  /// No description provided for @taskFormCategoryNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get taskFormCategoryNone;
+
+  /// No description provided for @taskFormCategoryNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get taskFormCategoryNew;
+
+  /// No description provided for @planFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get planFilterAll;
+
+  /// No description provided for @planShowList.
+  ///
+  /// In en, this message translates to:
+  /// **'Show as list'**
+  String get planShowList;
+
+  /// No description provided for @planShowBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Show as board'**
+  String get planShowBoard;
+
+  /// No description provided for @planFocusOnCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus on {name}'**
+  String planFocusOnCategory(String name);
+
+  /// No description provided for @planNoCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get planNoCategory;
+
+  /// No description provided for @planBoardDropHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Drop tasks here'**
+  String get planBoardDropHere;
+
+  /// No description provided for @planBoardDragTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to another category'**
+  String get planBoardDragTooltip;
+
+  /// No description provided for @planNoTasksInCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks in this category for this day.'**
+  String get planNoTasksInCategory;
+
+  /// No description provided for @planCategoryOpenTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{none open} =1{1 open} other{{count} open}}'**
+  String planCategoryOpenTasks(int count);
+
+  /// No description provided for @statsByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus time per category'**
+  String get statsByCategory;
+
+  /// No description provided for @statsNoCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No category'**
+  String get statsNoCategory;
+
+  /// No description provided for @focusTitleCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus: {name}'**
+  String focusTitleCategory(String name);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

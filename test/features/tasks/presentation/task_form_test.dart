@@ -25,6 +25,7 @@ Future<FakeTaskRepository> _openForm(WidgetTester tester, {TaskEntity? task, Siz
       overrides: [
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
+        categoryRepositoryProvider.overrideWithValue(repository),
         sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
       ],
       child: localizedApp(
@@ -181,6 +182,7 @@ void main() {
         overrides: [
           taskRepositoryProvider.overrideWithValue(repository),
           focusSessionRepositoryProvider.overrideWithValue(repository),
+          categoryRepositoryProvider.overrideWithValue(repository),
           sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
         ],
         child: localizedApp(

@@ -12,7 +12,7 @@ class FocusSessionRepositoryImpl implements IFocusSessionRepository {
   final AppDatabase _database;
 
   /// Maps a database row to the domain entity.
-  static FocusSession toEntity(FocusSessionRow row, {String? taskTitle}) {
+  static FocusSession toEntity(FocusSessionRow row, {String? taskTitle, int? taskCategoryId}) {
     return FocusSession(
       id: row.id,
       taskId: row.taskId,
@@ -23,6 +23,7 @@ class FocusSessionRepositoryImpl implements IFocusSessionRepository {
       endReason: EndReason.fromStorage(row.endReason),
       interruptions: row.interruptions,
       taskTitle: taskTitle,
+      taskCategoryId: taskCategoryId,
     );
   }
 

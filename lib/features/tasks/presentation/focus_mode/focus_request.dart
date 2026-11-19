@@ -1,13 +1,14 @@
 import 'package:focused_task/core/utils/date_utils.dart';
 
-/// What focus mode works on: the open tasks of [day], starting with [startTaskId] if given.
+/// What focus mode works on: the open tasks of [day] (only those of [categoryId], if given), starting with
+/// [startTaskId] if given.
 class FocusRequest {
   FocusRequest(DateTime day, {this.startTaskId, this.categoryId}) : day = day.dateOnly;
 
   final DateTime day;
   final int? startTaskId;
 
-  /// Focus on one category only; used from #2 on.
+  /// Focus on the tasks of this category only.
   final int? categoryId;
 
   @override

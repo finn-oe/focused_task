@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:focused_task/core/database/app_database.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/categories/data/category_repository_impl.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
@@ -43,6 +44,30 @@ const _tasksV4 = '''CREATE TABLE tasks (
     last_seen_at INTEGER NULL
   )''';
 
+/// Schema of version 5 (session log, no categories), as created by app versions 1.4.0 – 1.12.0.
+const _tasksV5 = '''CREATE TABLE tasks (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT NULL,
+    assigned_date INTEGER NOT NULL,
+    sort_order TEXT NOT NULL,
+    is_completed INTEGER NOT NULL DEFAULT 0 CHECK (is_completed IN (0, 1)),
+    priority INTEGER NOT NULL DEFAULT 0,
+    time_spent INTEGER NOT NULL DEFAULT 0,
+    target_duration_minutes INTEGER NULL
+  )''';
+
+const _sessionsV5 = '''CREATE TABLE focus_sessions (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    task_id INTEGER NULL REFERENCES tasks (id) ON DELETE SET NULL,
+    kind TEXT NOT NULL DEFAULT 'focus',
+    started_at INTEGER NOT NULL,
+    ended_at INTEGER NULL,
+    last_seen_at INTEGER NOT NULL,
+    end_reason TEXT NULL,
+    interruptions INTEGER NOT NULL DEFAULT 0
+  )''';
+
 /// Drift stores `DateTime` as Unix seconds.
 int _seconds(DateTime value) => value.millisecondsSinceEpoch ~/ 1000;
 
@@ -79,6 +104,8 @@ void main() {
 
     final version = await database.customSelect('PRAGMA user_version').getSingle();
     expect(version.data.values.single, database.schemaVersion);
+    expect(task.categoryId, isNull, reason: 'the rebuilt tasks table already has category_id');
+    expect(await database.select(database.categories).get(), isEmpty);
   });
 
   group('v4 → v5 (session log)', () {
@@ -140,6 +167,59 @@ void main() {
       final sessions = await database.select(database.focusSessions).get();
       expect(sessions.where((session) => session.taskId == null), hasLength(1), reason: 'sessions are kept');
       expect((await FocusSessionRepositoryImpl(database).focusTimeByDay(DateRange(day, day)))[day], const Duration(minutes: 40));
+    });
+  });
+
+  group('v5 → v6 (categories)', () {
+    final day = DateTime(2026, 11, 10);
+    late AppDatabase database;
+
+    setUp(() {
+      database = _open([
+        _tasksV5,
+        _todos,
+        _sessionsV5,
+        'CREATE INDEX focus_sessions_started_at ON focus_sessions (started_at)',
+        "INSERT INTO tasks (id, title, assigned_date, sort_order, is_completed, time_spent, target_duration_minutes) VALUES (1, 'done', ${_seconds(day)}, 'a0', 1, 1800000, 25)",
+        "INSERT INTO tasks (id, title, assigned_date, sort_order, priority) VALUES (2, 'open', ${_seconds(day)}, 'a1', 2)",
+        "INSERT INTO task_todos (task_id, title, sort_order) VALUES (1, 'sub-task', 'a0')",
+        "INSERT INTO focus_sessions (task_id, started_at, ended_at, last_seen_at, end_reason) VALUES (1, ${_seconds(day.add(const Duration(hours: 9)))}, ${_seconds(day.add(const Duration(hours: 9, minutes: 30)))}, ${_seconds(day.add(const Duration(hours: 9, minutes: 30)))}, 'completed')",
+        'INSERT INTO focus_sessions (task_id, started_at, last_seen_at) VALUES (2, ${_seconds(day.add(const Duration(hours: 10)))}, ${_seconds(day.add(const Duration(hours: 10, minutes: 5)))})',
+        'PRAGMA user_version = 5',
+      ]);
+    });
+    tearDown(() => database.close());
+
+    test('keeps tasks, sub-tasks, sessions and tracked time; tasks have no category', () async {
+      final tasks = TaskRepositoryImpl(database);
+
+      final all = await tasks.getTasksForDay(day);
+      expect(all.map((task) => (task.title, task.timeSpent, task.isCompleted, task.categoryId)), [('done', 1800000, true, null), ('open', 0, false, null)]);
+      expect(all.first.todos.single.title, 'sub-task');
+      expect(all.first.targetDurationMinutes, 25);
+      expect(all.last.isRunning, isTrue, reason: 'the open session stays recoverable');
+      expect(await database.select(database.focusSessions).get(), hasLength(2));
+
+      final stats = await tasks.getStatsReport(StatsQuery(range: DateRange(day, day), granularity: StatsGranularity.day));
+      expect(stats.focusTotal, const Duration(minutes: 35));
+      expect(stats.hasCategorizedFocus, isFalse);
+
+      final version = await database.customSelect('PRAGMA user_version').getSingle();
+      expect(version.data.values.single, 6);
+    });
+
+    test('tasks can get a category; deleting it leaves them uncategorised', () async {
+      final categories = CategoryRepositoryImpl(database);
+      final tasks = TaskRepositoryImpl(database);
+      final work = await categories.createCategory(name: 'Work', colorIndex: 3);
+      await categories.setTaskCategory(taskId: 1, categoryId: work);
+      expect((await tasks.getTaskById(1))!.categoryId, work);
+
+      await categories.deleteCategory(work);
+
+      final task = (await tasks.getTaskById(1))!;
+      expect((task.title, task.categoryId, task.timeSpent), ('done', null, 1800000));
+      expect(await database.select(database.taskTodos).get(), hasLength(1), reason: 'nothing cascades from a category');
     });
   });
 }

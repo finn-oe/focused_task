@@ -3,6 +3,19 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.13.0] - 2026-11-19
+
+### Added
+- **Task categories**: create categories with one of ten colours in Settings → Categories; rename, recolour, reorder, archive or delete them (deleting asks first and keeps the tasks, without a category). (#2)
+- A category picker in the task form, with "None" and "+ New". (#2)
+- The plan list shows a coloured dot per task and filter chips (All / each category). New tasks get the filtered category. (#2)
+- **Board view**: switch the plan between list and board in the app bar. The board groups the day's tasks by category – columns on wide screens, sections on phones – and dragging a task to another group changes its category. The choice is remembered. (#2)
+- **Category focus**: "Focus on <category>" from the filter or a board header works through only that category's open tasks. (#2)
+- Statistics show the focus time per category. (#2)
+
+### Changed
+- Database schema version 6 (new `categories` table, `tasks.category_id`). Existing tasks, sub-tasks, sessions and tracked time are kept. (#2)
+
 ## [1.12.0] - 2026-11-19
 
 ### Added

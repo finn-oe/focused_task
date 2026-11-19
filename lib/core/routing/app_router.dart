@@ -5,6 +5,7 @@ import 'package:focused_task/core/ui/app_shell.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_period.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_screen.dart';
+import 'package:focused_task/features/categories/presentation/categories_screen.dart';
 import 'package:focused_task/features/settings/presentation/settings_screen.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/finished_for_today_screen.dart';
@@ -26,19 +27,31 @@ abstract final class AppRoutes {
   static const finishedForToday = '/finished-for-today';
   static const taskForm = '/task-form';
 
+  /// Category management, below [settings].
+  static const categories = '/settings/categories';
+
   /// Query parameter of [plan] with the shown day (`YYYY-MM-DD`); missing = today.
   static const dateParameter = 'date';
 
   /// Query parameter of [calendar] with the view (`week` or `month`; missing = week). The shown day is [dateParameter].
   static const viewParameter = 'view';
 
-  /// Query parameters of [focus]: the day (`YYYY-MM-DD`, missing = today) and the task to start with.
+  /// Query parameters of [focus]: the day (`YYYY-MM-DD`, missing = today), the task to start with and the category
+  /// to focus on.
   static const dayParameter = 'day';
   static const taskParameter = 'task';
+  static const categoryParameter = 'category';
 
   /// Location of focus mode for [request].
   static String focusFor(FocusRequest request) {
-    return Uri(path: focus, queryParameters: {dayParameter: request.day.isoDate, if (request.startTaskId != null) taskParameter: '${request.startTaskId}'}).toString();
+    return Uri(
+      path: focus,
+      queryParameters: {
+        dayParameter: request.day.isoDate,
+        if (request.startTaskId != null) taskParameter: '${request.startTaskId}',
+        if (request.categoryId != null) categoryParameter: '${request.categoryId}',
+      },
+    ).toString();
   }
 
   /// Location of the plan for [day]; today has no date parameter.
@@ -84,7 +97,13 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.plan}) {
             routes: [GoRoute(path: AppRoutes.stats, builder: (context, state) => const StatsScreen())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: AppRoutes.settings, builder: (context, state) => const SettingsScreen())],
+            routes: [
+              GoRoute(
+                path: AppRoutes.settings,
+                builder: (context, state) => const SettingsScreen(),
+                routes: [GoRoute(path: 'categories', builder: (context, state) => const CategoriesScreen())],
+              ),
+            ],
           ),
         ],
       ),
@@ -93,7 +112,13 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.plan}) {
         builder: (context, state) {
           final parameters = state.uri.queryParameters;
           final day = tryParseIsoDate(parameters[AppRoutes.dayParameter]) ?? DateTime.now();
-          return FocusScreen(request: FocusRequest(day, startTaskId: int.tryParse(parameters[AppRoutes.taskParameter] ?? '')));
+          return FocusScreen(
+            request: FocusRequest(
+              day,
+              startTaskId: int.tryParse(parameters[AppRoutes.taskParameter] ?? ''),
+              categoryId: int.tryParse(parameters[AppRoutes.categoryParameter] ?? ''),
+            ),
+          );
         },
       ),
       GoRoute(path: AppRoutes.finishedForToday, builder: (context, state) => const FinishedForTodayScreen()),

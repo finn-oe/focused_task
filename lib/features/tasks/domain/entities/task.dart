@@ -39,6 +39,7 @@ class TaskEntity {
     this.targetDurationMinutes,
     this.lastSeenAt,
     required this.todos,
+    this.categoryId,
   });
 
   final int id;
@@ -59,6 +60,9 @@ class TaskEntity {
   /// Last heartbeat of the open focus session.
   final DateTime? lastSeenAt;
   final List<TaskTodoEntity> todos;
+
+  /// The task's category, `null` if it has none.
+  final int? categoryId;
 
   bool get isRunning => latestStart != null;
 
@@ -93,6 +97,8 @@ class TaskEntity {
     int? targetDurationMinutes,
     DateTime? lastSeenAt,
     List<TaskTodoEntity>? todos,
+    int? categoryId,
+    bool clearCategory = false,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -107,6 +113,7 @@ class TaskEntity {
       targetDurationMinutes: clearTargetDuration ? null : targetDurationMinutes ?? this.targetDurationMinutes,
       lastSeenAt: clearLatestStart ? null : lastSeenAt ?? this.lastSeenAt,
       todos: todos ?? this.todos,
+      categoryId: clearCategory ? null : categoryId ?? this.categoryId,
     );
   }
 }

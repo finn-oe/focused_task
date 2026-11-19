@@ -19,7 +19,11 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          taskRepositoryProvider.overrideWithValue(repository),
+          focusSessionRepositoryProvider.overrideWithValue(repository),
+          categoryRepositoryProvider.overrideWithValue(repository),
+        ],
         child: localizedApp(home: TaskFormScreen(task: task)),
       ),
     );

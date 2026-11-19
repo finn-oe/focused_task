@@ -15,6 +15,7 @@ Widget _app(SharedPreferences preferences) {
     overrides: [
       taskRepositoryProvider.overrideWithValue(repository),
       focusSessionRepositoryProvider.overrideWithValue(repository),
+      categoryRepositoryProvider.overrideWithValue(repository),
       sharedPreferencesProvider.overrideWithValue(preferences),
     ],
     child: const FocusedTaskApp(),

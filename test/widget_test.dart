@@ -15,6 +15,7 @@ Future<Widget> _app(FakeTaskRepository repository) async {
     overrides: [
       taskRepositoryProvider.overrideWithValue(repository),
       focusSessionRepositoryProvider.overrideWithValue(repository),
+      categoryRepositoryProvider.overrideWithValue(repository),
       sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
     ],
     child: localizedApp(home: const PlanScreen()),

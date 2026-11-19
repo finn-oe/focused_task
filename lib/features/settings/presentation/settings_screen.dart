@@ -1,9 +1,11 @@
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/settings/presentation/settings_state.dart';
 
@@ -68,6 +70,14 @@ class SettingsScreen extends ConsumerWidget {
             value: state.askToMoveUnfinished,
             contentPadding: EdgeInsets.zero,
             onChanged: notifier.setAskToMoveUnfinished,
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.label_outline),
+            title: Text(l10n.settingsCategories),
+            subtitle: Text(l10n.settingsCategoriesHint),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go(AppRoutes.categories),
           ),
           const SizedBox(height: 24),
           Text(l10n.settingsDataRetention, style: textTheme.titleLarge),

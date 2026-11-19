@@ -30,7 +30,12 @@ Future<void> _pump(WidgetTester tester, Widget child, {FocusGoal goal = _goal, F
   final repo = repository ?? FakeTaskRepository();
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [taskRepositoryProvider.overrideWithValue(repo), focusSessionRepositoryProvider.overrideWithValue(repo), focusGoalProvider.overrideWithValue(goal)],
+      overrides: [
+        taskRepositoryProvider.overrideWithValue(repo),
+        focusSessionRepositoryProvider.overrideWithValue(repo),
+        categoryRepositoryProvider.overrideWithValue(repo),
+        focusGoalProvider.overrideWithValue(goal),
+      ],
       child: localizedApp(home: Scaffold(body: child)),
     ),
   );
@@ -112,6 +117,7 @@ void main() {
             overrides: [
               taskRepositoryProvider.overrideWithValue(repository),
               focusSessionRepositoryProvider.overrideWithValue(repository),
+              categoryRepositoryProvider.overrideWithValue(repository),
               focusGoalProvider.overrideWithValue(_goal),
             ],
             child: localizedApp(home: const FinishedForTodayScreen()),
@@ -161,6 +167,7 @@ void main() {
       overrides: [
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
+        categoryRepositoryProvider.overrideWithValue(repository),
         sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
       ],
     );

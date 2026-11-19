@@ -19,6 +19,12 @@ compared to reality – so you can get a little more dedicated every day.
 - **Plan mode** – tasks per day with description, sub-tasks (checklist) and an optional target duration.
   Reorder by drag & drop, mark as done or duplicate. Unfinished tasks of past days can be moved to today (or any day,
   with undo) – their tracked time and session history stay on the days they were worked – or copied.
+- **Categories** – group tasks into categories (e.g. "Work", "Study") with one of ten colours, managed in
+  Settings → Categories (add, rename, colour, reorder, archive, delete). Pick a category in the task form. The plan
+  list shows a coloured dot per task and filter chips; the **board** (toggle in the plan's app bar) groups the day's
+  tasks by category in columns (wide) or sections (phone) – drag a task by its handle to change its category.
+  "Focus on <category>" from the filter or a board header works through that category's open tasks only, and the
+  statistics show the focus time per category. Without categories the plan looks exactly as before.
 - **Calendar** – week and month views (`/calendar?view=month&date=2026-11-17`). The week shows each day's tasks
   (7 columns on wide windows – long-press and drag a task to another day; an agenda with "Move to…" on phones). The
   month grid shows done/total tasks and a bar for the focus time of each day. Tap a day to open it in the plan.
@@ -117,9 +123,11 @@ lib/
 │   ├── routing/            # go_router routes
 │   ├── services/           # platform services (alarm)
 │   ├── ui/charts/          # reusable BarChart and HeatmapChart (CustomPainter, no chart package)
+│   ├── ui/category_palette.dart # the ten category colours (seeded ColorSchemes, light & dark)
 │   ├── ui/themes/          # light & dark Material 3 themes
 │   └── utils/              # formatting, fractional indexing, lifecycle observer
 └── features/
+    ├── categories/         # task categories: TaskCategory, ICategoryRepository, management screen
     ├── goals/              # daily focus goal: FocusGoal, StreakCalculator, progress ring
     ├── settings/           # preferences (shared_preferences)
     └── tasks/
@@ -136,7 +144,10 @@ How the pieces fit together:
 - **Ordering** uses fractional indexing (`sort_order` strings), so moving a task only updates one row.
 - **Time tracking:** a task stores its accumulated `time_spent` (ms) and `latest_start` while it is running.
   Elapsed time = `time_spent + (now − latest_start)`.
-- **Routes:** `/plan` (home), `/task-form`, `/focus`, `/pause`, `/finished-for-today`, `/stats`, `/settings`.
+- **Categories:** `categories` table; `tasks.category_id` is set to `NULL` when a category is deleted. A category
+  stores an index into the fixed palette, never a raw colour.
+- **Routes:** `/plan` (home), `/task-form`, `/focus?day=…&task=…&category=…`, `/pause`, `/finished-for-today`, `/stats`,
+  `/settings`, `/settings/categories`.
 
 More detail and the rules for contributors are in [CLAUDE.md](CLAUDE.md).
 
