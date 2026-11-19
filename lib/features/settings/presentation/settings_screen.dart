@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
+import 'package:focused_task/features/breaks/domain/interval_settings.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/settings/presentation/settings_state.dart';
 
@@ -141,6 +142,7 @@ class SettingsScreen extends ConsumerWidget {
             contentPadding: EdgeInsets.zero,
             onChanged: notifier.setPauseOnBackground,
           ),
+          const _IntervalsSection(),
           const SizedBox(height: 24),
           const _GoalsSection(),
           const SizedBox(height: 24),
@@ -170,6 +172,98 @@ Future<bool> _confirmCleanup(BuildContext context, {required int count, required
     ),
   );
   return confirmed ?? false;
+}
+
+/// Pomodoro-style work/break cycles: on/off, the lengths and auto-start.
+class _IntervalsSection extends ConsumerWidget {
+  const _IntervalsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final intervals = ref.watch(settingsNotifierProvider.select((settings) => settings.intervals));
+    final notifier = ref.read(settingsNotifierProvider.notifier);
+    String minutes(int value) => l10n.durationLabel(Duration(minutes: value));
+
+    return Column(
+      children: [
+        SwitchListTile(
+          key: const Key('settingsIntervals'),
+          title: Text(l10n.settingsIntervals),
+          subtitle: Text(l10n.settingsIntervalsHint),
+          value: intervals.isEnabled,
+          contentPadding: EdgeInsets.zero,
+          onChanged: (enabled) => notifier.setIntervals(intervals.copyWith(isEnabled: enabled)),
+        ),
+        if (intervals.isEnabled) ...[
+          _IntervalOption(
+            title: l10n.settingsIntervalWork,
+            value: intervals.work.inMinutes,
+            options: IntervalSettings.workOptions,
+            label: minutes,
+            onChanged: (value) => notifier.setIntervals(intervals.copyWith(work: Duration(minutes: value))),
+          ),
+          _IntervalOption(
+            title: l10n.settingsIntervalShortBreak,
+            value: intervals.shortBreak.inMinutes,
+            options: IntervalSettings.shortBreakOptions,
+            label: minutes,
+            onChanged: (value) => notifier.setIntervals(intervals.copyWith(shortBreak: Duration(minutes: value))),
+          ),
+          _IntervalOption(
+            title: l10n.settingsIntervalLongBreak,
+            value: intervals.longBreak.inMinutes,
+            options: IntervalSettings.longBreakOptions,
+            label: minutes,
+            onChanged: (value) => notifier.setIntervals(intervals.copyWith(longBreak: Duration(minutes: value))),
+          ),
+          _IntervalOption(
+            title: l10n.settingsIntervalLongBreakEvery,
+            value: intervals.longBreakEvery,
+            options: IntervalSettings.longBreakEveryOptions,
+            label: l10n.settingsIntervalCount,
+            onChanged: (value) => notifier.setIntervals(intervals.copyWith(longBreakEvery: value)),
+          ),
+          SwitchListTile(
+            title: Text(l10n.settingsIntervalAutoStart),
+            subtitle: Text(l10n.settingsIntervalAutoStartHint),
+            value: intervals.autoStart,
+            contentPadding: EdgeInsets.zero,
+            onChanged: (autoStart) => notifier.setIntervals(intervals.copyWith(autoStart: autoStart)),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// One length of the work/break cycle, picked from [options].
+class _IntervalOption extends StatelessWidget {
+  const _IntervalOption({required this.title, required this.value, required this.options, required this.label, required this.onChanged});
+
+  final String title;
+  final int value;
+  final List<int> options;
+  final String Function(int value) label;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Text(title),
+      trailing: DropdownButton<int>(
+        value: value,
+        onChanged: (selected) {
+          if (selected != null) onChanged(selected);
+        },
+        items: [
+          // A value stored by an older version that isn't an option any more stays selectable.
+          for (final option in {...options, value}.toList()..sort()) DropdownMenuItem(value: option, child: Text(label(option))),
+        ],
+      ),
+    );
+  }
 }
 
 /// Daily focus goal (off / 30 min … 8 h) and the working days it applies to.

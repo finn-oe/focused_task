@@ -8,6 +8,7 @@ import 'package:focused_task/features/calendar/presentation/calendar_screen.dart
 import 'package:focused_task/features/categories/presentation/categories_screen.dart';
 import 'package:focused_task/features/settings/presentation/settings_screen.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/features/tasks/presentation/focus_mode/break_screen.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/finished_for_today_screen.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_screen.dart';
@@ -24,6 +25,9 @@ abstract final class AppRoutes {
   static const settings = '/settings';
   static const focus = '/focus';
   static const pause = '/pause';
+
+  /// The break of a work/break cycle (#27).
+  static const breakTime = '/break';
   static const finishedForToday = '/finished-for-today';
   static const taskForm = '/task-form';
 
@@ -123,6 +127,7 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.plan}) {
       ),
       GoRoute(path: AppRoutes.finishedForToday, builder: (context, state) => const FinishedForTodayScreen()),
       GoRoute(path: AppRoutes.pause, builder: (context, state) => const PauseScreen()),
+      GoRoute(path: AppRoutes.breakTime, builder: (context, state) => const BreakScreen()),
       GoRoute(
         path: AppRoutes.taskForm,
         builder: (context, state) => TaskFormScreen(task: state.extra as TaskEntity?),

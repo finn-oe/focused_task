@@ -7,6 +7,7 @@ import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/breaks/domain/interval_settings.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_notifier.dart';
 import 'package:focused_task/features/categories/data/category_repository_impl.dart';
 import 'package:focused_task/features/categories/domain/i_category_repository.dart';
@@ -84,6 +85,9 @@ final statsReportProvider = StreamProvider.autoDispose.family<StatsReport, Stats
 
 /// The daily focus goal from the settings.
 final focusGoalProvider = Provider<FocusGoal>((ref) => ref.watch(settingsNotifierProvider.select((settings) => settings.focusGoal)));
+
+/// The work/break cycle settings (#27).
+final intervalSettingsProvider = Provider<IntervalSettings>((ref) => ref.watch(settingsNotifierProvider.select((settings) => settings.intervals)));
 
 /// No session is older than this; the start of the whole session log for [goalStatusProvider].
 final _historyStart = DateTime(2000);

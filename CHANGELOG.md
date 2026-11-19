@@ -3,6 +3,19 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.14.0] - 2026-11-19
+
+### Added
+- **Breaks**: optional Pomodoro-style work/break cycles in Settings → Focus Mode → "Work in intervals" (off by default): work 25 min, short break 5 min, long break 15 min after every 4 intervals, all adjustable. (#27)
+- Focus mode shows when the next break comes. At the end of a work interval the **break screen** counts down with a hint to stand up and look away, and offers "Skip break" and "Exit Focus". (#27)
+- After the break: "Ready? Continue with <task>" – or focus continues on its own with "Continue automatically after a break". (#27)
+- Notifications "Time for a break" and "Break is over" (channel *Breaks*), also while the app is in the background. (#27)
+- Statistics show break time next to the focus time; breaks never count as focus time, nor towards the daily goal and streaks. (#27)
+
+### Changed
+- A task's target alarm never rings at the same moment as a break: if the target falls at the end of a work interval, the alarm rings once after the break. (#27)
+- A break left open by a crash is closed at its last activity on the next start, without asking. (#27)
+
 ## [1.13.0] - 2026-11-19
 
 ### Added

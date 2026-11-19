@@ -9,6 +9,14 @@ Duration focusTimeWithin(FocusSession session, DateTime from, DateTime toExclusi
   return end.isAfter(start) ? end.difference(start) : Duration.zero;
 }
 
+/// Break time (#27) of [session] inside `[from, toExclusive)`. Focus sessions count as zero.
+Duration breakTimeWithin(FocusSession session, DateTime from, DateTime toExclusive) {
+  if (session.kind != SessionKind.breakTime) return Duration.zero;
+  final start = session.startedAt.isAfter(from) ? session.startedAt : from;
+  final end = session.effectiveEnd.isBefore(toExclusive) ? session.effectiveEnd : toExclusive;
+  return end.isAfter(start) ? end.difference(start) : Duration.zero;
+}
+
 /// Focus time per calendar day of [range] (local midnight keys, in date order). Sessions are split at local midnight,
 /// so a session from 23:30 to 00:30 counts 30 minutes on each day. Days without focus time are omitted.
 ///

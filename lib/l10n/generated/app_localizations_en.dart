@@ -1034,4 +1034,83 @@ class AppLocalizationsEn extends AppLocalizations {
   String focusTitleCategory(String name) {
     return 'Focus: $name';
   }
+
+  @override
+  String get settingsIntervals => 'Work in intervals';
+
+  @override
+  String get settingsIntervalsHint => 'Pomodoro style: focus for a set time, then take a short break.';
+
+  @override
+  String get settingsIntervalWork => 'Work interval';
+
+  @override
+  String get settingsIntervalShortBreak => 'Short break';
+
+  @override
+  String get settingsIntervalLongBreak => 'Long break';
+
+  @override
+  String get settingsIntervalLongBreakEvery => 'Long break after';
+
+  @override
+  String settingsIntervalCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count intervals', one: '1 interval');
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsIntervalAutoStart => 'Continue automatically after a break';
+
+  @override
+  String get settingsIntervalAutoStartHint => 'Otherwise focus waits until you are ready.';
+
+  @override
+  String focusBreakIn(String duration) {
+    return 'Break in $duration';
+  }
+
+  @override
+  String get breakShortTitle => 'Short break';
+
+  @override
+  String get breakLongTitle => 'Long break';
+
+  @override
+  String get breakHint => 'Stand up, stretch and look away from the screen.';
+
+  @override
+  String get breakSkip => 'Skip break';
+
+  @override
+  String get breakReadyTitle => 'Ready?';
+
+  @override
+  String breakContinueWith(String task) {
+    return 'Continue with $task';
+  }
+
+  @override
+  String get breakContinue => 'Continue';
+
+  @override
+  String get notificationBreakTitle => 'Time for a break';
+
+  @override
+  String notificationBreakBody(String duration) {
+    return 'Take $duration off. Stand up and look away from the screen.';
+  }
+
+  @override
+  String get notificationBreakOverTitle => 'Break is over';
+
+  @override
+  String notificationBreakOverBody(String task) {
+    return 'Ready? Continue with $task.';
+  }
+
+  @override
+  String statsBreakTime(String duration) {
+    return '+ $duration breaks';
+  }
 }

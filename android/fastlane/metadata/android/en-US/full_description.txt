@@ -1,0 +1,28 @@
+Focused Task is a simple planner with a built-in focus mode. Plan your day, work through it one task at a time, and see where your time really went – without accounts, ads or tracking.
+
+PLAN
+• Put tasks on days, order them by drag and drop and break them into sub-tasks.
+• Estimate how long a task takes; an alarm rings when the time is up.
+• Group tasks into categories with their own colour, as a list or as a board.
+• Week and month calendar to move tasks between days.
+• Unfinished tasks from the last days can be moved to today with one tap.
+
+FOCUS
+• Focus mode shows one task at a time: its timer, its sub-tasks and what comes next.
+• Optional breaks in the Pomodoro style: work for 25 minutes, then take a short break, with a longer one after every fourth round. All lengths are adjustable.
+• Focus on a single category, skip a task for later, or add a sub-task without leaving focus.
+• Optionally pauses when you leave the app and keeps the screen awake.
+
+TRACK
+• Every minute of focused work is recorded, also across app switches, crashes and midnight.
+• If the app was closed during a session, you decide whether to keep the time.
+• Missing time can be added by hand.
+
+REFLECT
+• Statistics per day, week, month or year: focus time, completed tasks, planned vs. actual time, your best focus hours and top tasks.
+• A daily focus goal for your working days, with streaks.
+• Break time is shown separately and never counts as focus time.
+
+PRIVATE BY DESIGN
+• All data stays on your device. No account, no ads, no tracking.
+• Light and dark theme, English and German.

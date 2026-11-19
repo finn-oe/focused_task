@@ -90,6 +90,7 @@ class StatsReport {
     required this.topTasks,
     required this.interruptionsPerFocusHour,
     this.focusByCategory = const [],
+    this.breakTotal = Duration.zero,
   });
 
   final StatsQuery query;
@@ -127,6 +128,9 @@ class StatsReport {
 
   /// Focus time per category, most first; categories without focus time in the range are left out.
   final List<CategoryFocusTime> focusByCategory;
+
+  /// Break time of the work/break cycles (#27) inside the range; never part of [focusTotal].
+  final Duration breakTotal;
 
   /// Whether any focus time of the range belongs to a category.
   bool get hasCategorizedFocus => focusByCategory.any((entry) => entry.categoryId != null);

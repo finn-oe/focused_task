@@ -63,6 +63,7 @@ Rules:
 - **Dependency direction:** `presentation → domain ← data`. Presentation code depends on repository *interfaces* (`ITaskRepository`), never on `AppDatabase` or Drift row classes.
 - **Domain is pure Dart.** Entities are immutable, have `copyWith`, and contain no Flutter or Drift imports.
 - **Tracked time lives in `focus_sessions`** (`lib/features/sessions/`, `IFocusSessionRepository`). Start/heartbeat/end sessions through the repository; never write `tasks.time_spent` directly – it is a cached total that `end()` / `addManualTime()` update in the same transaction. At most one session is open at a time. Statistics count focus time on the day it happened (`focusTimeByDay` splits at local midnight); all statistics numbers come from the pure `StatsCalculator` (`lib/features/tasks/domain/stats/`); goal progress and streaks from the pure `StreakCalculator` (`lib/features/goals/domain/`, fed by `focusTimeByDay`).
+- **Breaks** (`lib/features/breaks/`): the pure `IntervalPlanner` is the work/break state machine; `FocusModeNotifier` drives it (`state.intervals`), ends the focus session with `EndReason.interval` and records the break as a `kind = 'break'` session without a task. Break time never counts as focus time.
 - **Categories** (`lib/features/categories/`, `ICategoryRepository`, `categoriesNotifierProvider`) store a palette index (`CategoryColor` in `lib/core/ui/category_palette.dart`), never a colour. Deleting a category sets its tasks' `category_id` to `NULL`; archived ones are hidden from pickers, filters and the board.
 - **Business logic lives in notifiers/domain**, not in widgets. Widgets render state and forward user intent.
 - **Notifiers** extend `Notifier` and get their dependencies with `ref.watch(...)` in `build()`, never via constructors. Widgets never read `taskRepositoryProvider` directly; data a screen loads goes through a provider (e.g. `statsReportProvider`) or a notifier method.
@@ -120,7 +121,7 @@ flutter run -d windows   # or chrome, macos, linux, android, ios
 
 ## Workflow
 
-- **Start with the roadmap issue #38.** It lists the open issues in the order they should be done, which ones can run in parallel, and the rules for picking one up.
+- **Start with the roadmap issue #38** (or run the `/next-issue` skill in `.claude/skills/next-issue/`, which does this whole workflow and the release preparation). It lists the open issues in the order they should be done, which ones can run in parallel, and the rules for picking one up.
 - Every `agent-ready` issue has *Order* (depends on / blocks), *Context*, *Tasks*, *Acceptance criteria* and a *Definition of done*. Follow it, and update the spec of later issues if your work changes them.
 - Branch `issue-<number>-<slug>` from `main`, one issue per PR, `Fixes #<number>` in the PR body, tick the box in #38 after merging.
 - Never develop two database schema changes at the same time (each bumps `schemaVersion`).
@@ -134,6 +135,7 @@ Every merged PR ships as a new version: a Git tag, a GitHub Release and a signed
 1. **In the PR** (before merging):
    - Bump `version` in `pubspec.yaml` with SemVer: new feature → minor (`1.1.0` → `1.2.0`), fix / tech debt / docs → patch (`1.2.0` → `1.2.1`), incompatible data or behaviour change → major. **Always increase the build number** after `+` by one: it is the Android `versionCode` and must grow, or updates won't install.
    - Add a section `## [x.y.z] - YYYY-MM-DD` at the top of `CHANGELOG.md` (Keep a Changelog: *Added*, *Changed*, *Fixed*, *Removed*) with user-facing changes and the issue number.
+   - Write the Play Store "What's new" texts (at most 500 characters, for users, no issue numbers) to `android/fastlane/metadata/android/{en-US,de-DE}/changelogs/<versionCode>.txt`, update the store listing there if features changed, and add the release sheet `release-notes/vX.Y.Z.md`.
 2. **After merging** (on an up-to-date `main`):
    ```bash
    git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z

@@ -22,7 +22,7 @@ class FocusSessions extends Table {
   /// Heartbeat of the running session.
   DateTimeColumn get lastSeenAt => dateTime().named('last_seen_at')();
 
-  /// paused | completed | exited | background | recovered | discarded | manual | migrated
+  /// paused | completed | skipped | exited | background | recovered | discarded | manual | migrated | interval
   TextColumn get endReason => text().named('end_reason').nullable()();
 
   IntColumn get interruptions => integer().withDefault(const Constant(0))();

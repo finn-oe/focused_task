@@ -1037,4 +1037,83 @@ class AppLocalizationsDe extends AppLocalizations {
   String focusTitleCategory(String name) {
     return 'Fokus: $name';
   }
+
+  @override
+  String get settingsIntervals => 'In Intervallen arbeiten';
+
+  @override
+  String get settingsIntervalsHint => 'Wie Pomodoro: eine feste Zeit fokussiert arbeiten, dann kurz Pause machen.';
+
+  @override
+  String get settingsIntervalWork => 'Arbeitsintervall';
+
+  @override
+  String get settingsIntervalShortBreak => 'Kurze Pause';
+
+  @override
+  String get settingsIntervalLongBreak => 'Lange Pause';
+
+  @override
+  String get settingsIntervalLongBreakEvery => 'Lange Pause nach';
+
+  @override
+  String settingsIntervalCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count Intervallen', one: '1 Intervall');
+    return '$_temp0';
+  }
+
+  @override
+  String get settingsIntervalAutoStart => 'Nach einer Pause automatisch weitermachen';
+
+  @override
+  String get settingsIntervalAutoStartHint => 'Sonst wartet der Fokus, bis du bereit bist.';
+
+  @override
+  String focusBreakIn(String duration) {
+    return 'Pause in $duration';
+  }
+
+  @override
+  String get breakShortTitle => 'Kurze Pause';
+
+  @override
+  String get breakLongTitle => 'Lange Pause';
+
+  @override
+  String get breakHint => 'Steh auf, streck dich und schau weg vom Bildschirm.';
+
+  @override
+  String get breakSkip => 'Pause überspringen';
+
+  @override
+  String get breakReadyTitle => 'Bereit?';
+
+  @override
+  String breakContinueWith(String task) {
+    return 'Weiter mit $task';
+  }
+
+  @override
+  String get breakContinue => 'Weiter';
+
+  @override
+  String get notificationBreakTitle => 'Zeit für eine Pause';
+
+  @override
+  String notificationBreakBody(String duration) {
+    return 'Mach $duration Pause. Steh auf und schau weg vom Bildschirm.';
+  }
+
+  @override
+  String get notificationBreakOverTitle => 'Die Pause ist vorbei';
+
+  @override
+  String notificationBreakOverBody(String task) {
+    return 'Bereit? Weiter mit $task.';
+  }
+
+  @override
+  String statsBreakTime(String duration) {
+    return '+ $duration Pausen';
+  }
 }

@@ -8,6 +8,7 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/breaks/domain/interval_planner.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
@@ -43,6 +44,8 @@ class FocusModeState {
     this.shouldShowFinishedForToday = false,
     this.shouldShowAlarm = false,
     this.hasAlarmPlayedForCurrentTask = false,
+    this.intervals,
+    this.isBreakOver = false,
   });
 
   factory FocusModeState.initial() {
@@ -73,6 +76,15 @@ class FocusModeState {
   /// Whether the target alarm already rang (or the target was already exceeded) for [currentTask].
   final bool hasAlarmPlayedForCurrentTask;
 
+  /// The work/break cycle (#27), or `null` if intervals are off.
+  final IntervalPlanner? intervals;
+
+  /// A break is running; focus time doesn't count meanwhile.
+  bool get isOnBreak => intervals?.phase.isBreak ?? false;
+
+  /// The break is over and the next work interval waits for the user.
+  final bool isBreakOver;
+
   Duration get totalSessionDuration {
     final runningMs = isPaused || sessionStartedAt == null ? 0 : now.difference(sessionStartedAt!).inMilliseconds;
     return Duration(milliseconds: sessionBaseMs + runningMs);
@@ -100,6 +112,9 @@ class FocusModeState {
     bool? shouldShowFinishedForToday,
     bool? shouldShowAlarm,
     bool? hasAlarmPlayedForCurrentTask,
+    IntervalPlanner? intervals,
+    bool? isBreakOver,
+    bool clearIntervals = false,
     bool clearCurrentTask = false,
     bool clearSessionStartedAt = false,
     bool clearError = false,
@@ -118,6 +133,8 @@ class FocusModeState {
       shouldShowFinishedForToday: shouldShowFinishedForToday ?? this.shouldShowFinishedForToday,
       shouldShowAlarm: shouldShowAlarm ?? this.shouldShowAlarm,
       hasAlarmPlayedForCurrentTask: hasAlarmPlayedForCurrentTask ?? this.hasAlarmPlayedForCurrentTask,
+      intervals: clearIntervals ? null : intervals ?? this.intervals,
+      isBreakOver: isBreakOver ?? this.isBreakOver,
     );
   }
 }
@@ -131,10 +148,20 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
 
   /// The open focus session of [FocusModeState.currentTask], or `null` while paused.
   int? _sessionId;
+
+  /// The open break session, or `null` if no break runs.
+  int? _breakSessionId;
   DateTime? _lastHeartbeat;
+
+  /// Set while an interval end is handled, so the ticker doesn't handle it twice.
+  bool _isAdvancingIntervals = false;
 
   /// How often a running session records that it is still alive.
   static const heartbeatInterval = Duration(seconds: 30);
+
+  /// A target alarm due this close to the end of a work interval waits until after the break, so the two never ring
+  /// at the same moment (the interval has priority).
+  static const alarmGap = Duration(minutes: 1);
 
   @override
   FocusModeState build() {
@@ -162,7 +189,14 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     final open = (await _repository.getTasksForDay(request.day)).where((task) => !task.isCompleted && (category == null || task.categoryId == category)).toList();
     final startIndex = open.indexWhere((task) => task.id == request.startTaskId);
     final queue = startIndex <= 0 ? open : [...open.sublist(startIndex), ...open.sublist(0, startIndex)];
-    state = state.copyWith(queue: queue);
+    // A new focus run starts a new work/break cycle; settings changed meanwhile apply from here on.
+    final intervals = ref.read(intervalSettingsProvider);
+    state = state.copyWith(
+      queue: queue,
+      intervals: intervals.isEnabled ? IntervalPlanner(settings: intervals) : null,
+      clearIntervals: !intervals.isEnabled,
+      isBreakOver: false,
+    );
 
     await _loadCurrentTask();
   }
@@ -205,16 +239,61 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     return Duration(minutes: target) - task.elapsedAt(now);
   }
 
-  /// Schedules the OS/background alarm for the running [task] – only if its target is still ahead.
+  /// Schedules the OS/background alarm for the running [task] if it hasn't rung yet. A target that was reached while
+  /// the alarm was deferred (see [alarmGap]) rings right away; a target at or near the end of the running work
+  /// interval is left to the next work interval.
   Future<void> _scheduleTargetAlarm(TaskEntity task, DateTime now) async {
     final remaining = _remainingUntilTarget(task, now);
-    if (remaining == null || remaining <= Duration.zero || state.hasAlarmPlayedForCurrentTask) {
+    if (remaining == null || state.hasAlarmPlayedForCurrentTask) {
+      return;
+    }
+    final at = remaining.isNegative ? now : now.add(remaining);
+    final intervalEnd = state.intervals?.phase == IntervalPhase.work ? state.intervals?.endsAt : null;
+    if (intervalEnd != null && !at.isBefore(intervalEnd.subtract(alarmGap))) {
       return;
     }
     // Read at schedule time (not watched): switching the language must not reset a running session.
     final l10n = ref.read(appLocalizationsProvider);
     final notification = AlarmNotification(title: l10n.focusTimeIsUp, body: l10n.focusAlarmNotificationBody(task.title), stopButton: l10n.focusAlarmStopButton);
-    await _alarm.schedule(notification: notification, at: now.add(remaining));
+    await _alarm.schedule(notification: notification, at: at);
+  }
+
+  /// Whether the target alarm waits because the work interval is about to end (see [alarmGap]).
+  bool _isTargetAlarmDeferred(DateTime now) {
+    final intervals = state.intervals;
+    return intervals != null && intervals.phase == IntervalPhase.work && intervals.isRunning && intervals.remaining(now) <= alarmGap;
+  }
+
+  /// Schedules the "time for a break" notification for the end of the running work interval, so it also arrives while
+  /// the app is in the background.
+  Future<void> _scheduleBreakNotification() async {
+    final intervals = state.intervals;
+    final at = intervals?.endsAt;
+    if (intervals == null || intervals.phase != IntervalPhase.work || at == null) return;
+    final breakLength = intervals.nextPhase == IntervalPhase.longBreak ? intervals.settings.longBreak : intervals.settings.shortBreak;
+    final l10n = ref.read(appLocalizationsProvider);
+    final notification = AppNotification(
+      id: NotificationIds.breakStarts,
+      channel: NotificationChannel.breaks,
+      title: l10n.notificationBreakTitle,
+      body: l10n.notificationBreakBody(l10n.durationLabel(breakLength)),
+    );
+    await _notifications.schedule(notification, at);
+  }
+
+  /// Schedules the "break is over" notification for the end of the running break.
+  Future<void> _scheduleBreakOverNotification() async {
+    final at = state.intervals?.endsAt;
+    final task = state.currentTask;
+    if (!state.isOnBreak || at == null || task == null) return;
+    final l10n = ref.read(appLocalizationsProvider);
+    final notification = AppNotification(
+      id: NotificationIds.breakOver,
+      channel: NotificationChannel.breaks,
+      title: l10n.notificationBreakOverTitle,
+      body: l10n.notificationBreakOverBody(task.title),
+    );
+    await _notifications.schedule(notification, at);
   }
 
   Future<void> _loadCurrentTask() async {
@@ -230,7 +309,10 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
         shouldShowFinishedForToday: true,
         shouldShowAlarm: false,
         hasAlarmPlayedForCurrentTask: false,
+        clearIntervals: true,
+        isBreakOver: false,
       );
+      await _notifications.cancel(NotificationIds.breakStarts);
       return;
     }
 
@@ -253,9 +335,12 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
       shouldShowFinishedForToday: false,
       // A task that is already over its target must not ring again every time focus is (re)entered.
       hasAlarmPlayedForCurrentTask: remaining != null && remaining <= Duration.zero,
+      // The work interval runs across tasks: it starts with the first task and goes on when the task changes.
+      intervals: state.intervals?.start(now),
     );
 
     await _scheduleTargetAlarm(current, now);
+    await _scheduleBreakNotification();
     await _scheduleGoalNotification(now);
   }
 
@@ -286,32 +371,132 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
       clearSessionStartedAt: true,
       now: now,
       shouldShowFinishedForToday: false,
+      // The work interval stops with the session and continues with the time that was left.
+      intervals: state.intervals?.pause(now),
     );
   }
 
+  /// Continues a paused session. Does nothing during a break: the break screen goes on with [skipBreak] or
+  /// [continueAfterBreak].
   Future<void> resumeSession() async {
-    final task = state.currentTask;
-    if (task == null || !state.isPaused) {
+    if (state.currentTask == null || !state.isPaused || state.isOnBreak || state.isBreakOver) {
       return;
     }
+    await _startWork(clock.now());
+  }
 
-    final now = clock.now();
-    _sessionId = (await _sessions.start(taskId: task.id, at: now)).id;
+  /// Starts a focus session for the current task at [at] (also the next work interval after a break).
+  Future<void> _startWork(DateTime at) async {
+    final task = state.currentTask;
+    if (task == null) return;
+
+    _sessionId = (await _sessions.start(taskId: task.id, at: at)).id;
     final updatedTask = await _repository.getTaskById(task.id);
 
     _startTicker();
-    state = state.copyWith(currentTask: updatedTask, isPaused: false, sessionStartedAt: now, now: now, shouldShowFinishedForToday: false);
+    final now = clock.now();
+    state = state.copyWith(
+      currentTask: updatedTask,
+      isPaused: false,
+      sessionStartedAt: at,
+      now: now,
+      shouldShowFinishedForToday: false,
+      intervals: state.intervals?.start(at),
+      isBreakOver: false,
+    );
 
     if (updatedTask != null) {
       await _scheduleTargetAlarm(updatedTask, now);
     }
+    await _scheduleBreakNotification();
     await _scheduleGoalNotification(now);
   }
 
-  /// Cancels the target alarm and the goal notification; both are scheduled again when focus continues.
-  Future<void> _cancelReminders() async {
+  /// Handles every phase of the work/break cycle that is over at [now], in order: after the app was suspended for a
+  /// while, a work interval and the following break may both be over.
+  Future<void> _advanceIntervals(DateTime now) async {
+    if (_isAdvancingIntervals) return;
+    _isAdvancingIntervals = true;
+    try {
+      while (true) {
+        final intervals = state.intervals;
+        final end = intervals?.endsAt;
+        if (intervals == null || end == null || !intervals.isDue(now)) break;
+        if (intervals.phase == IntervalPhase.work) {
+          await _endWorkInterval(end);
+        } else {
+          await _endBreak(end);
+        }
+      }
+    } finally {
+      _isAdvancingIntervals = false;
+    }
+  }
+
+  /// The work interval is over at [at]: the focus session ends there and the break starts.
+  Future<void> _endWorkInterval(DateTime at) async {
+    // The break notification is due right now and must still arrive while the app is in the background.
+    await _cancelReminders(keepBreakNotification: true);
+    final task = state.currentTask;
+    final sessionId = _sessionId;
+    _sessionId = null;
+    if (sessionId != null) {
+      await _sessions.end(sessionId, at, EndReason.interval);
+    }
+    final updatedTask = task == null ? null : await _repository.getTaskById(task.id);
+    final startedAt = state.sessionStartedAt;
+    final runningMs = startedAt == null ? 0 : at.difference(startedAt).inMilliseconds;
+    _breakSessionId = (await _sessions.start(kind: SessionKind.breakTime, at: at)).id;
+
+    state = state.copyWith(
+      currentTask: updatedTask,
+      sessionBaseMs: state.sessionBaseMs + (runningMs < 0 ? 0 : runningMs),
+      isPaused: true,
+      clearSessionStartedAt: true,
+      now: clock.now(),
+      intervals: state.intervals?.next(at),
+      isBreakOver: false,
+    );
+    await _scheduleBreakOverNotification();
+  }
+
+  /// The break is over at [at]: with auto-start the next work interval starts there, otherwise it waits for the user.
+  Future<void> _endBreak(DateTime at) async {
+    await _closeBreakSession(at, EndReason.interval);
+    final intervals = state.intervals!;
+    final autoStart = intervals.settings.autoStart;
+    state = state.copyWith(intervals: intervals.next(at, start: false), isBreakOver: !autoStart, now: clock.now());
+    if (autoStart) await _startWork(at);
+  }
+
+  Future<void> _closeBreakSession(DateTime at, EndReason reason) async {
+    final breakId = _breakSessionId;
+    _breakSessionId = null;
+    if (breakId != null) await _sessions.end(breakId, at, reason);
+  }
+
+  /// Ends the running break now and starts the next work interval.
+  Future<void> skipBreak() async {
+    final intervals = state.intervals;
+    if (intervals == null || !state.isOnBreak) return;
+    final now = clock.now();
+    await _notifications.cancel(NotificationIds.breakOver);
+    await _closeBreakSession(now, EndReason.skipped);
+    state = state.copyWith(intervals: intervals.skip(now));
+    await _startWork(now);
+  }
+
+  /// Starts the next work interval after a break that is over ([FocusModeState.isBreakOver]).
+  Future<void> continueAfterBreak() async {
+    if (!state.isBreakOver) return;
+    await _startWork(clock.now());
+  }
+
+  /// Cancels the target alarm, the goal and the break notification; they are scheduled again when focus continues.
+  Future<void> _cancelReminders({bool keepBreakNotification = false}) async {
     await _alarm.cancel();
     await _notifications.cancel(NotificationIds.goalReached);
+    if (!keepBreakNotification) await _notifications.cancel(NotificationIds.breakStarts);
   }
 
   /// Schedules the "goal reached" notification for the moment today's focus time reaches the daily goal, if focus
@@ -354,9 +539,13 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
 
   Future<void> exitFocus() async {
     await pauseSession(reason: EndReason.exited);
+    await _closeBreakSession(clock.now(), EndReason.exited);
     await _cancelReminders();
+    await _notifications.cancel(NotificationIds.breakOver);
     _stopTicker();
     state = state.copyWith(
+      clearIntervals: true,
+      isBreakOver: false,
       clearCurrentTask: true,
       queue: const [],
       isPaused: true,
@@ -367,8 +556,21 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     );
   }
 
-  /// Sessions that were left running, e.g. because the app was killed while focusing.
-  Future<List<FocusSession>> loadRecoverableSessions() => _sessions.unfinishedSessions();
+  /// Focus sessions that were left running, e.g. because the app was killed while focusing. Breaks left open hold no
+  /// focus time, so they are closed at their last activity right away instead of asking.
+  Future<List<FocusSession>> loadRecoverableSessions() async {
+    final recoverable = <FocusSession>[];
+    for (final session in await _sessions.unfinishedSessions()) {
+      // Sessions this notifier is running are not left over.
+      if (session.id == _sessionId || session.id == _breakSessionId) continue;
+      if (session.kind == SessionKind.breakTime) {
+        await _sessions.end(session.id, session.lastActivityAt, EndReason.recovered);
+      } else {
+        recoverable.add(session);
+      }
+    }
+    return recoverable;
+  }
 
   Future<void> recoverSessions({required SessionRecovery recovery, required List<FocusSession> sessions}) async {
     final now = clock.now();
@@ -410,14 +612,20 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
 
   void _tick() {
     final now = clock.now();
-    final task = state.currentTask;
-    final remaining = task == null ? null : _remainingUntilTarget(task, now);
-    final reachedTarget = remaining != null && remaining <= Duration.zero && !state.hasAlarmPlayedForCurrentTask;
+    if (state.intervals?.isDue(now) ?? false) {
+      // The interval end has priority over the target alarm at the same moment.
+      unawaited(_advanceIntervals(now));
+      return;
+    }
 
-    if (task != null && !state.isPaused && (_lastHeartbeat == null || now.difference(_lastHeartbeat!) >= heartbeatInterval)) {
+    final task = state.currentTask;
+    final remaining = task == null || state.isPaused ? null : _remainingUntilTarget(task, now);
+    final reachedTarget = remaining != null && remaining <= Duration.zero && !state.hasAlarmPlayedForCurrentTask && !_isTargetAlarmDeferred(now);
+
+    final runningId = state.isPaused ? _breakSessionId : _sessionId;
+    if (runningId != null && (_lastHeartbeat == null || now.difference(_lastHeartbeat!) >= heartbeatInterval)) {
       _lastHeartbeat = now;
-      final sessionId = _sessionId;
-      if (sessionId != null) unawaited(_sessions.heartbeat(sessionId, now));
+      unawaited(_sessions.heartbeat(runningId, now));
     }
 
     // The alarm itself is rung by [TargetAlarm]; here we only show the in-app dialog.

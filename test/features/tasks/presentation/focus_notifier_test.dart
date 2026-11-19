@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart' show Locale;
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/breaks/domain/interval_settings.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
@@ -23,6 +24,7 @@ void _runFocus(
   List<TaskEntity> tasks,
   void Function(FakeAsync async, FocusModeNotifier notifier, FakeTaskRepository repository, FakeTargetAlarm alarm) body, {
   FocusGoal goal = FocusGoal.off,
+  IntervalSettings intervals = IntervalSettings.off,
   FakeNotificationService? notifications,
   DateTime? initialTime,
 }) {
@@ -37,6 +39,7 @@ void _runFocus(
         targetAlarmProvider.overrideWithValue(alarm),
         notificationServiceProvider.overrideWithValue(notifications ?? FakeNotificationService()),
         focusGoalProvider.overrideWithValue(goal),
+        intervalSettingsProvider.overrideWithValue(intervals),
         _english,
       ],
     );
@@ -287,6 +290,7 @@ void main() {
             targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
             notificationServiceProvider.overrideWithValue(FakeNotificationService()),
             focusGoalProvider.overrideWithValue(FocusGoal.off),
+            intervalSettingsProvider.overrideWithValue(IntervalSettings.off),
             _english,
           ],
         );

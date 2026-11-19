@@ -7,6 +7,7 @@ import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/categories/domain/task_category.dart';
+import 'package:focused_task/features/breaks/domain/interval_settings.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_draft.dart';
@@ -219,6 +220,7 @@ void main() {
           targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
           notificationServiceProvider.overrideWithValue(FakeNotificationService()),
           focusGoalProvider.overrideWithValue(FocusGoal.off),
+          intervalSettingsProvider.overrideWithValue(IntervalSettings.off),
           appLocalizationsProvider.overrideWithValue(lookupAppLocalizations(const Locale('en'))),
         ],
       );

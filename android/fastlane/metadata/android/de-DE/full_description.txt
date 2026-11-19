@@ -1,0 +1,28 @@
+Focused Task ist ein einfacher Planer mit eingebautem Fokusmodus. Plane deinen Tag, arbeite ihn Aufgabe für Aufgabe ab und sieh, wohin deine Zeit wirklich gegangen ist – ohne Konto, Werbung oder Tracking.
+
+PLANEN
+• Aufgaben auf Tage legen, per Drag & Drop sortieren und in Teilaufgaben zerlegen.
+• Schätzen, wie lange eine Aufgabe dauert; ein Alarm klingelt, wenn die Zeit um ist.
+• Aufgaben in Kategorien mit eigener Farbe ordnen, als Liste oder als Board.
+• Wochen- und Monatskalender, um Aufgaben zwischen Tagen zu verschieben.
+• Unerledigte Aufgaben der letzten Tage mit einem Tipp auf heute holen.
+
+FOKUSSIEREN
+• Der Fokusmodus zeigt immer eine Aufgabe: ihre Zeit, ihre Teilaufgaben und was als Nächstes kommt.
+• Optionale Pausen wie bei Pomodoro: 25 Minuten arbeiten, dann kurz Pause machen, nach jeder vierten Runde länger. Alle Zeiten sind einstellbar.
+• Nur eine Kategorie bearbeiten, eine Aufgabe nach hinten schieben oder eine Teilaufgabe hinzufügen, ohne den Fokus zu verlassen.
+• Pausiert auf Wunsch, wenn du die App verlässt, und hält den Bildschirm an.
+
+ERFASSEN
+• Jede fokussierte Minute wird gespeichert – auch über App-Wechsel, Abstürze und Mitternacht hinweg.
+• Wurde die App während einer Sitzung geschlossen, entscheidest du, ob die Zeit zählt.
+• Fehlende Zeit lässt sich von Hand nachtragen.
+
+REFLEKTIEREN
+• Statistik pro Tag, Woche, Monat oder Jahr: Fokuszeit, erledigte Aufgaben, geplante vs. tatsächliche Zeit, deine besten Fokusstunden und Top-Aufgaben.
+• Ein tägliches Fokusziel für deine Arbeitstage, mit Serien.
+• Pausenzeit wird getrennt gezeigt und zählt nie als Fokuszeit.
+
+PRIVAT
+• Alle Daten bleiben auf deinem Gerät. Kein Konto, keine Werbung, kein Tracking.
+• Helles und dunkles Design, Deutsch und Englisch.
