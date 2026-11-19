@@ -17,6 +17,12 @@ abstract final class NotificationIds {
   static const focusAlarm = 1;
   static const test = 2;
   static const goalReached = 3;
+
+  /// A work interval is over: time for a break (#27).
+  static const breakStarts = 4;
+
+  /// The break is over (#27).
+  static const breakOver = 5;
 }
 
 /// A system notification. Texts are already localized.

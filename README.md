@@ -32,6 +32,11 @@ compared to reality – so you can get a little more dedicated every day.
   today (can be turned off in Settings → Planning).
 - **Focus mode** – works through today's open tasks in order. Shows the time spent on the current task
   (or the time remaining until the target), the overall session time, and the sub-task progress.
+- **Breaks (intervals)** – optional Pomodoro-style cycles, off by default: work 25 min, then a 5 min break, and a
+  15 min break after every 4 intervals (all adjustable in the settings). Focus shows when the next break comes; the
+  break screen counts down and offers "Skip break", then asks "Ready? Continue with …" (or continues on its own).
+  Notifications announce the break and its end in the background. Break time is recorded but never counts as focus
+  time; the statistics show it separately.
 - **Target alarm** – rings when a task's target duration is reached (native alarm on Android/iOS, sound and system
   notification on desktop and web). Notification permission is asked the first time you enter focus mode; Settings
   has a test notification.
@@ -50,11 +55,11 @@ compared to reality – so you can get a little more dedicated every day.
   by the current goal. While you focus, a notification says when the goal is reached (once a day).
 - **Languages** – English and German; follows the system language or can be chosen in the settings.
 - **Settings** – light/dark/system theme, language, the daily rollover prompt, data retention, focus-mode behaviour,
-  daily focus goal and working days.
+  daily focus goal and working days, work/break intervals.
 
 ### Planned
 
-Breaks (Pomodoro), distraction tracking, recurring tasks, data export and full support for every Flutter platform.
+Distraction tracking, recurring tasks, data export and full support for every Flutter platform.
 See [Roadmap](#roadmap).
 
 ## Platforms
@@ -127,6 +132,7 @@ lib/
 │   ├── ui/themes/          # light & dark Material 3 themes
 │   └── utils/              # formatting, fractional indexing, lifecycle observer
 └── features/
+    ├── breaks/             # work/break cycles: IntervalSettings, IntervalPlanner (pure state machine)
     ├── categories/         # task categories: TaskCategory, ICategoryRepository, management screen
     ├── goals/              # daily focus goal: FocusGoal, StreakCalculator, progress ring
     ├── settings/           # preferences (shared_preferences)
@@ -135,18 +141,20 @@ lib/
         ├── domain/         # TaskEntity, ITaskRepository, stats/ (StatsCalculator → StatsReport)
         └── presentation/
             ├── plan_mode/  # day list, task form
-            ├── focus_mode/ # focus, pause and "finished for today" screens
+            ├── focus_mode/ # focus, pause, break and "finished for today" screens
             └── stats/      # statistics screen
 ```
 
 How the pieces fit together:
 
 - **Ordering** uses fractional indexing (`sort_order` strings), so moving a task only updates one row.
-- **Time tracking:** a task stores its accumulated `time_spent` (ms) and `latest_start` while it is running.
-  Elapsed time = `time_spent + (now − latest_start)`.
+- **Time tracking:** every focus (or break) interval is a row in `focus_sessions`; `tasks.time_spent` caches the sum
+  of a task's closed focus sessions. A task's elapsed time = `time_spent + (now − start of its open session)`.
+- **Breaks:** the pure `IntervalPlanner` decides the phase (work → short break → … → long break). When a work interval
+  ends, its focus session ends (`end_reason = 'interval'`) and a `kind = 'break'` session starts.
 - **Categories:** `categories` table; `tasks.category_id` is set to `NULL` when a category is deleted. A category
   stores an index into the fixed palette, never a raw colour.
-- **Routes:** `/plan` (home), `/task-form`, `/focus?day=…&task=…&category=…`, `/pause`, `/finished-for-today`, `/stats`,
+- **Routes:** `/plan` (home), `/task-form`, `/focus?day=…&task=…&category=…`, `/pause`, `/break`, `/finished-for-today`, `/stats`,
   `/settings`, `/settings/categories`.
 
 More detail and the rules for contributors are in [CLAUDE.md](CLAUDE.md).

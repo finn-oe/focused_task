@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:focused_task/features/breaks/domain/interval_settings.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
 
 /// Outcome of the last cleanup run; the screen turns it into a localized message.
@@ -24,6 +25,7 @@ class SettingsState {
     this.askToMoveUnfinished = true,
     this.notificationsDenied = false,
     this.focusGoal = FocusGoal.off,
+    this.intervals = IntervalSettings.off,
     this.locale,
     this.lastCleanup,
   });
@@ -51,6 +53,9 @@ class SettingsState {
   /// Daily focus goal and working days; off by default.
   final FocusGoal focusGoal;
 
+  /// Pomodoro-style work/break cycles in focus mode; off by default.
+  final IntervalSettings intervals;
+
   SettingsState copyWith({
     ThemeMode? themeMode,
     Locale? locale,
@@ -65,6 +70,7 @@ class SettingsState {
     bool? askToMoveUnfinished,
     bool? notificationsDenied,
     FocusGoal? focusGoal,
+    IntervalSettings? intervals,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -78,6 +84,7 @@ class SettingsState {
       askToMoveUnfinished: askToMoveUnfinished ?? this.askToMoveUnfinished,
       notificationsDenied: notificationsDenied ?? this.notificationsDenied,
       focusGoal: focusGoal ?? this.focusGoal,
+      intervals: intervals ?? this.intervals,
     );
   }
 }

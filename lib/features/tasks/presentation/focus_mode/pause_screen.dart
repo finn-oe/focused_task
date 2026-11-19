@@ -15,7 +15,7 @@ class PauseScreen extends ConsumerWidget {
 
     Future<void> exitToPlan() async {
       await notifier.exitFocus();
-      if (context.mounted) context.go('/plan');
+      if (context.mounted) context.go(AppRoutes.plan);
     }
 
     return PopScope(

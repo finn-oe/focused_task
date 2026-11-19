@@ -5,6 +5,9 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/core/routing/app_router.dart';
+import 'package:focused_task/core/utils/duration_extensions.dart';
+import 'package:focused_task/features/breaks/domain/interval_planner.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/lifecycle_observer.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
@@ -45,7 +48,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   Future<void> _exitToPlan() async {
     await ref.read(focusModeNotifierProvider.notifier).exitFocus();
     if (!mounted) return;
-    context.go('/plan');
+    context.go(AppRoutes.plan);
   }
 
   Future<void> _showAlarmDialog() async {
@@ -72,10 +75,13 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       if (!mounted) return;
       if (previous?.shouldShowFinishedForToday != true && next.shouldShowFinishedForToday && !next.isLoading) {
         ref.read(focusModeNotifierProvider.notifier).clearFinishedForToday();
-        context.go('/finished-for-today');
+        context.go(AppRoutes.finishedForToday);
       }
       if (previous?.shouldShowAlarm != true && next.shouldShowAlarm) {
         _showAlarmDialog();
+      }
+      if (previous?.isOnBreak != true && next.isOnBreak) {
+        context.go(AppRoutes.breakTime);
       }
     });
 
@@ -92,7 +98,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         await notifier.pauseSession(reason: EndReason.background);
         if (settings.enableWakelock) await WakelockPlus.disable();
         if (!context.mounted) return;
-        context.go('/pause');
+        context.go(AppRoutes.pause);
       },
       onResume: () {},
       child: PopScope(
@@ -160,6 +166,10 @@ class _FocusBody extends ConsumerWidget {
               Expanded(child: SessionTimer(duration: state.totalSessionDuration)),
             ],
           ),
+          if (state.intervals case final intervals? when intervals.phase == IntervalPhase.work) ...[
+            const SizedBox(height: 8),
+            _BreakCountdown(remaining: intervals.remaining(state.now)),
+          ],
           const SizedBox(height: 24),
 
           Expanded(
@@ -246,6 +256,30 @@ class _FocusBody extends ConsumerWidget {
           OutlinedButton(onPressed: onExit, child: Text(context.l10n.focusExit)),
         ],
       ),
+    );
+  }
+}
+
+/// Time left in the work interval until the next break.
+class _BreakCountdown extends StatelessWidget {
+  const _BreakCountdown({required this.remaining});
+
+  final Duration remaining;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.self_improvement, size: 18, color: theme.colorScheme.onSurfaceVariant),
+        const SizedBox(width: 6),
+        Text(
+          context.l10n.focusBreakIn(remaining.toClockString()),
+          key: const Key('focusBreakIn'),
+          style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+        ),
+      ],
     );
   }
 }

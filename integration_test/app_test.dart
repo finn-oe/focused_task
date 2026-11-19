@@ -284,4 +284,34 @@ void main() {
     await app.restart(tester);
     expect(find.byTooltip('Show as list'), findsOneWidget, reason: 'the board view is remembered');
   });
+
+  testWidgets('intervals: a break left open by a crash is closed without asking; turned on, focus shows the next break', (tester) async {
+    final app = await TestApp.start(
+      tester,
+      seed: (database) async {
+        await TaskRepositoryImpl(database).createTask(title: 'Deep work', assignedDate: DateTime.now(), sortOrder: 'a0');
+        // The app was killed during a break.
+        await database.startSession(kind: 'break', at: DateTime.now().subtract(const Duration(minutes: 3)));
+      },
+    );
+    expect(find.text('Recover unfinished session?'), findsNothing);
+    expect(await app.database.getOpenSession(), isNull, reason: 'the break session was closed');
+
+    await tester.tapAndSettle(find.text('Settings').first);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('settingsIntervals')),
+      200,
+      scrollable: find.descendant(of: find.byType(SettingsScreen), matching: find.byType(Scrollable)).first,
+    );
+    await tester.tapAndSettle(find.byKey(const Key('settingsIntervals')));
+    expect(app.preferences.getBool('settings.intervals_enabled'), isTrue);
+    expect(find.text('Work interval'), findsOneWidget);
+
+    await tester.tapAndSettle(find.text('Plan').first);
+    await tester.tapAndSettle(find.text('Start focus'));
+    expect(find.textContaining('Break in 00:2'), findsOneWidget);
+
+    await tester.tapAndSettle(find.text('Exit Focus'));
+    expect(await app.database.getOpenSession(), isNull);
+  });
 }

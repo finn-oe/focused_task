@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/services/notification_service.dart';
+import 'package:focused_task/features/breaks/domain/interval_settings.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/settings/presentation/settings_state.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
@@ -22,6 +23,12 @@ class SettingsNotifier extends Notifier<SettingsState> {
   static const String _askToMoveUnfinishedKey = 'settings.ask_to_move_unfinished';
   static const String _dailyGoalMinutesKey = 'settings.daily_goal_minutes';
   static const String _workingDaysKey = 'settings.working_days';
+  static const String _intervalsEnabledKey = 'settings.intervals_enabled';
+  static const String _intervalWorkMinutesKey = 'settings.interval_work_minutes';
+  static const String _intervalShortBreakMinutesKey = 'settings.interval_short_break_minutes';
+  static const String _intervalLongBreakMinutesKey = 'settings.interval_long_break_minutes';
+  static const String _intervalLongBreakEveryKey = 'settings.interval_long_break_every';
+  static const String _intervalAutoStartKey = 'settings.interval_auto_start';
 
   late SharedPreferences _prefs;
   late ITaskRepository _repository;
@@ -51,6 +58,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       askToMoveUnfinished: prefs.getBool(_askToMoveUnfinishedKey) ?? true,
       notificationsDenied: prefs.getBool(_notificationsDeniedKey) ?? false,
       focusGoal: _loadFocusGoal(prefs),
+      intervals: _loadIntervals(prefs),
     );
   }
 
@@ -61,6 +69,34 @@ class SettingsNotifier extends Notifier<SettingsState> {
       daily: minutes > 0 ? Duration(minutes: minutes) : null,
       workingDays: stored == null || stored.isEmpty ? FocusGoal.defaultWorkingDays : stored,
     );
+  }
+
+  static IntervalSettings _loadIntervals(SharedPreferences prefs) {
+    Duration minutes(String key, Duration fallback) {
+      final value = prefs.getInt(key);
+      return value == null || value < 1 ? fallback : Duration(minutes: value);
+    }
+
+    final every = prefs.getInt(_intervalLongBreakEveryKey);
+    return IntervalSettings(
+      isEnabled: prefs.getBool(_intervalsEnabledKey) ?? false,
+      work: minutes(_intervalWorkMinutesKey, IntervalSettings.defaultWork),
+      shortBreak: minutes(_intervalShortBreakMinutesKey, IntervalSettings.defaultShortBreak),
+      longBreak: minutes(_intervalLongBreakMinutesKey, IntervalSettings.defaultLongBreak),
+      longBreakEvery: every == null || every < 1 ? IntervalSettings.defaultLongBreakEvery : every,
+      autoStart: prefs.getBool(_intervalAutoStartKey) ?? false,
+    );
+  }
+
+  /// Changes the work/break cycle settings. A running focus session keeps the cycle it started with.
+  Future<void> setIntervals(IntervalSettings intervals) async {
+    await _prefs.setBool(_intervalsEnabledKey, intervals.isEnabled);
+    await _prefs.setInt(_intervalWorkMinutesKey, intervals.work.inMinutes);
+    await _prefs.setInt(_intervalShortBreakMinutesKey, intervals.shortBreak.inMinutes);
+    await _prefs.setInt(_intervalLongBreakMinutesKey, intervals.longBreak.inMinutes);
+    await _prefs.setInt(_intervalLongBreakEveryKey, intervals.longBreakEvery);
+    await _prefs.setBool(_intervalAutoStartKey, intervals.autoStart);
+    state = state.copyWith(intervals: intervals);
   }
 
   /// Sets the daily focus goal; `null` turns it off.

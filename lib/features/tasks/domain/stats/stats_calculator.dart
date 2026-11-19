@@ -58,6 +58,7 @@ class StatsCalculator {
       topTasks: _topTasks(focusSessions, range, taskList),
       interruptionsPerFocusHour: !interruptionsTracked || focusHours == 0 ? null : interruptions / focusHours,
       focusByCategory: _focusByCategory(focusSessions, from, toExclusive, taskList),
+      breakTotal: sessions.fold(Duration.zero, (sum, session) => sum + breakTimeWithin(session, from, toExclusive)),
     );
   }
 

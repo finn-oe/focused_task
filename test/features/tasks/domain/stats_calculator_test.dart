@@ -217,5 +217,21 @@ void main() {
       expect(report.hasCategorizedFocus, isTrue);
       expect(calculator.compute(week, tasks: const [], sessions: [_session(nine, _minute * 5)], today: monday).hasCategorizedFocus, isFalse);
     });
+
+    test('break time is reported separately and never counts as focus time', () {
+      final nine = monday.add(const Duration(hours: 9));
+      final sessions = [
+        _session(nine, _minute * 25),
+        _session(nine.add(_minute * 25), _minute * 5, taskId: null, kind: SessionKind.breakTime),
+        _session(nine.add(_minute * 30), _minute * 25),
+        // Before the range: only the part inside counts.
+        _session(monday.subtract(_minute * 10), _minute * 15, taskId: null, kind: SessionKind.breakTime),
+      ];
+      final report = calculator.compute(week, tasks: const [], sessions: sessions, today: monday);
+
+      expect(report.focusTotal, _minute * 50);
+      expect(report.sessionCount, 2);
+      expect(report.breakTotal, _minute * 10);
+    });
   });
 }

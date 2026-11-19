@@ -50,7 +50,12 @@ class StatsSummaryTiles extends StatelessWidget {
     final rate = report.completionRate;
     final interruptions = report.interruptionsPerFocusHour;
     final tiles = [
-      _StatTile(icon: Icons.timer_outlined, title: l10n.statsFocusTime, value: l10n.durationLabel(report.focusTotal)),
+      _StatTile(
+        icon: Icons.timer_outlined,
+        title: l10n.statsFocusTime,
+        value: l10n.durationLabel(report.focusTotal),
+        detail: report.breakTotal < const Duration(minutes: 1) ? null : l10n.statsBreakTime(l10n.durationLabel(report.breakTotal)),
+      ),
       _StatTile(icon: Icons.insights, title: l10n.statsAveragePerDay, value: l10n.durationLabel(report.averagePerElapsedDay), detail: l10n.statsElapsedDays(report.elapsedDays)),
       _StatTile(
         icon: Icons.av_timer,

@@ -1630,7 +1630,7 @@ class FocusSessionRow extends DataClass implements Insertable<FocusSessionRow> {
   /// Heartbeat of the running session.
   final DateTime lastSeenAt;
 
-  /// paused | completed | exited | background | recovered | discarded | manual | migrated
+  /// paused | completed | skipped | exited | background | recovered | discarded | manual | migrated | interval
   final String? endReason;
   final int interruptions;
   const FocusSessionRow({

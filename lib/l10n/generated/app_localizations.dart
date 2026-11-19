@@ -1807,6 +1807,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Focus: {name}'**
   String focusTitleCategory(String name);
+
+  /// No description provided for @settingsIntervals.
+  ///
+  /// In en, this message translates to:
+  /// **'Work in intervals'**
+  String get settingsIntervals;
+
+  /// No description provided for @settingsIntervalsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Pomodoro style: focus for a set time, then take a short break.'**
+  String get settingsIntervalsHint;
+
+  /// No description provided for @settingsIntervalWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Work interval'**
+  String get settingsIntervalWork;
+
+  /// No description provided for @settingsIntervalShortBreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Short break'**
+  String get settingsIntervalShortBreak;
+
+  /// No description provided for @settingsIntervalLongBreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Long break'**
+  String get settingsIntervalLongBreak;
+
+  /// No description provided for @settingsIntervalLongBreakEvery.
+  ///
+  /// In en, this message translates to:
+  /// **'Long break after'**
+  String get settingsIntervalLongBreakEvery;
+
+  /// No description provided for @settingsIntervalCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 interval} other{{count} intervals}}'**
+  String settingsIntervalCount(int count);
+
+  /// No description provided for @settingsIntervalAutoStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue automatically after a break'**
+  String get settingsIntervalAutoStart;
+
+  /// No description provided for @settingsIntervalAutoStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Otherwise focus waits until you are ready.'**
+  String get settingsIntervalAutoStartHint;
+
+  /// No description provided for @focusBreakIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Break in {duration}'**
+  String focusBreakIn(String duration);
+
+  /// No description provided for @breakShortTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Short break'**
+  String get breakShortTitle;
+
+  /// No description provided for @breakLongTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Long break'**
+  String get breakLongTitle;
+
+  /// No description provided for @breakHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Stand up, stretch and look away from the screen.'**
+  String get breakHint;
+
+  /// No description provided for @breakSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip break'**
+  String get breakSkip;
+
+  /// No description provided for @breakReadyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready?'**
+  String get breakReadyTitle;
+
+  /// No description provided for @breakContinueWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with {task}'**
+  String breakContinueWith(String task);
+
+  /// No description provided for @breakContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get breakContinue;
+
+  /// No description provided for @notificationBreakTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Time for a break'**
+  String get notificationBreakTitle;
+
+  /// No description provided for @notificationBreakBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Take {duration} off. Stand up and look away from the screen.'**
+  String notificationBreakBody(String duration);
+
+  /// No description provided for @notificationBreakOverTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Break is over'**
+  String get notificationBreakOverTitle;
+
+  /// No description provided for @notificationBreakOverBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready? Continue with {task}.'**
+  String notificationBreakOverBody(String task);
+
+  /// No description provided for @statsBreakTime.
+  ///
+  /// In en, this message translates to:
+  /// **'+ {duration} breaks'**
+  String statsBreakTime(String duration);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
