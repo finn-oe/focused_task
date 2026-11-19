@@ -111,7 +111,9 @@ flutter pub get
 flutter analyze
 flutter test
 flutter test integration_test -d windows   # end-to-end flows (or -d macos / -d linux)
-dart format .
+# Format everything except generated code (CI compares *.g.dart and lib/l10n/generated with fresh generator output).
+# Never `dart format .` or `dart format lib`.
+dart format $(git ls-files -co --exclude-standard 'lib/*.dart' 'test/*.dart' 'integration_test/*.dart' 'tool/*.dart' | grep -v -e '\.g\.dart$' -e '^lib/l10n/generated/')
 dart run build_runner build --delete-conflicting-outputs   # after changing Drift tables
 flutter run -d windows   # or chrome, macos, linux, android, ios
 ```
