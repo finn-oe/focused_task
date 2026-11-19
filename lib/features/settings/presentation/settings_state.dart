@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'package:focused_task/features/goals/domain/focus_goal.dart';
+
 /// Outcome of the last cleanup run; the screen turns it into a localized message.
 class CleanupResult {
   const CleanupResult.deleted(int this.deletedCount);
@@ -21,6 +23,7 @@ class SettingsState {
     required this.isCleaning,
     this.askToMoveUnfinished = true,
     this.notificationsDenied = false,
+    this.focusGoal = FocusGoal.off,
     this.locale,
     this.lastCleanup,
   });
@@ -45,6 +48,9 @@ class SettingsState {
   /// The user declined notifications when asked; the settings show a hint.
   final bool notificationsDenied;
 
+  /// Daily focus goal and working days; off by default.
+  final FocusGoal focusGoal;
+
   SettingsState copyWith({
     ThemeMode? themeMode,
     Locale? locale,
@@ -58,6 +64,7 @@ class SettingsState {
     bool clearLastCleanup = false,
     bool? askToMoveUnfinished,
     bool? notificationsDenied,
+    FocusGoal? focusGoal,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -70,6 +77,7 @@ class SettingsState {
       lastCleanup: clearLastCleanup ? null : lastCleanup ?? this.lastCleanup,
       askToMoveUnfinished: askToMoveUnfinished ?? this.askToMoveUnfinished,
       notificationsDenied: notificationsDenied ?? this.notificationsDenied,
+      focusGoal: focusGoal ?? this.focusGoal,
     );
   }
 }

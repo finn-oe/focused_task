@@ -16,6 +16,7 @@ enum NotificationChannel { focusAlarm, reminders, breaks }
 abstract final class NotificationIds {
   static const focusAlarm = 1;
   static const test = 2;
+  static const goalReached = 3;
 }
 
 /// A system notification. Texts are already localized.

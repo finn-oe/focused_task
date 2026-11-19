@@ -43,12 +43,27 @@ class StatsScreen extends ConsumerWidget {
                   AsyncError() => Center(child: Text(l10n.statsUnavailable)),
                   _ => const Center(child: CircularProgressIndicator()),
                 },
+                const SizedBox(height: 12),
+                _GoalSection(year: query.range.start.year),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+/// Streaks are about the whole history, so they show for every period; the goal days follow the period's year.
+class _GoalSection extends ConsumerWidget {
+  const _GoalSection({required this.year});
+
+  final int year;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(goalStatusProvider).value;
+    return status == null ? const SizedBox.shrink() : StreakCards(status: status, year: year);
   }
 }
 
@@ -124,13 +139,14 @@ String statsPeriodLabel(BuildContext context, StatsPeriod period, {required int 
   };
 }
 
-class _StatsContent extends StatelessWidget {
+class _StatsContent extends ConsumerWidget {
   const _StatsContent({required this.report});
 
   final StatsReport report;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final goal = ref.watch(focusGoalProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
         final cards = [PlannedVsActualCard(report: report), BestHoursCard(report: report), TopTasksCard(report: report)];
@@ -140,7 +156,7 @@ class _StatsContent extends StatelessWidget {
           spacing: 12,
           children: [
             StatsSummaryTiles(report: report, width: constraints.maxWidth),
-            FocusChartCard(report: report),
+            FocusChartCard(report: report, dailyGoal: goal.isEnabled ? goal.daily : null),
             if (twoColumns) ...[
               for (var index = 0; index < cards.length; index += 2)
                 Row(

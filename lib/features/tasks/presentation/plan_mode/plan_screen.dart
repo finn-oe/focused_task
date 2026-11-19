@@ -10,6 +10,7 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
+import 'package:focused_task/features/goals/presentation/goal_progress_ring.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/rollover_sheet.dart';
@@ -173,6 +174,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                   onPick: _pickDay,
                 ),
                 actions: [
+                  const TodayGoalRing(),
                   if (!shownDay.isSameDate(today))
                     compact
                         ? IconButton(tooltip: l10n.commonToday, onPressed: () => _goToDay(today), icon: const Icon(Icons.today))

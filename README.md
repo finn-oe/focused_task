@@ -37,13 +37,18 @@ compared to reality – so you can get a little more dedicated every day.
 - **Statistics** – day, week, month or year, with ‹ › to browse past periods: focus time (total, per elapsed day,
   sessions), completed tasks, a bar chart of focus time per hour / day / month, planned vs. tracked time with the median
   estimation accuracy, a weekday × hour heatmap of your best focus hours and the top 5 tasks.
+- **Daily focus goal & streaks** – an optional goal (30 min … 8 h) for your working days (Mon–Fri by default). A small
+  ring next to the date in the plan shows today's progress (tap → statistics); the statistics show the current and
+  longest streak of working days that reached the goal and the goal days per month; "finished for today" sums up the
+  day. Days off neither break nor extend a streak, and today only counts once the goal is reached. Past days are judged
+  by the current goal. While you focus, a notification says when the goal is reached (once a day).
 - **Languages** – English and German; follows the system language or can be chosen in the settings.
-- **Settings** – light/dark/system theme, language, the daily rollover prompt, data retention, focus-mode behaviour.
+- **Settings** – light/dark/system theme, language, the daily rollover prompt, data retention, focus-mode behaviour,
+  daily focus goal and working days.
 
 ### Planned
 
-Breaks (Pomodoro), distraction tracking,
-charts, goals & streaks, recurring tasks, data export and full support for every Flutter platform.
+Breaks (Pomodoro), distraction tracking, recurring tasks, data export and full support for every Flutter platform.
 See [Roadmap](#roadmap).
 
 ## Platforms
@@ -115,6 +120,7 @@ lib/
 │   ├── ui/themes/          # light & dark Material 3 themes
 │   └── utils/              # formatting, fractional indexing, lifecycle observer
 └── features/
+    ├── goals/              # daily focus goal: FocusGoal, StreakCalculator, progress ring
     ├── settings/           # preferences (shared_preferences)
     └── tasks/
         ├── data/           # TaskRepositoryImpl (Drift)

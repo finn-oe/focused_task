@@ -7,6 +7,7 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/ui/charts/bar_chart.dart';
 import 'package:focused_task/core/ui/charts/heatmap_chart.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 import 'package:focused_task/features/tasks/presentation/stats/stats_screen.dart';
 
@@ -17,7 +18,7 @@ import '../../../helpers/localized_app.dart';
 // Wednesday, 18 Nov 2026, 15:00.
 final _now = DateTime(2026, 11, 18, 15);
 
-Future<FakeTaskRepository> _pump(WidgetTester tester, {Size size = const Size(800, 1600)}) async {
+Future<FakeTaskRepository> _pump(WidgetTester tester, {Size size = const Size(800, 1600), FocusGoal goal = FocusGoal.off}) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -33,7 +34,7 @@ Future<FakeTaskRepository> _pump(WidgetTester tester, {Size size = const Size(80
 
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository)],
+      overrides: [taskRepositoryProvider.overrideWithValue(repository), focusSessionRepositoryProvider.overrideWithValue(repository), focusGoalProvider.overrideWithValue(goal)],
       child: localizedApp(home: const StatsScreen()),
     ),
   );
@@ -153,5 +154,19 @@ void main() {
     container.listen(statsReportProvider(query(today)), (_, _) {});
     final report = await container.read(statsReportProvider(query(today)).future);
     expect(report.isEmpty, isTrue);
+  });
+
+  testWidgets('with a daily goal: a goal line per day and the streak cards', (tester) async {
+    await withClock(Clock.fixed(_now), () async {
+      await _pump(tester, goal: const FocusGoal(daily: Duration(minutes: 20)));
+
+      expect(find.byKey(const Key('statsCurrentStreak')), findsOneWidget);
+      expect(find.text('Goal days in 2026'), findsOneWidget);
+      expect(tester.widget<BarChart>(find.byKey(const Key('statsFocusChart'))).referenceValue, isNull, reason: 'no goal line per hour');
+
+      await tester.tap(find.text('Week'));
+      await tester.pumpAndSettle();
+      expect(tester.widget<BarChart>(find.byKey(const Key('statsFocusChart'))).referenceValue, 20);
+    });
   });
 }

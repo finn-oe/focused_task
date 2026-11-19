@@ -1,8 +1,10 @@
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/settings/presentation/settings_state.dart';
 
 /// Language options; `null` follows the system language.
@@ -130,6 +132,8 @@ class SettingsScreen extends ConsumerWidget {
             onChanged: notifier.setPauseOnBackground,
           ),
           const SizedBox(height: 24),
+          const _GoalsSection(),
+          const SizedBox(height: 24),
           const _NotificationsSection(),
         ],
       ),
@@ -156,6 +160,67 @@ Future<bool> _confirmCleanup(BuildContext context, {required int count, required
     ),
   );
   return confirmed ?? false;
+}
+
+/// Daily focus goal (off / 30 min … 8 h) and the working days it applies to.
+class _GoalsSection extends ConsumerWidget {
+  const _GoalsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final textTheme = Theme.of(context).textTheme;
+    final goal = ref.watch(settingsNotifierProvider.select((settings) => settings.focusGoal));
+    final notifier = ref.read(settingsNotifierProvider.notifier);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final firstWeekday = firstDayOfWeek(context);
+    final weekdays = [for (var offset = 0; offset < DateTime.daysPerWeek; offset++) (firstWeekday - 1 + offset) % DateTime.daysPerWeek + 1];
+    // 2024-01-01 was a Monday: any week gives the localized weekday names.
+    String weekdayName(int weekday) => DateFormat.E(locale).format(DateTime(2024, 1, weekday));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.settingsGoals, style: textTheme.titleLarge),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.settingsDailyGoal),
+          subtitle: Text(l10n.settingsDailyGoalHint),
+          trailing: DropdownButton<int>(
+            key: const Key('settingsDailyGoal'),
+            value: goal.daily?.inMinutes ?? 0,
+            onChanged: (minutes) => notifier.setDailyGoal(minutes == null || minutes == 0 ? null : Duration(minutes: minutes)),
+            items: [
+              DropdownMenuItem(value: 0, child: Text(l10n.settingsGoalOff)),
+              // A goal stored by an older version that isn't an option any more stays selectable.
+              for (final minutes in {...FocusGoal.options, ?goal.daily?.inMinutes}.toList()..sort())
+                DropdownMenuItem(
+                  value: minutes,
+                  child: Text(l10n.durationLabel(Duration(minutes: minutes))),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(l10n.settingsWorkingDays, style: textTheme.titleMedium),
+        Text(l10n.settingsWorkingDaysHint, style: textTheme.bodyMedium),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final weekday in weekdays)
+              FilterChip(
+                label: Text(weekdayName(weekday)),
+                selected: goal.workingDays.contains(weekday),
+                // The last working day can't be removed.
+                onSelected: goal.workingDays.length == 1 && goal.workingDays.contains(weekday) ? null : (selected) => notifier.setWorkingDay(weekday, selected),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 /// Hint when notifications were refused, and a test notification to check they arrive.

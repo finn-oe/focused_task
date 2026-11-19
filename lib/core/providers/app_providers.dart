@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,7 +8,9 @@ import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_notifier.dart';
+import 'package:focused_task/features/goals/domain/focus_goal.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
+import 'package:focused_task/features/sessions/domain/focus_time.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
@@ -67,6 +70,24 @@ final statsReportProvider = StreamProvider.autoDispose.family<StatsReport, Stats
   final tasks = ref.watch(taskRepositoryProvider);
   final sessions = ref.watch(focusSessionRepositoryProvider);
   return sessions.watchInRange(query.range.start, query.range.end.nextDay).asyncMap((_) => tasks.getStatsReport(query));
+});
+
+/// The daily focus goal from the settings.
+final focusGoalProvider = Provider<FocusGoal>((ref) => ref.watch(settingsNotifierProvider.select((settings) => settings.focusGoal)));
+
+/// No session is older than this; the start of the whole session log for [goalStatusProvider].
+final _historyStart = DateTime(2000);
+
+/// Today's goal progress and the streaks, from the whole session log (split at local midnight like the statistics).
+/// Recomputed whenever a session changes, so the progress ring moves while focus mode runs.
+final goalStatusProvider = StreamProvider.autoDispose<GoalStatus>((ref) {
+  final goal = ref.watch(focusGoalProvider);
+  final sessions = ref.watch(focusSessionRepositoryProvider);
+  // Open-ended, so the provider stays correct after midnight.
+  return sessions.watchInRange(_historyStart, DateTime(9999)).map((all) {
+    final today = clock.now().dateOnly;
+    return GoalStatus.from(focusTimeByDay(all, DateRange(_historyStart, today)), goal, today);
+  });
 });
 
 /// Period selected on the statistics screen.
