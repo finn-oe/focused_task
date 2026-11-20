@@ -428,9 +428,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get statsNotTrackedYet => 'Not tracked yet';
-
-  @override
   String get statsNoValue => '–';
 
   @override
@@ -1113,4 +1110,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String statsBreakTime(String duration) {
     return '+ $duration breaks';
   }
+
+  @override
+  String get settingsMinimalFocusLayout => 'Minimal focus layout';
+
+  @override
+  String get settingsMinimalFocusLayoutHint => 'Only the timer, the task and its main button. Can also be switched in focus mode.';
+
+  @override
+  String get focusDistracted => 'I got distracted';
+
+  @override
+  String focusDistractedNoted(String task) {
+    return 'Noted. Back to $task.';
+  }
+
+  @override
+  String get focusMinimalLayout => 'Minimal layout';
+
+  @override
+  String get focusFullLayout => 'Show everything';
+
+  @override
+  String get focusParkThought => 'Park a thought…';
+
+  @override
+  String get focusThoughtParked => 'Parked for later.';
+
+  @override
+  String focusAwayFor(String duration) {
+    return 'You were away $duration.';
+  }
+
+  @override
+  String inboxCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count parked thoughts', one: '1 parked thought');
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxReview => 'Review';
+
+  @override
+  String get inboxTitle => 'Parked thoughts';
+
+  @override
+  String get inboxHint => 'Turn them into tasks or let them go.';
+
+  @override
+  String get inboxToTodayTooltip => 'Add as a task for today';
+
+  @override
+  String get inboxToTomorrowTooltip => 'Add as a task for tomorrow';
+
+  @override
+  String get inboxDismiss => 'Dismiss';
+
+  @override
+  String get inboxAddedToday => 'Added to today.';
+
+  @override
+  String get inboxAddedTomorrow => 'Added to tomorrow.';
+
+  @override
+  String get inboxDismissed => 'Dismissed.';
+
+  @override
+  String get inboxAllReviewed => 'All reviewed.';
+
+  @override
+  String get statsParkedThoughts => 'Parked thoughts';
+
+  @override
+  String get statsParkedThoughtReviewed => 'Reviewed';
 }

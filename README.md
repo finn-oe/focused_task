@@ -42,12 +42,20 @@ compared to reality – so you can get a little more dedicated every day.
   has a test notification.
 - **Distraction guard** – optionally pauses the session when the app is minimised or the screen is locked,
   and can keep the screen awake while focusing.
+- **Distraction tracking** – leaving focus for 2 s or more (window loses focus, app switch, screen lock) counts as an
+  interruption, once per switch; "I got distracted" counts one by hand. Coming back after a minute or more says how long
+  you were away. Leaving during a break doesn't count. A **minimal layout** shows only the timer, the task and its main
+  button (remembered).
+- **Distraction inbox** – "Park a thought…" in focus mode saves a stray thought without leaving the task. Afterwards,
+  "3 parked thoughts" on the plan and the finished screen opens a review: turn each into a task for today or tomorrow,
+  or dismiss it (with undo).
 - **Session log** – every focus interval is recorded, so time counts on the day you actually worked (also across midnight).
   Missing time can be added by hand in the task form ("Add time").
 - **Session recovery** – if the app was closed during a session, you are asked whether to keep the tracked time.
 - **Statistics** – day, week, month or year, with ‹ › to browse past periods: focus time (total, per elapsed day,
   sessions), completed tasks, a bar chart of focus time per hour / day / month, planned vs. tracked time with the median
-  estimation accuracy, a weekday × hour heatmap of your best focus hours and the top 5 tasks.
+  estimation accuracy, a weekday × hour heatmap of your best focus hours, the top 5 tasks, interruptions per focus hour
+  and the most recent parked thoughts.
 - **Daily focus goal & streaks** – an optional goal (30 min … 8 h) for your working days (Mon–Fri by default). A small
   ring next to the date in the plan shows today's progress (tap → statistics); the statistics show the current and
   longest streak of working days that reached the goal and the goal days per month; "finished for today" sums up the
@@ -59,7 +67,7 @@ compared to reality – so you can get a little more dedicated every day.
 
 ### Planned
 
-Distraction tracking, recurring tasks, data export and full support for every Flutter platform.
+Due dates and reminders, recurring tasks, data export and full support for every Flutter platform.
 See [Roadmap](#roadmap).
 
 ## Platforms
@@ -135,6 +143,7 @@ lib/
     ├── breaks/             # work/break cycles: IntervalSettings, IntervalPlanner (pure state machine)
     ├── categories/         # task categories: TaskCategory, ICategoryRepository, management screen
     ├── goals/              # daily focus goal: FocusGoal, StreakCalculator, progress ring
+    ├── inbox/              # distraction inbox: InboxItem, IInboxRepository, review sheet
     ├── settings/           # preferences (shared_preferences)
     └── tasks/
         ├── data/           # TaskRepositoryImpl (Drift)
@@ -152,6 +161,8 @@ How the pieces fit together:
   of a task's closed focus sessions. A task's elapsed time = `time_spent + (now − start of its open session)`.
 - **Breaks:** the pure `IntervalPlanner` decides the phase (work → short break → … → long break). When a work interval
   ends, its focus session ends (`end_reason = 'interval'`) and a `kind = 'break'` session starts.
+- **Distractions:** `focus_sessions.interruptions` counts interruptions per session; parked thoughts live in
+  `inbox_items` (linked to their session, `resolved_at` once reviewed).
 - **Categories:** `categories` table; `tasks.category_id` is set to `NULL` when a category is deleted. A category
   stores an index into the fixed palette, never a raw colour.
 - **Routes:** `/plan` (home), `/task-form`, `/focus?day=…&task=…&category=…`, `/pause`, `/break`, `/finished-for-today`, `/stats`,

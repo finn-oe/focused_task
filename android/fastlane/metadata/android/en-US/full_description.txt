@@ -11,6 +11,8 @@ FOCUS
 • Focus mode shows one task at a time: its timer, its sub-tasks and what comes next.
 • Optional breaks in the Pomodoro style: work for 25 minutes, then take a short break, with a longer one after every fourth round. All lengths are adjustable.
 • Focus on a single category, skip a task for later, or add a sub-task without leaving focus.
+• Park a stray thought with one line and stay on your task; review it afterwards and turn it into a task.
+• A minimal layout shows only the timer and your task.
 • Optionally pauses when you leave the app and keeps the screen awake.
 
 TRACK
@@ -22,6 +24,7 @@ REFLECT
 • Statistics per day, week, month or year: focus time, completed tasks, planned vs. actual time, your best focus hours and top tasks.
 • A daily focus goal for your working days, with streaks.
 • Break time is shown separately and never counts as focus time.
+• See how often you were interrupted per focus hour.
 
 PRIVATE BY DESIGN
 • All data stays on your device. No account, no ads, no tracking.

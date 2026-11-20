@@ -1,9 +1,11 @@
+import 'package:clock/clock.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:focused_task/core/database/tables/categories_table.dart';
 import 'package:focused_task/core/database/tables/focus_sessions_table.dart';
+import 'package:focused_task/core/database/tables/inbox_items_table.dart';
 import 'package:focused_task/core/database/tables/tasks_table.dart';
 import 'package:focused_task/core/database/tables/task_todos_table.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
@@ -28,12 +30,12 @@ class SessionWithTitle {
   final int? categoryId;
 }
 
-@DriftDatabase(tables: [Categories, Tasks, TaskTodos, FocusSessions])
+@DriftDatabase(tables: [Categories, Tasks, TaskTodos, FocusSessions, InboxItems])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration {
@@ -59,6 +61,9 @@ class AppDatabase extends _$AppDatabase {
         if (from < 6) {
           await m.createTable(categories);
           if (from >= 5) await m.addColumn(tasks, tasks.categoryId);
+        }
+        if (from < 7) {
+          await m.createTable(inboxItems);
         }
       },
       beforeOpen: (details) async {
@@ -272,7 +277,7 @@ class AppDatabase extends _$AppDatabase {
   /// never keeps counting after the task is done.
   Future<void> setTaskCompletion({required int taskId, required bool isCompleted, DateTime? at}) async {
     if (isCompleted) {
-      return completeTask(taskId: taskId, completedAt: at ?? DateTime.now());
+      return completeTask(taskId: taskId, completedAt: at ?? clock.now());
     }
     await (update(tasks)..where((task) => task.id.equals(taskId))).write(const TasksCompanion(isCompleted: Value(false)));
   }
@@ -380,6 +385,42 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Stream<List<FocusSessionRow>> watchSessionsOverlapping(DateTime start, DateTime endExclusive) => _overlapping(start, endExclusive).watch();
+
+  /// Counts one interruption (#28) on session [id], also if it has ended meanwhile.
+  Future<void> addInterruption(int id) async {
+    await customUpdate(
+      'UPDATE focus_sessions SET interruptions = interruptions + 1 WHERE id = ?',
+      variables: [Variable.withInt(id)],
+      updates: {focusSessions},
+      updateKind: UpdateKind.update,
+    );
+  }
+
+  // --- Distraction inbox ----------------------------------------------------------------------------------------
+
+  Future<int> addInboxItem(InboxItemsCompanion companion) => into(inboxItems).insert(companion);
+
+  /// Items still waiting for review, oldest first.
+  Stream<List<InboxItemRow>> watchOpenInboxItems() {
+    return (select(inboxItems)
+          ..where((item) => item.resolvedAt.isNull())
+          ..orderBy([(item) => OrderingTerm.asc(item.createdAt), (item) => OrderingTerm.asc(item.id)]))
+        .watch();
+  }
+
+  /// Items parked in `[start, endExclusive)`, newest first, at most [limit].
+  Stream<List<InboxItemRow>> watchInboxItemsCreated(DateTime start, DateTime endExclusive, {required int limit}) {
+    return (select(inboxItems)
+          ..where((item) => item.createdAt.isBiggerOrEqualValue(start) & item.createdAt.isSmallerThanValue(endExclusive))
+          ..orderBy([(item) => OrderingTerm.desc(item.createdAt), (item) => OrderingTerm.desc(item.id)])
+          ..limit(limit))
+        .watch();
+  }
+
+  /// Marks item [id] as reviewed at [at], or as waiting again with `null`.
+  Future<void> setInboxItemResolved(int id, DateTime? at) async {
+    await (update(inboxItems)..where((item) => item.id.equals(id))).write(InboxItemsCompanion(resolvedAt: Value(at)));
+  }
 
   // --- Categories -----------------------------------------------------------------------------------------------
 

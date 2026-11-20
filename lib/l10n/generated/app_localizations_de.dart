@@ -428,9 +428,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String get statsNotTrackedYet => 'Noch nicht erfasst';
-
-  @override
   String get statsNoValue => '–';
 
   @override
@@ -1116,4 +1113,77 @@ class AppLocalizationsDe extends AppLocalizations {
   String statsBreakTime(String duration) {
     return '+ $duration Pausen';
   }
+
+  @override
+  String get settingsMinimalFocusLayout => 'Minimale Fokusansicht';
+
+  @override
+  String get settingsMinimalFocusLayoutHint => 'Nur der Timer, die Aufgabe und ihr wichtigster Button. Lässt sich auch im Fokusmodus umschalten.';
+
+  @override
+  String get focusDistracted => 'Ich wurde abgelenkt';
+
+  @override
+  String focusDistractedNoted(String task) {
+    return 'Notiert. Zurück zu $task.';
+  }
+
+  @override
+  String get focusMinimalLayout => 'Minimale Ansicht';
+
+  @override
+  String get focusFullLayout => 'Alles zeigen';
+
+  @override
+  String get focusParkThought => 'Gedanken parken…';
+
+  @override
+  String get focusThoughtParked => 'Für später geparkt.';
+
+  @override
+  String focusAwayFor(String duration) {
+    return 'Du warst $duration weg.';
+  }
+
+  @override
+  String inboxCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count geparkte Gedanken', one: '1 geparkter Gedanke');
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxReview => 'Durchsehen';
+
+  @override
+  String get inboxTitle => 'Geparkte Gedanken';
+
+  @override
+  String get inboxHint => 'Mach Aufgaben daraus oder lass sie los.';
+
+  @override
+  String get inboxToTodayTooltip => 'Als Aufgabe für heute anlegen';
+
+  @override
+  String get inboxToTomorrowTooltip => 'Als Aufgabe für morgen anlegen';
+
+  @override
+  String get inboxDismiss => 'Verwerfen';
+
+  @override
+  String get inboxAddedToday => 'Für heute angelegt.';
+
+  @override
+  String get inboxAddedTomorrow => 'Für morgen angelegt.';
+
+  @override
+  String get inboxDismissed => 'Verworfen.';
+
+  @override
+  String get inboxAllReviewed => 'Alles durchgesehen.';
+
+  @override
+  String get statsParkedThoughts => 'Geparkte Gedanken';
+
+  @override
+  String get statsParkedThoughtReviewed => 'Durchgesehen';
 }

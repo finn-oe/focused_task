@@ -1909,6 +1909,372 @@ class FocusSessionsCompanion extends UpdateCompanion<FocusSessionRow> {
   }
 }
 
+class $InboxItemsTable extends InboxItems
+    with TableInfo<$InboxItemsTable, InboxItemRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $InboxItemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'text',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sessionIdMeta = const VerificationMeta(
+    'sessionId',
+  );
+  @override
+  late final GeneratedColumn<int> sessionId = GeneratedColumn<int>(
+    'session_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES focus_sessions (id) ON DELETE SET NULL',
+    ),
+  );
+  static const VerificationMeta _resolvedAtMeta = const VerificationMeta(
+    'resolvedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> resolvedAt = GeneratedColumn<DateTime>(
+    'resolved_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    content,
+    createdAt,
+    sessionId,
+    resolvedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'inbox_items';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<InboxItemRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('text')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['text']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('session_id')) {
+      context.handle(
+        _sessionIdMeta,
+        sessionId.isAcceptableOrUnknown(data['session_id']!, _sessionIdMeta),
+      );
+    }
+    if (data.containsKey('resolved_at')) {
+      context.handle(
+        _resolvedAtMeta,
+        resolvedAt.isAcceptableOrUnknown(data['resolved_at']!, _resolvedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  InboxItemRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return InboxItemRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}text'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      sessionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}session_id'],
+      ),
+      resolvedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}resolved_at'],
+      ),
+    );
+  }
+
+  @override
+  $InboxItemsTable createAlias(String alias) {
+    return $InboxItemsTable(attachedDatabase, alias);
+  }
+}
+
+class InboxItemRow extends DataClass implements Insertable<InboxItemRow> {
+  final int id;
+
+  /// The parked thought. (`text` would clash with [Table.text].)
+  final String content;
+  final DateTime createdAt;
+
+  /// The focus session it was parked in; `NULL` if parked outside focus or the session is gone.
+  final int? sessionId;
+
+  /// When it was turned into a task or dismissed; `NULL` while it waits for review.
+  final DateTime? resolvedAt;
+  const InboxItemRow({
+    required this.id,
+    required this.content,
+    required this.createdAt,
+    this.sessionId,
+    this.resolvedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['text'] = Variable<String>(content);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || sessionId != null) {
+      map['session_id'] = Variable<int>(sessionId);
+    }
+    if (!nullToAbsent || resolvedAt != null) {
+      map['resolved_at'] = Variable<DateTime>(resolvedAt);
+    }
+    return map;
+  }
+
+  InboxItemsCompanion toCompanion(bool nullToAbsent) {
+    return InboxItemsCompanion(
+      id: Value(id),
+      content: Value(content),
+      createdAt: Value(createdAt),
+      sessionId: sessionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sessionId),
+      resolvedAt: resolvedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resolvedAt),
+    );
+  }
+
+  factory InboxItemRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return InboxItemRow(
+      id: serializer.fromJson<int>(json['id']),
+      content: serializer.fromJson<String>(json['content']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      sessionId: serializer.fromJson<int?>(json['sessionId']),
+      resolvedAt: serializer.fromJson<DateTime?>(json['resolvedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'content': serializer.toJson<String>(content),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'sessionId': serializer.toJson<int?>(sessionId),
+      'resolvedAt': serializer.toJson<DateTime?>(resolvedAt),
+    };
+  }
+
+  InboxItemRow copyWith({
+    int? id,
+    String? content,
+    DateTime? createdAt,
+    Value<int?> sessionId = const Value.absent(),
+    Value<DateTime?> resolvedAt = const Value.absent(),
+  }) => InboxItemRow(
+    id: id ?? this.id,
+    content: content ?? this.content,
+    createdAt: createdAt ?? this.createdAt,
+    sessionId: sessionId.present ? sessionId.value : this.sessionId,
+    resolvedAt: resolvedAt.present ? resolvedAt.value : this.resolvedAt,
+  );
+  InboxItemRow copyWithCompanion(InboxItemsCompanion data) {
+    return InboxItemRow(
+      id: data.id.present ? data.id.value : this.id,
+      content: data.content.present ? data.content.value : this.content,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      sessionId: data.sessionId.present ? data.sessionId.value : this.sessionId,
+      resolvedAt: data.resolvedAt.present
+          ? data.resolvedAt.value
+          : this.resolvedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InboxItemRow(')
+          ..write('id: $id, ')
+          ..write('content: $content, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('resolvedAt: $resolvedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, content, createdAt, sessionId, resolvedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is InboxItemRow &&
+          other.id == this.id &&
+          other.content == this.content &&
+          other.createdAt == this.createdAt &&
+          other.sessionId == this.sessionId &&
+          other.resolvedAt == this.resolvedAt);
+}
+
+class InboxItemsCompanion extends UpdateCompanion<InboxItemRow> {
+  final Value<int> id;
+  final Value<String> content;
+  final Value<DateTime> createdAt;
+  final Value<int?> sessionId;
+  final Value<DateTime?> resolvedAt;
+  const InboxItemsCompanion({
+    this.id = const Value.absent(),
+    this.content = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.sessionId = const Value.absent(),
+    this.resolvedAt = const Value.absent(),
+  });
+  InboxItemsCompanion.insert({
+    this.id = const Value.absent(),
+    required String content,
+    required DateTime createdAt,
+    this.sessionId = const Value.absent(),
+    this.resolvedAt = const Value.absent(),
+  }) : content = Value(content),
+       createdAt = Value(createdAt);
+  static Insertable<InboxItemRow> custom({
+    Expression<int>? id,
+    Expression<String>? content,
+    Expression<DateTime>? createdAt,
+    Expression<int>? sessionId,
+    Expression<DateTime>? resolvedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (content != null) 'text': content,
+      if (createdAt != null) 'created_at': createdAt,
+      if (sessionId != null) 'session_id': sessionId,
+      if (resolvedAt != null) 'resolved_at': resolvedAt,
+    });
+  }
+
+  InboxItemsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? content,
+    Value<DateTime>? createdAt,
+    Value<int?>? sessionId,
+    Value<DateTime?>? resolvedAt,
+  }) {
+    return InboxItemsCompanion(
+      id: id ?? this.id,
+      content: content ?? this.content,
+      createdAt: createdAt ?? this.createdAt,
+      sessionId: sessionId ?? this.sessionId,
+      resolvedAt: resolvedAt ?? this.resolvedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (content.present) {
+      map['text'] = Variable<String>(content.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (sessionId.present) {
+      map['session_id'] = Variable<int>(sessionId.value);
+    }
+    if (resolvedAt.present) {
+      map['resolved_at'] = Variable<DateTime>(resolvedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('InboxItemsCompanion(')
+          ..write('id: $id, ')
+          ..write('content: $content, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('sessionId: $sessionId, ')
+          ..write('resolvedAt: $resolvedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1916,6 +2282,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TasksTable tasks = $TasksTable(this);
   late final $TaskTodosTable taskTodos = $TaskTodosTable(this);
   late final $FocusSessionsTable focusSessions = $FocusSessionsTable(this);
+  late final $InboxItemsTable inboxItems = $InboxItemsTable(this);
   late final Index focusSessionsStartedAt = Index(
     'focus_sessions_started_at',
     'CREATE INDEX focus_sessions_started_at ON focus_sessions (started_at)',
@@ -1929,6 +2296,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     tasks,
     taskTodos,
     focusSessions,
+    inboxItems,
     focusSessionsStartedAt,
   ];
   @override
@@ -1953,6 +2321,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('focus_sessions', kind: UpdateKind.update)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'focus_sessions',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('inbox_items', kind: UpdateKind.update)],
     ),
   ]);
 }
@@ -3236,6 +3611,24 @@ final class $$FocusSessionsTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static MultiTypedResultKey<$InboxItemsTable, List<InboxItemRow>>
+  _inboxItemsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.inboxItems,
+    aliasName: 'focus_sessions__id__inbox_items__session_id',
+  );
+
+  $$InboxItemsTableProcessedTableManager get inboxItemsRefs {
+    final manager = $$InboxItemsTableTableManager(
+      $_db,
+      $_db.inboxItems,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_inboxItemsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$FocusSessionsTableFilterComposer
@@ -3303,6 +3696,31 @@ class $$FocusSessionsTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> inboxItemsRefs(
+    Expression<bool> Function($$InboxItemsTableFilterComposer f) f,
+  ) {
+    final $$InboxItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.inboxItems,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$InboxItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.inboxItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 }
 
@@ -3430,6 +3848,31 @@ class $$FocusSessionsTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> inboxItemsRefs<T extends Object>(
+    Expression<T> Function($$InboxItemsTableAnnotationComposer a) f,
+  ) {
+    final $$InboxItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.inboxItems,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$InboxItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.inboxItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$FocusSessionsTableTableManager
@@ -3445,7 +3888,7 @@ class $$FocusSessionsTableTableManager
           $$FocusSessionsTableUpdateCompanionBuilder,
           (FocusSessionRow, $$FocusSessionsTableReferences),
           FocusSessionRow,
-          PrefetchHooks Function({bool taskId})
+          PrefetchHooks Function({bool taskId, bool inboxItemsRefs})
         > {
   $$FocusSessionsTableTableManager(_$AppDatabase db, $FocusSessionsTable table)
     : super(
@@ -3506,10 +3949,10 @@ class $$FocusSessionsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({taskId = false}) {
+          prefetchHooksCallback: ({taskId = false, inboxItemsRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [],
+              explicitlyWatchedTables: [if (inboxItemsRefs) db.inboxItems],
               addJoins:
                   <
                     T extends TableManagerState<
@@ -3543,7 +3986,28 @@ class $$FocusSessionsTableTableManager
                     return state;
                   },
               getPrefetchedDataCallback: (items) async {
-                return [];
+                return [
+                  if (inboxItemsRefs)
+                    await $_getPrefetchedDataByColumns<
+                      FocusSessionRow,
+                      $FocusSessionsTable,
+                      InboxItemRow,
+                      $InboxItemsTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$FocusSessionsTableReferences
+                          ._inboxItemsRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$FocusSessionsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).inboxItemsRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'session_id',
+                      typedResults: items,
+                    ),
+                ];
               },
             );
           },
@@ -3563,7 +4027,321 @@ typedef $$FocusSessionsTableProcessedTableManager =
       $$FocusSessionsTableUpdateCompanionBuilder,
       (FocusSessionRow, $$FocusSessionsTableReferences),
       FocusSessionRow,
-      PrefetchHooks Function({bool taskId})
+      PrefetchHooks Function({bool taskId, bool inboxItemsRefs})
+    >;
+typedef $$InboxItemsTableCreateCompanionBuilder =
+    InboxItemsCompanion Function({
+      Value<int> id,
+      required String content,
+      required DateTime createdAt,
+      Value<int?> sessionId,
+      Value<DateTime?> resolvedAt,
+    });
+typedef $$InboxItemsTableUpdateCompanionBuilder =
+    InboxItemsCompanion Function({
+      Value<int> id,
+      Value<String> content,
+      Value<DateTime> createdAt,
+      Value<int?> sessionId,
+      Value<DateTime?> resolvedAt,
+    });
+
+final class $$InboxItemsTableReferences
+    extends BaseReferences<_$AppDatabase, $InboxItemsTable, InboxItemRow> {
+  $$InboxItemsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $FocusSessionsTable _sessionIdTable(_$AppDatabase db) => db
+      .focusSessions
+      .createAlias('inbox_items__session_id__focus_sessions__id');
+
+  $$FocusSessionsTableProcessedTableManager? get sessionId {
+    final $_column = $_itemColumn<int>('session_id');
+    if ($_column == null) return null;
+    final manager = $$FocusSessionsTableTableManager(
+      $_db,
+      $_db.focusSessions,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$InboxItemsTableFilterComposer
+    extends Composer<_$AppDatabase, $InboxItemsTable> {
+  $$InboxItemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$FocusSessionsTableFilterComposer get sessionId {
+    final $$FocusSessionsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.focusSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FocusSessionsTableFilterComposer(
+            $db: $db,
+            $table: $db.focusSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$InboxItemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $InboxItemsTable> {
+  $$InboxItemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$FocusSessionsTableOrderingComposer get sessionId {
+    final $$FocusSessionsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.focusSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FocusSessionsTableOrderingComposer(
+            $db: $db,
+            $table: $db.focusSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$InboxItemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $InboxItemsTable> {
+  $$InboxItemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get resolvedAt => $composableBuilder(
+    column: $table.resolvedAt,
+    builder: (column) => column,
+  );
+
+  $$FocusSessionsTableAnnotationComposer get sessionId {
+    final $$FocusSessionsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.focusSessions,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FocusSessionsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.focusSessions,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$InboxItemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $InboxItemsTable,
+          InboxItemRow,
+          $$InboxItemsTableFilterComposer,
+          $$InboxItemsTableOrderingComposer,
+          $$InboxItemsTableAnnotationComposer,
+          $$InboxItemsTableCreateCompanionBuilder,
+          $$InboxItemsTableUpdateCompanionBuilder,
+          (InboxItemRow, $$InboxItemsTableReferences),
+          InboxItemRow,
+          PrefetchHooks Function({bool sessionId})
+        > {
+  $$InboxItemsTableTableManager(_$AppDatabase db, $InboxItemsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$InboxItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$InboxItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$InboxItemsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int?> sessionId = const Value.absent(),
+                Value<DateTime?> resolvedAt = const Value.absent(),
+              }) => InboxItemsCompanion(
+                id: id,
+                content: content,
+                createdAt: createdAt,
+                sessionId: sessionId,
+                resolvedAt: resolvedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String content,
+                required DateTime createdAt,
+                Value<int?> sessionId = const Value.absent(),
+                Value<DateTime?> resolvedAt = const Value.absent(),
+              }) => InboxItemsCompanion.insert(
+                id: id,
+                content: content,
+                createdAt: createdAt,
+                sessionId: sessionId,
+                resolvedAt: resolvedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$InboxItemsTable, InboxItemRow>(table),
+                  $$InboxItemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sessionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sessionId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.sessionId,
+                                referencedTable: $$InboxItemsTableReferences
+                                    ._sessionIdTable(db),
+                                referencedColumn: $$InboxItemsTableReferences
+                                    ._sessionIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$InboxItemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $InboxItemsTable,
+      InboxItemRow,
+      $$InboxItemsTableFilterComposer,
+      $$InboxItemsTableOrderingComposer,
+      $$InboxItemsTableAnnotationComposer,
+      $$InboxItemsTableCreateCompanionBuilder,
+      $$InboxItemsTableUpdateCompanionBuilder,
+      (InboxItemRow, $$InboxItemsTableReferences),
+      InboxItemRow,
+      PrefetchHooks Function({bool sessionId})
     >;
 
 class $AppDatabaseManager {
@@ -3577,4 +4355,6 @@ class $AppDatabaseManager {
       $$TaskTodosTableTableManager(_db, _db.taskTodos);
   $$FocusSessionsTableTableManager get focusSessions =>
       $$FocusSessionsTableTableManager(_db, _db.focusSessions);
+  $$InboxItemsTableTableManager get inboxItems =>
+      $$InboxItemsTableTableManager(_db, _db.inboxItems);
 }

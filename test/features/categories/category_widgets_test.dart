@@ -35,6 +35,7 @@ Future<GoRouter> _pumpApp(WidgetTester tester, FakeTaskRepository repository, {S
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        inboxRepositoryProvider.overrideWithValue(repository),
         sharedPreferencesProvider.overrideWithValue(
           await fakePreferences({PlanModeNotifier.rolloverPromptedKey: DateTime.now().dateOnly.isoDate, PlanModeNotifier.viewKey: ?view?.name}),
         ),
@@ -253,6 +254,7 @@ void main() {
           taskRepositoryProvider.overrideWithValue(repository),
           focusSessionRepositoryProvider.overrideWithValue(repository),
           categoryRepositoryProvider.overrideWithValue(repository),
+          inboxRepositoryProvider.overrideWithValue(repository),
           focusGoalProvider.overrideWithValue(FocusGoal.off),
         ],
         child: localizedApp(home: const StatsScreen()),

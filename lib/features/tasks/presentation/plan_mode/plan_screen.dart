@@ -11,6 +11,7 @@ import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/core/ui/category_palette.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
+import 'package:focused_task/features/inbox/presentation/inbox_review_sheet.dart';
 import 'package:focused_task/features/goals/presentation/goal_progress_ring.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
@@ -201,7 +202,15 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                   const SizedBox(width: 8),
                 ],
               ),
-              body: showBoard ? const CategoryBoard() : _DayTasks(onSwipeToPrevious: _previousDay, onSwipeToNext: _nextDay),
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const ParkedThoughtsBanner(),
+                  Expanded(
+                    child: showBoard ? const CategoryBoard() : _DayTasks(onSwipeToPrevious: _previousDay, onSwipeToNext: _nextDay),
+                  ),
+                ],
+              ),
               floatingActionButton: FloatingActionButton.extended(onPressed: _addTask, icon: const Icon(Icons.add), label: Text(l10n.planAddTask)),
             );
           },

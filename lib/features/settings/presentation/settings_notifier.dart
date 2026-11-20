@@ -29,6 +29,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
   static const String _intervalLongBreakMinutesKey = 'settings.interval_long_break_minutes';
   static const String _intervalLongBreakEveryKey = 'settings.interval_long_break_every';
   static const String _intervalAutoStartKey = 'settings.interval_auto_start';
+  static const String _focusMinimalLayoutKey = 'settings.focus_minimal_layout';
 
   late SharedPreferences _prefs;
   late ITaskRepository _repository;
@@ -59,6 +60,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       notificationsDenied: prefs.getBool(_notificationsDeniedKey) ?? false,
       focusGoal: _loadFocusGoal(prefs),
       intervals: _loadIntervals(prefs),
+      focusMinimalLayout: prefs.getBool(_focusMinimalLayoutKey) ?? false,
     );
   }
 
@@ -183,6 +185,11 @@ class SettingsNotifier extends Notifier<SettingsState> {
   Future<void> setPauseOnBackground(bool value) async {
     await _prefs.setBool(_pauseOnBackgroundKey, value);
     state = state.copyWith(pauseOnBackground: value);
+  }
+
+  Future<void> setFocusMinimalLayout(bool value) async {
+    await _prefs.setBool(_focusMinimalLayoutKey, value);
+    state = state.copyWith(focusMinimalLayout: value);
   }
 
   Future<void> setEnableWakelock(bool value) async {

@@ -38,6 +38,7 @@ Follow `CLAUDE.md` strictly. The points people miss most:
 - Every string goes into **both** `lib/l10n/app_en.arb` and `lib/l10n/app_de.arb`, then run `flutter gen-l10n`.
 - Schema change: bump `schemaVersion`, add a migration step and a migration test, run `dart run build_runner build --delete-conflicting-outputs`. A doc comment on a Drift column is copied into `app_database.g.dart`, so regenerate after changing one too.
 - Notification ids live in `NotificationIds`. Routes use `AppRoutes` constants.
+- A new repository goes into `FakeTaskRepository` too, and its provider override next to every `categoryRepositoryProvider.overrideWithValue(...)` in the tests (one `sed` does it); otherwise widget tests open a real database.
 - New screens need a 360 px phone layout and `PopScope`. Closing a desktop window during focus must close open sessions.
 
 ## 4. Test

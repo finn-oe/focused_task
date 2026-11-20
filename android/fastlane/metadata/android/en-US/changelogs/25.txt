@@ -1,0 +1,4 @@
+• Park a thought: a stray idea goes into your inbox with one line, and you stay on your task. Review it later and turn it into a task for today or tomorrow.
+• See how often you get pulled away: switching apps during focus counts as an interruption, and "I got distracted" counts one by hand.
+• A minimal focus layout shows only the timer and your task.
+• Statistics show interruptions per focus hour and your latest parked thoughts.

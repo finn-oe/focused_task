@@ -39,6 +39,9 @@ class FocusSessionRepositoryImpl implements IFocusSessionRepository {
   Future<void> end(int id, DateTime at, EndReason reason) => _database.endSession(id, at, reason.name);
 
   @override
+  Future<void> addInterruption(int id) => _database.addInterruption(id);
+
+  @override
   Future<FocusSession?> openSession() async {
     final row = await _database.getOpenSession();
     return row == null ? null : toEntity(row);

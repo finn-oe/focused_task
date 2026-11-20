@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:focused_task/core/database/app_database.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/categories/data/category_repository_impl.dart';
+import 'package:focused_task/features/inbox/data/inbox_repository_impl.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
@@ -66,6 +67,29 @@ const _sessionsV5 = '''CREATE TABLE focus_sessions (
     last_seen_at INTEGER NOT NULL,
     end_reason TEXT NULL,
     interruptions INTEGER NOT NULL DEFAULT 0
+  )''';
+
+/// Schema of version 6 (categories, no inbox), as created by app versions 1.13.0 – 1.14.0.
+const _tasksV6 = '''CREATE TABLE tasks (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT NULL,
+    assigned_date INTEGER NOT NULL,
+    sort_order TEXT NOT NULL,
+    is_completed INTEGER NOT NULL DEFAULT 0 CHECK (is_completed IN (0, 1)),
+    priority INTEGER NOT NULL DEFAULT 0,
+    time_spent INTEGER NOT NULL DEFAULT 0,
+    target_duration_minutes INTEGER NULL,
+    category_id INTEGER NULL REFERENCES categories (id) ON DELETE SET NULL
+  )''';
+
+const _categoriesV6 = '''CREATE TABLE categories (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    color INTEGER NOT NULL,
+    icon TEXT NULL,
+    sort_order TEXT NOT NULL,
+    archived INTEGER NOT NULL DEFAULT 0 CHECK (archived IN (0, 1))
   )''';
 
 /// Drift stores `DateTime` as Unix seconds.
@@ -205,7 +229,7 @@ void main() {
       expect(stats.hasCategorizedFocus, isFalse);
 
       final version = await database.customSelect('PRAGMA user_version').getSingle();
-      expect(version.data.values.single, 6);
+      expect(version.data.values.single, database.schemaVersion);
     });
 
     test('tasks can get a category; deleting it leaves them uncategorised', () async {
@@ -220,6 +244,47 @@ void main() {
       final task = (await tasks.getTaskById(1))!;
       expect((task.title, task.categoryId, task.timeSpent), ('done', null, 1800000));
       expect(await database.select(database.taskTodos).get(), hasLength(1), reason: 'nothing cascades from a category');
+    });
+  });
+
+  group('v6 → v7 (distraction inbox)', () {
+    final day = DateTime(2026, 11, 10);
+    late AppDatabase database;
+
+    setUp(() {
+      database = _open([
+        _tasksV6,
+        _todos,
+        _sessionsV5,
+        _categoriesV6,
+        'CREATE INDEX focus_sessions_started_at ON focus_sessions (started_at)',
+        "INSERT INTO categories (id, name, color, sort_order) VALUES (1, 'Work', 2, 'a0')",
+        "INSERT INTO tasks (id, title, assigned_date, sort_order, time_spent, category_id) VALUES (1, 'report', ${_seconds(day)}, 'a0', 1800000, 1)",
+        "INSERT INTO focus_sessions (task_id, started_at, ended_at, last_seen_at, end_reason, interruptions) VALUES (1, ${_seconds(day.add(const Duration(hours: 9)))}, ${_seconds(day.add(const Duration(hours: 9, minutes: 30)))}, ${_seconds(day.add(const Duration(hours: 9, minutes: 30)))}, 'paused', 2)",
+        'PRAGMA user_version = 6',
+      ]);
+    });
+    tearDown(() => database.close());
+
+    test('keeps tasks, categories and sessions; the inbox starts empty', () async {
+      final task = (await TaskRepositoryImpl(database).getTaskById(1))!;
+      expect((task.title, task.timeSpent, task.categoryId), ('report', 1800000, 1));
+      expect((await database.select(database.focusSessions).getSingle()).interruptions, 2);
+      expect(await database.select(database.inboxItems).get(), isEmpty);
+
+      final version = await database.customSelect('PRAGMA user_version').getSingle();
+      expect(version.data.values.single, 7);
+    });
+
+    test('items can be parked; deleting their session keeps them', () async {
+      final inbox = InboxRepositoryImpl(database);
+      await inbox.addInboxItem(text: '  call the bank ', at: day.add(const Duration(hours: 9, minutes: 10)), sessionId: 1);
+      final item = (await inbox.watchOpenInboxItems().first).single;
+      expect((item.text, item.sessionId), ('call the bank', 1));
+
+      await database.customStatement('DELETE FROM focus_sessions');
+      final kept = await database.select(database.inboxItems).getSingle();
+      expect((kept.content, kept.sessionId), ('call the bank', null), reason: 'ON DELETE SET NULL');
     });
   });
 }

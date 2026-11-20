@@ -6,6 +6,8 @@ import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/fractional_indexer.dart';
 import 'package:focused_task/features/categories/domain/i_category_repository.dart';
 import 'package:focused_task/features/categories/domain/task_category.dart';
+import 'package:focused_task/features/inbox/domain/i_inbox_repository.dart';
+import 'package:focused_task/features/inbox/domain/inbox_item.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/sessions/domain/focus_time.dart' as focus_time;
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
@@ -15,15 +17,15 @@ import 'package:focused_task/features/tasks/domain/stats/stats_calculator.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
-/// Simple in-memory [ITaskRepository], [IFocusSessionRepository] **and** [ICategoryRepository] for widget and notifier
-/// tests, so tasks, sessions and categories share one consistent store. Override all three providers with the same
-/// instance.
+/// Simple in-memory [ITaskRepository], [IFocusSessionRepository], [ICategoryRepository] **and** [IInboxRepository] for
+/// widget and notifier tests, so tasks, sessions, categories and parked thoughts share one consistent store. Override
+/// all four providers with the same instance.
 ///
 /// It mirrors the behaviour of the Drift implementation closely enough for presentation-layer tests.
 /// Repository behaviour itself is tested against a real in-memory database.
 ///
 /// Seeded tasks with a `latestStart` (and `lastSeenAt`) get an open session, like data left by a crash.
-class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, ICategoryRepository {
+class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, ICategoryRepository, IInboxRepository {
   FakeTaskRepository({List<TaskEntity> tasks = const [], List<FocusSession> sessions = const [], List<TaskCategory> categories = const []}) {
     for (final category in categories) {
       _categories[category.id] = category;
@@ -332,6 +334,12 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, IC
   }
 
   @override
+  Future<void> addInterruption(int id) async {
+    final session = _sessions.where((session) => session.id == id).firstOrNull;
+    if (session != null) _replaceSession(session.copyWith(interruptions: session.interruptions + 1));
+  }
+
+  @override
   Future<FocusSession?> openSession() async => _sessions.where((session) => session.isOpen).lastOrNull;
 
   @override
@@ -435,4 +443,48 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, IC
   Future<void> setTaskCategory({required int taskId, required int? categoryId}) async {
     _update(taskId, (task) => task.copyWith(categoryId: categoryId, clearCategory: categoryId == null));
   }
+
+  // --- IInboxRepository ---------------------------------------------------------------------------------------------
+
+  final List<InboxItem> _inbox = [];
+  int _nextInboxId = 1;
+
+  /// All parked thoughts, oldest first.
+  List<InboxItem> get inboxItems => List.unmodifiable(_inbox);
+
+  List<InboxItem> get _openInbox => _inbox.where((item) => !item.isResolved).toList(growable: false);
+
+  @override
+  Future<int> addInboxItem({required String text, required DateTime at, int? sessionId}) async {
+    final id = _nextInboxId++;
+    _inbox.add(InboxItem(id: id, text: text.trim(), createdAt: at, sessionId: sessionId));
+    _changes.add(null);
+    return id;
+  }
+
+  @override
+  Stream<List<InboxItem>> watchOpenInboxItems() async* {
+    yield _openInbox;
+    yield* _changes.stream.map((_) => _openInbox);
+  }
+
+  @override
+  Stream<List<InboxItem>> watchInboxItemsCreated(DateTime start, DateTime endExclusive, {int limit = 5}) async* {
+    List<InboxItem> created() => _inbox.reversed.where((item) => !item.createdAt.isBefore(start) && item.createdAt.isBefore(endExclusive)).take(limit).toList(growable: false);
+    yield created();
+    yield* _changes.stream.map((_) => created());
+  }
+
+  void _setResolved(int id, DateTime? at) {
+    final index = _inbox.indexWhere((item) => item.id == id);
+    if (index < 0) return;
+    _inbox[index] = _inbox[index].copyWith(resolvedAt: at, clearResolvedAt: at == null);
+    _changes.add(null);
+  }
+
+  @override
+  Future<void> resolveInboxItem(int id, DateTime at) async => _setResolved(id, at);
+
+  @override
+  Future<void> reopenInboxItem(int id) async => _setResolved(id, null);
 }

@@ -142,6 +142,13 @@ class SettingsScreen extends ConsumerWidget {
             contentPadding: EdgeInsets.zero,
             onChanged: notifier.setPauseOnBackground,
           ),
+          SwitchListTile(
+            title: Text(l10n.settingsMinimalFocusLayout),
+            subtitle: Text(l10n.settingsMinimalFocusLayoutHint),
+            value: state.focusMinimalLayout,
+            contentPadding: EdgeInsets.zero,
+            onChanged: notifier.setFocusMinimalLayout,
+          ),
           const _IntervalsSection(),
           const SizedBox(height: 24),
           const _GoalsSection(),

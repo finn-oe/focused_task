@@ -9,6 +9,7 @@ import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/breaks/domain/interval_planner.dart';
+import 'package:focused_task/features/inbox/domain/i_inbox_repository.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
@@ -46,6 +47,7 @@ class FocusModeState {
     this.hasAlarmPlayedForCurrentTask = false,
     this.intervals,
     this.isBreakOver = false,
+    this.awayFor,
   });
 
   factory FocusModeState.initial() {
@@ -85,6 +87,9 @@ class FocusModeState {
   /// The break is over and the next work interval waits for the user.
   final bool isBreakOver;
 
+  /// How long the user was away from a running focus session; set once on return for the "welcome back" message.
+  final Duration? awayFor;
+
   Duration get totalSessionDuration {
     final runningMs = isPaused || sessionStartedAt == null ? 0 : now.difference(sessionStartedAt!).inMilliseconds;
     return Duration(milliseconds: sessionBaseMs + runningMs);
@@ -114,6 +119,8 @@ class FocusModeState {
     bool? hasAlarmPlayedForCurrentTask,
     IntervalPlanner? intervals,
     bool? isBreakOver,
+    Duration? awayFor,
+    bool clearAwayFor = false,
     bool clearIntervals = false,
     bool clearCurrentTask = false,
     bool clearSessionStartedAt = false,
@@ -135,6 +142,7 @@ class FocusModeState {
       hasAlarmPlayedForCurrentTask: hasAlarmPlayedForCurrentTask ?? this.hasAlarmPlayedForCurrentTask,
       intervals: clearIntervals ? null : intervals ?? this.intervals,
       isBreakOver: isBreakOver ?? this.isBreakOver,
+      awayFor: clearAwayFor ? null : awayFor ?? this.awayFor,
     );
   }
 }
@@ -144,7 +152,12 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
   late IFocusSessionRepository _sessions;
   late TargetAlarm _alarm;
   late NotificationService _notifications;
+  late IInboxRepository _inbox;
   Timer? _ticker;
+
+  /// When the app lost the user's attention, and the focus session that was running then (#28).
+  DateTime? _awaySince;
+  int? _awaySessionId;
 
   /// The open focus session of [FocusModeState.currentTask], or `null` while paused.
   int? _sessionId;
@@ -163,12 +176,20 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
   /// at the same moment (the interval has priority).
   static const alarmGap = Duration(minutes: 1);
 
+  /// Leaving the app for at least this long during focus counts as an interruption; shorter switches (a flickering
+  /// window focus, a glance at a notification) don't.
+  static const interruptionThreshold = Duration(seconds: 2);
+
+  /// Coming back after at least this long shows "You were away …".
+  static const welcomeBackThreshold = Duration(minutes: 1);
+
   @override
   FocusModeState build() {
     _repository = ref.watch(taskRepositoryProvider);
     _sessions = ref.watch(focusSessionRepositoryProvider);
     _alarm = ref.watch(targetAlarmProvider);
     _notifications = ref.watch(notificationServiceProvider);
+    _inbox = ref.watch(inboxRepositoryProvider);
     ref.onDispose(_stopTicker);
     return FocusModeState.initial();
   }
@@ -537,7 +558,49 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     await _loadCurrentTask();
   }
 
+  /// The app lost the user's attention (window unfocused, app switched, screen locked). Only the first of several
+  /// lifecycle events of one switch counts.
+  void appLeft() {
+    if (_awaySince != null) return;
+    _awaySince = clock.now();
+    _awaySessionId = state.isPaused ? null : _sessionId;
+  }
+
+  /// The user is back. Being away from a running focus session for [interruptionThreshold] or longer counts one
+  /// interruption on that session (also if it was paused meanwhile because the app went to the background); after
+  /// [welcomeBackThreshold], [FocusModeState.awayFor] says how long. Leaving during a break is not a distraction.
+  Future<void> appReturned() async {
+    final since = _awaySince;
+    final sessionId = _awaySessionId;
+    _awaySince = null;
+    _awaySessionId = null;
+    if (since == null || sessionId == null) return;
+    final away = clock.now().difference(since);
+    if (away < interruptionThreshold) return;
+    await _sessions.addInterruption(sessionId);
+    if (away >= welcomeBackThreshold) state = state.copyWith(awayFor: away);
+  }
+
+  /// The "welcome back" message was shown.
+  void clearAwayFor() => state = state.copyWith(clearAwayFor: true);
+
+  /// "I got distracted": counts one interruption on the running focus session.
+  Future<void> recordDistraction() async {
+    final sessionId = _sessionId;
+    if (sessionId == null || state.isPaused) return;
+    await _sessions.addInterruption(sessionId);
+  }
+
+  /// Parks a thought in the distraction inbox without leaving focus; it is reviewed after the session.
+  Future<void> parkThought(String text) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    await _inbox.addInboxItem(text: trimmed, at: clock.now(), sessionId: state.isPaused ? null : _sessionId);
+  }
+
   Future<void> exitFocus() async {
+    _awaySince = null;
+    _awaySessionId = null;
     await pauseSession(reason: EndReason.exited);
     await _closeBreakSession(clock.now(), EndReason.exited);
     await _cancelReminders();

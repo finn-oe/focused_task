@@ -14,6 +14,9 @@ abstract class IFocusSessionRepository {
   /// time (the session ends where it started). Ending a session that is already closed does nothing.
   Future<void> end(int id, DateTime at, EndReason reason);
 
+  /// Counts one interruption (#28) on session [id] (also after it has ended).
+  Future<void> addInterruption(int id);
+
   /// The currently open session, if any.
   Future<FocusSession?> openSession();
 

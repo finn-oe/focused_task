@@ -16,6 +16,7 @@ Widget _app(SharedPreferences preferences) {
       taskRepositoryProvider.overrideWithValue(repository),
       focusSessionRepositoryProvider.overrideWithValue(repository),
       categoryRepositoryProvider.overrideWithValue(repository),
+      inboxRepositoryProvider.overrideWithValue(repository),
       sharedPreferencesProvider.overrideWithValue(preferences),
     ],
     child: const FocusedTaskApp(),
