@@ -33,6 +33,16 @@ compared to reality – so you can get a little more dedicated every day.
   today (can be turned off in Settings → Planning).
 - **Collapse completed tasks** – optional (Settings → Planning): completed tasks move into a "Completed (n)" section
   at the end of the plan list and of each board group, collapsed by default and opened with a tap.
+- **Start/due times & reminders** – optional, behind "Schedule & reminder" in the task form (a sub-page, so title,
+  day, estimate, category, priority, sub-tasks and description stay first): a start time on the task's day, a due date
+  with an optional time (default 17:00) and a reminder (default lead time, 5–60 min, or off) with a preview. The
+  reminder comes before the start, or – without a start – before the deadline minus the work still left on the
+  estimate (estimate − tracked). Times never change the order; moving a task keeps its start time and due date. Tiles
+  show "14:00" and "Due Fri" (warning colour within a day, error colour when overdue); today's plan shows
+  "2 tasks overdue" with their list.
+- **Reminders & dates** (Settings → Notifications) – task reminders on/off, default lead time and due time; optional
+  "Plan your day" at a chosen time on working days without tasks; an optional inactivity reminder during working hours
+  (09:00–17:00, after 60 min without a focus session by default; not while a session runs); the notification checks.
 - **Focus mode** – works through today's open tasks in order. Shows the time spent on the current task
   (or the time remaining until the target), the overall session time, and the sub-task progress.
 - **Breaks (intervals)** – optional Pomodoro-style cycles, off by default: work 25 min, then a 5 min break, and a
@@ -66,11 +76,11 @@ compared to reality – so you can get a little more dedicated every day.
   by the current goal. While you focus, a notification says when the goal is reached (once a day).
 - **Languages** – English and German; follows the system language or can be chosen in the settings.
 - **Settings** – light/dark/system theme, language, the daily rollover prompt, data retention, focus-mode behaviour,
-  daily focus goal and working days, work/break intervals.
+  daily focus goal and working days, work/break intervals, reminders & dates.
 
 ### Planned
 
-Due dates and reminders, recurring tasks, data export and full support for every Flutter platform.
+Recurring tasks, data export and full support for every Flutter platform.
 See [Roadmap](#roadmap).
 
 ## Platforms
@@ -147,6 +157,7 @@ lib/
     ├── categories/         # task categories: TaskCategory, ICategoryRepository, management screen
     ├── goals/              # daily focus goal: FocusGoal, StreakCalculator, progress ring
     ├── inbox/              # distraction inbox: InboxItem, IInboxRepository, review sheet
+    ├── reminders/          # ReminderSettings, ReminderScheduler (pure), RemindersNotifier (system notifications)
     ├── settings/           # preferences (shared_preferences)
     └── tasks/
         ├── data/           # TaskRepositoryImpl (Drift)
@@ -168,8 +179,12 @@ How the pieces fit together:
   `inbox_items` (linked to their session, `resolved_at` once reviewed).
 - **Categories:** `categories` table; `tasks.category_id` is set to `NULL` when a category is deleted. A category
   stores an index into the fixed palette, never a raw colour.
-- **Routes:** `/plan` (home), `/task-form`, `/focus?day=…&task=…&category=…`, `/pause`, `/break`, `/finished-for-today`, `/stats`,
-  `/settings`, `/settings/categories`.
+- **Reminders:** `tasks.start_minute` (on `assigned_date`), `due_date` / `due_minute`, `reminder_minutes` /
+  `reminder_off`, all optional. The pure `ReminderScheduler` computes when each reminder fires; `RemindersNotifier`
+  replans on startup and whenever scheduled tasks, sessions or settings change, and remembers delivered reminders so
+  a passed one is shown only once.
+- **Routes:** `/plan` (home), `/task-form`, `/task-schedule`, `/focus?day=…&task=…&category=…`, `/pause`, `/break`, `/finished-for-today`, `/stats`,
+  `/settings`, `/settings/categories`, `/settings/reminders`.
 
 More detail and the rules for contributors are in [CLAUDE.md](CLAUDE.md).
 

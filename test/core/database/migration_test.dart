@@ -7,6 +7,7 @@ import 'package:focused_task/features/categories/data/category_repository_impl.d
 import 'package:focused_task/features/inbox/data/inbox_repository_impl.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
+import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 
 const _tasksV3 = '''CREATE TABLE tasks (
@@ -90,6 +91,15 @@ const _categoriesV6 = '''CREATE TABLE categories (
     icon TEXT NULL,
     sort_order TEXT NOT NULL,
     archived INTEGER NOT NULL DEFAULT 0 CHECK (archived IN (0, 1))
+  )''';
+
+/// Inbox of version 7 (#28), as created by app versions 1.15.0 – 1.17.0.
+const _inboxV7 = '''CREATE TABLE inbox_items (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    session_id INTEGER NULL REFERENCES focus_sessions (id) ON DELETE SET NULL,
+    resolved_at INTEGER NULL
   )''';
 
 /// Drift stores `DateTime` as Unix seconds.
@@ -273,7 +283,7 @@ void main() {
       expect(await database.select(database.inboxItems).get(), isEmpty);
 
       final version = await database.customSelect('PRAGMA user_version').getSingle();
-      expect(version.data.values.single, 7);
+      expect(version.data.values.single, database.schemaVersion);
     });
 
     test('items can be parked; deleting their session keeps them', () async {
@@ -285,6 +295,47 @@ void main() {
       await database.customStatement('DELETE FROM focus_sessions');
       final kept = await database.select(database.inboxItems).getSingle();
       expect((kept.content, kept.sessionId), ('call the bank', null), reason: 'ON DELETE SET NULL');
+    });
+  });
+
+  group('v7 → v8 (start/due times, #10)', () {
+    final day = DateTime(2026, 11, 10);
+    late AppDatabase database;
+
+    setUp(() {
+      database = _open([
+        _tasksV6,
+        _todos,
+        _sessionsV5,
+        _categoriesV6,
+        _inboxV7,
+        'CREATE INDEX focus_sessions_started_at ON focus_sessions (started_at)',
+        "INSERT INTO tasks (id, title, assigned_date, sort_order, time_spent, target_duration_minutes) VALUES (1, 'report', ${_seconds(day)}, 'a0', 1800000, 60)",
+        "INSERT INTO inbox_items (text, created_at) VALUES ('call the bank', ${_seconds(day)})",
+        'PRAGMA user_version = 7',
+      ]);
+    });
+    tearDown(() => database.close());
+
+    test('existing tasks keep their data and have no times and no reminder', () async {
+      final task = (await TaskRepositoryImpl(database).getTaskById(1))!;
+      expect((task.title, task.timeSpent, task.targetDurationMinutes), ('report', 1800000, 60));
+      expect(task.schedule, TaskSchedule.none);
+      expect(await database.select(database.inboxItems).get(), hasLength(1));
+
+      final version = await database.customSelect('PRAGMA user_version').getSingle();
+      expect(version.data.values.single, database.schemaVersion);
+    });
+
+    test('times can be set afterwards', () async {
+      final tasks = TaskRepositoryImpl(database);
+      await tasks.updateTaskDetails(
+        taskId: 1,
+        title: 'report',
+        categoryId: null,
+        schedule: TaskSchedule(startMinute: 540, dueDate: day),
+      );
+      expect((await tasks.getTaskById(1))!.schedule, TaskSchedule(startMinute: 540, dueDate: day));
     });
   });
 }

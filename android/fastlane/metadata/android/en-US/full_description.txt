@@ -6,6 +6,7 @@ PLAN
 • Group tasks into categories with their own colour, as a list or as a board.
 • Week and month calendar to move tasks between days.
 • Unfinished tasks from the last days can be moved to today with one tap.
+• Optional start and due times with reminders, and a gentle nudge to plan your day or start the next focus block.
 
 FOCUS
 • Focus mode shows one task at a time: its timer, its sub-tasks and what comes next.

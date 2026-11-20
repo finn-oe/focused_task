@@ -13,6 +13,7 @@ import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/completed_section_header.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_schedule_chips.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/task_form_fields.dart';
 
 /// Width from which the groups are columns side by side instead of sections below each other.
@@ -280,6 +281,7 @@ class _BoardTaskCard extends ConsumerWidget {
         contentPadding: const EdgeInsets.only(left: 4, right: 4),
         leading: Checkbox(value: isCompleted, semanticLabel: isCompleted ? l10n.taskMarkIncomplete : l10n.taskMarkComplete, onChanged: (_) => notifier.toggleTaskCompletion(task)),
         title: title,
+        subtitle: task.schedule.isEmpty ? null : TaskScheduleChips(task: task),
         onTap: () => context.push(AppRoutes.taskForm, extra: task),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,

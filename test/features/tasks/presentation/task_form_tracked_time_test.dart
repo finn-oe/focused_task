@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
+import 'package:focused_task/features/reminders/domain/reminder_settings.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/task_form_screen.dart';
 
@@ -24,6 +25,7 @@ void main() {
           focusSessionRepositoryProvider.overrideWithValue(repository),
           categoryRepositoryProvider.overrideWithValue(repository),
           inboxRepositoryProvider.overrideWithValue(repository),
+          reminderSettingsProvider.overrideWithValue(ReminderSettings.defaults),
         ],
         child: localizedApp(home: TaskFormScreen(task: task)),
       ),

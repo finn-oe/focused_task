@@ -1,3 +1,7 @@
+import 'package:focused_task/features/tasks/domain/entities/task_schedule.dart';
+
+export 'package:focused_task/features/tasks/domain/entities/task_schedule.dart';
+
 enum TaskPriority {
   low(0),
   medium(1),
@@ -40,6 +44,7 @@ class TaskEntity {
     this.lastSeenAt,
     required this.todos,
     this.categoryId,
+    this.schedule = TaskSchedule.none,
   });
 
   final int id;
@@ -63,6 +68,18 @@ class TaskEntity {
 
   /// The task's category, `null` if it has none.
   final int? categoryId;
+
+  /// Optional start time, deadline and reminder (#10).
+  final TaskSchedule schedule;
+
+  /// The start time on the task's day, or `null`.
+  DateTime? get startAt => schedule.startOn(assignedDate);
+
+  /// Open, with a deadline before [now].
+  bool isOverdueAt(DateTime now, {required int defaultDueMinute}) {
+    final due = schedule.dueAt(defaultDueMinute: defaultDueMinute);
+    return !isCompleted && due != null && due.isBefore(now);
+  }
 
   bool get isRunning => latestStart != null;
 
@@ -99,6 +116,7 @@ class TaskEntity {
     List<TaskTodoEntity>? todos,
     int? categoryId,
     bool clearCategory = false,
+    TaskSchedule? schedule,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -114,6 +132,7 @@ class TaskEntity {
       lastSeenAt: clearLatestStart ? null : lastSeenAt ?? this.lastSeenAt,
       todos: todos ?? this.todos,
       categoryId: clearCategory ? null : categoryId ?? this.categoryId,
+      schedule: schedule ?? this.schedule,
     );
   }
 }

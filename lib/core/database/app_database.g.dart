@@ -524,6 +524,65 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
       'REFERENCES categories (id) ON DELETE SET NULL',
     ),
   );
+  static const VerificationMeta _startMinuteMeta = const VerificationMeta(
+    'startMinute',
+  );
+  @override
+  late final GeneratedColumn<int> startMinute = GeneratedColumn<int>(
+    'start_minute',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dueDateMeta = const VerificationMeta(
+    'dueDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> dueDate = GeneratedColumn<DateTime>(
+    'due_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dueMinuteMeta = const VerificationMeta(
+    'dueMinute',
+  );
+  @override
+  late final GeneratedColumn<int> dueMinute = GeneratedColumn<int>(
+    'due_minute',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _reminderMinutesMeta = const VerificationMeta(
+    'reminderMinutes',
+  );
+  @override
+  late final GeneratedColumn<int> reminderMinutes = GeneratedColumn<int>(
+    'reminder_minutes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _reminderOffMeta = const VerificationMeta(
+    'reminderOff',
+  );
+  @override
+  late final GeneratedColumn<bool> reminderOff = GeneratedColumn<bool>(
+    'reminder_off',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("reminder_off" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -536,6 +595,11 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     timeSpent,
     targetDurationMinutes,
     categoryId,
+    startMinute,
+    dueDate,
+    dueMinute,
+    reminderMinutes,
+    reminderOff,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -624,6 +688,45 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
       );
     }
+    if (data.containsKey('start_minute')) {
+      context.handle(
+        _startMinuteMeta,
+        startMinute.isAcceptableOrUnknown(
+          data['start_minute']!,
+          _startMinuteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('due_date')) {
+      context.handle(
+        _dueDateMeta,
+        dueDate.isAcceptableOrUnknown(data['due_date']!, _dueDateMeta),
+      );
+    }
+    if (data.containsKey('due_minute')) {
+      context.handle(
+        _dueMinuteMeta,
+        dueMinute.isAcceptableOrUnknown(data['due_minute']!, _dueMinuteMeta),
+      );
+    }
+    if (data.containsKey('reminder_minutes')) {
+      context.handle(
+        _reminderMinutesMeta,
+        reminderMinutes.isAcceptableOrUnknown(
+          data['reminder_minutes']!,
+          _reminderMinutesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('reminder_off')) {
+      context.handle(
+        _reminderOffMeta,
+        reminderOff.isAcceptableOrUnknown(
+          data['reminder_off']!,
+          _reminderOffMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -673,6 +776,26 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         DriftSqlType.int,
         data['${effectivePrefix}category_id'],
       ),
+      startMinute: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_minute'],
+      ),
+      dueDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}due_date'],
+      ),
+      dueMinute: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}due_minute'],
+      ),
+      reminderMinutes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}reminder_minutes'],
+      ),
+      reminderOff: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}reminder_off'],
+      )!,
     );
   }
 
@@ -697,6 +820,19 @@ class Task extends DataClass implements Insertable<Task> {
 
   /// Set to `NULL` when the category is deleted, so the task stays (uncategorised).
   final int? categoryId;
+
+  /// Start time on `assigned_date` in minutes after local midnight (#10).
+  final int? startMinute;
+
+  /// Deadline day (#10).
+  final DateTime? dueDate;
+
+  /// Deadline time in minutes after local midnight; `NULL` = the default due time from the settings.
+  final int? dueMinute;
+
+  /// Reminder lead time; `NULL` = the default from the settings.
+  final int? reminderMinutes;
+  final bool reminderOff;
   const Task({
     required this.id,
     required this.title,
@@ -708,6 +844,11 @@ class Task extends DataClass implements Insertable<Task> {
     required this.timeSpent,
     this.targetDurationMinutes,
     this.categoryId,
+    this.startMinute,
+    this.dueDate,
+    this.dueMinute,
+    this.reminderMinutes,
+    required this.reminderOff,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -728,6 +869,19 @@ class Task extends DataClass implements Insertable<Task> {
     if (!nullToAbsent || categoryId != null) {
       map['category_id'] = Variable<int>(categoryId);
     }
+    if (!nullToAbsent || startMinute != null) {
+      map['start_minute'] = Variable<int>(startMinute);
+    }
+    if (!nullToAbsent || dueDate != null) {
+      map['due_date'] = Variable<DateTime>(dueDate);
+    }
+    if (!nullToAbsent || dueMinute != null) {
+      map['due_minute'] = Variable<int>(dueMinute);
+    }
+    if (!nullToAbsent || reminderMinutes != null) {
+      map['reminder_minutes'] = Variable<int>(reminderMinutes);
+    }
+    map['reminder_off'] = Variable<bool>(reminderOff);
     return map;
   }
 
@@ -749,6 +903,19 @@ class Task extends DataClass implements Insertable<Task> {
       categoryId: categoryId == null && nullToAbsent
           ? const Value.absent()
           : Value(categoryId),
+      startMinute: startMinute == null && nullToAbsent
+          ? const Value.absent()
+          : Value(startMinute),
+      dueDate: dueDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dueDate),
+      dueMinute: dueMinute == null && nullToAbsent
+          ? const Value.absent()
+          : Value(dueMinute),
+      reminderMinutes: reminderMinutes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reminderMinutes),
+      reminderOff: Value(reminderOff),
     );
   }
 
@@ -770,6 +937,11 @@ class Task extends DataClass implements Insertable<Task> {
         json['targetDurationMinutes'],
       ),
       categoryId: serializer.fromJson<int?>(json['categoryId']),
+      startMinute: serializer.fromJson<int?>(json['startMinute']),
+      dueDate: serializer.fromJson<DateTime?>(json['dueDate']),
+      dueMinute: serializer.fromJson<int?>(json['dueMinute']),
+      reminderMinutes: serializer.fromJson<int?>(json['reminderMinutes']),
+      reminderOff: serializer.fromJson<bool>(json['reminderOff']),
     );
   }
   @override
@@ -786,6 +958,11 @@ class Task extends DataClass implements Insertable<Task> {
       'timeSpent': serializer.toJson<int>(timeSpent),
       'targetDurationMinutes': serializer.toJson<int?>(targetDurationMinutes),
       'categoryId': serializer.toJson<int?>(categoryId),
+      'startMinute': serializer.toJson<int?>(startMinute),
+      'dueDate': serializer.toJson<DateTime?>(dueDate),
+      'dueMinute': serializer.toJson<int?>(dueMinute),
+      'reminderMinutes': serializer.toJson<int?>(reminderMinutes),
+      'reminderOff': serializer.toJson<bool>(reminderOff),
     };
   }
 
@@ -800,6 +977,11 @@ class Task extends DataClass implements Insertable<Task> {
     int? timeSpent,
     Value<int?> targetDurationMinutes = const Value.absent(),
     Value<int?> categoryId = const Value.absent(),
+    Value<int?> startMinute = const Value.absent(),
+    Value<DateTime?> dueDate = const Value.absent(),
+    Value<int?> dueMinute = const Value.absent(),
+    Value<int?> reminderMinutes = const Value.absent(),
+    bool? reminderOff,
   }) => Task(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -813,6 +995,13 @@ class Task extends DataClass implements Insertable<Task> {
         ? targetDurationMinutes.value
         : this.targetDurationMinutes,
     categoryId: categoryId.present ? categoryId.value : this.categoryId,
+    startMinute: startMinute.present ? startMinute.value : this.startMinute,
+    dueDate: dueDate.present ? dueDate.value : this.dueDate,
+    dueMinute: dueMinute.present ? dueMinute.value : this.dueMinute,
+    reminderMinutes: reminderMinutes.present
+        ? reminderMinutes.value
+        : this.reminderMinutes,
+    reminderOff: reminderOff ?? this.reminderOff,
   );
   Task copyWithCompanion(TasksCompanion data) {
     return Task(
@@ -836,6 +1025,17 @@ class Task extends DataClass implements Insertable<Task> {
       categoryId: data.categoryId.present
           ? data.categoryId.value
           : this.categoryId,
+      startMinute: data.startMinute.present
+          ? data.startMinute.value
+          : this.startMinute,
+      dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
+      dueMinute: data.dueMinute.present ? data.dueMinute.value : this.dueMinute,
+      reminderMinutes: data.reminderMinutes.present
+          ? data.reminderMinutes.value
+          : this.reminderMinutes,
+      reminderOff: data.reminderOff.present
+          ? data.reminderOff.value
+          : this.reminderOff,
     );
   }
 
@@ -851,7 +1051,12 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('priority: $priority, ')
           ..write('timeSpent: $timeSpent, ')
           ..write('targetDurationMinutes: $targetDurationMinutes, ')
-          ..write('categoryId: $categoryId')
+          ..write('categoryId: $categoryId, ')
+          ..write('startMinute: $startMinute, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('dueMinute: $dueMinute, ')
+          ..write('reminderMinutes: $reminderMinutes, ')
+          ..write('reminderOff: $reminderOff')
           ..write(')'))
         .toString();
   }
@@ -868,6 +1073,11 @@ class Task extends DataClass implements Insertable<Task> {
     timeSpent,
     targetDurationMinutes,
     categoryId,
+    startMinute,
+    dueDate,
+    dueMinute,
+    reminderMinutes,
+    reminderOff,
   );
   @override
   bool operator ==(Object other) =>
@@ -882,7 +1092,12 @@ class Task extends DataClass implements Insertable<Task> {
           other.priority == this.priority &&
           other.timeSpent == this.timeSpent &&
           other.targetDurationMinutes == this.targetDurationMinutes &&
-          other.categoryId == this.categoryId);
+          other.categoryId == this.categoryId &&
+          other.startMinute == this.startMinute &&
+          other.dueDate == this.dueDate &&
+          other.dueMinute == this.dueMinute &&
+          other.reminderMinutes == this.reminderMinutes &&
+          other.reminderOff == this.reminderOff);
 }
 
 class TasksCompanion extends UpdateCompanion<Task> {
@@ -896,6 +1111,11 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<int> timeSpent;
   final Value<int?> targetDurationMinutes;
   final Value<int?> categoryId;
+  final Value<int?> startMinute;
+  final Value<DateTime?> dueDate;
+  final Value<int?> dueMinute;
+  final Value<int?> reminderMinutes;
+  final Value<bool> reminderOff;
   const TasksCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -907,6 +1127,11 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.timeSpent = const Value.absent(),
     this.targetDurationMinutes = const Value.absent(),
     this.categoryId = const Value.absent(),
+    this.startMinute = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.dueMinute = const Value.absent(),
+    this.reminderMinutes = const Value.absent(),
+    this.reminderOff = const Value.absent(),
   });
   TasksCompanion.insert({
     this.id = const Value.absent(),
@@ -919,6 +1144,11 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.timeSpent = const Value.absent(),
     this.targetDurationMinutes = const Value.absent(),
     this.categoryId = const Value.absent(),
+    this.startMinute = const Value.absent(),
+    this.dueDate = const Value.absent(),
+    this.dueMinute = const Value.absent(),
+    this.reminderMinutes = const Value.absent(),
+    this.reminderOff = const Value.absent(),
   }) : title = Value(title),
        assignedDate = Value(assignedDate),
        sortOrder = Value(sortOrder);
@@ -933,6 +1163,11 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<int>? timeSpent,
     Expression<int>? targetDurationMinutes,
     Expression<int>? categoryId,
+    Expression<int>? startMinute,
+    Expression<DateTime>? dueDate,
+    Expression<int>? dueMinute,
+    Expression<int>? reminderMinutes,
+    Expression<bool>? reminderOff,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -946,6 +1181,11 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (targetDurationMinutes != null)
         'target_duration_minutes': targetDurationMinutes,
       if (categoryId != null) 'category_id': categoryId,
+      if (startMinute != null) 'start_minute': startMinute,
+      if (dueDate != null) 'due_date': dueDate,
+      if (dueMinute != null) 'due_minute': dueMinute,
+      if (reminderMinutes != null) 'reminder_minutes': reminderMinutes,
+      if (reminderOff != null) 'reminder_off': reminderOff,
     });
   }
 
@@ -960,6 +1200,11 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<int>? timeSpent,
     Value<int?>? targetDurationMinutes,
     Value<int?>? categoryId,
+    Value<int?>? startMinute,
+    Value<DateTime?>? dueDate,
+    Value<int?>? dueMinute,
+    Value<int?>? reminderMinutes,
+    Value<bool>? reminderOff,
   }) {
     return TasksCompanion(
       id: id ?? this.id,
@@ -973,6 +1218,11 @@ class TasksCompanion extends UpdateCompanion<Task> {
       targetDurationMinutes:
           targetDurationMinutes ?? this.targetDurationMinutes,
       categoryId: categoryId ?? this.categoryId,
+      startMinute: startMinute ?? this.startMinute,
+      dueDate: dueDate ?? this.dueDate,
+      dueMinute: dueMinute ?? this.dueMinute,
+      reminderMinutes: reminderMinutes ?? this.reminderMinutes,
+      reminderOff: reminderOff ?? this.reminderOff,
     );
   }
 
@@ -1011,6 +1261,21 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (categoryId.present) {
       map['category_id'] = Variable<int>(categoryId.value);
     }
+    if (startMinute.present) {
+      map['start_minute'] = Variable<int>(startMinute.value);
+    }
+    if (dueDate.present) {
+      map['due_date'] = Variable<DateTime>(dueDate.value);
+    }
+    if (dueMinute.present) {
+      map['due_minute'] = Variable<int>(dueMinute.value);
+    }
+    if (reminderMinutes.present) {
+      map['reminder_minutes'] = Variable<int>(reminderMinutes.value);
+    }
+    if (reminderOff.present) {
+      map['reminder_off'] = Variable<bool>(reminderOff.value);
+    }
     return map;
   }
 
@@ -1026,7 +1291,12 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('priority: $priority, ')
           ..write('timeSpent: $timeSpent, ')
           ..write('targetDurationMinutes: $targetDurationMinutes, ')
-          ..write('categoryId: $categoryId')
+          ..write('categoryId: $categoryId, ')
+          ..write('startMinute: $startMinute, ')
+          ..write('dueDate: $dueDate, ')
+          ..write('dueMinute: $dueMinute, ')
+          ..write('reminderMinutes: $reminderMinutes, ')
+          ..write('reminderOff: $reminderOff')
           ..write(')'))
         .toString();
   }
@@ -2656,6 +2926,11 @@ typedef $$TasksTableCreateCompanionBuilder =
       Value<int> timeSpent,
       Value<int?> targetDurationMinutes,
       Value<int?> categoryId,
+      Value<int?> startMinute,
+      Value<DateTime?> dueDate,
+      Value<int?> dueMinute,
+      Value<int?> reminderMinutes,
+      Value<bool> reminderOff,
     });
 typedef $$TasksTableUpdateCompanionBuilder =
     TasksCompanion Function({
@@ -2669,6 +2944,11 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<int> timeSpent,
       Value<int?> targetDurationMinutes,
       Value<int?> categoryId,
+      Value<int?> startMinute,
+      Value<DateTime?> dueDate,
+      Value<int?> dueMinute,
+      Value<int?> reminderMinutes,
+      Value<bool> reminderOff,
     });
 
 final class $$TasksTableReferences
@@ -2779,6 +3059,31 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<int> get targetDurationMinutes => $composableBuilder(
     column: $table.targetDurationMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startMinute => $composableBuilder(
+    column: $table.startMinute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dueMinute => $composableBuilder(
+    column: $table.dueMinute,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get reminderMinutes => $composableBuilder(
+    column: $table.reminderMinutes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get reminderOff => $composableBuilder(
+    column: $table.reminderOff,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2910,6 +3215,31 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get startMinute => $composableBuilder(
+    column: $table.startMinute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get dueDate => $composableBuilder(
+    column: $table.dueDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dueMinute => $composableBuilder(
+    column: $table.dueMinute,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get reminderMinutes => $composableBuilder(
+    column: $table.reminderMinutes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get reminderOff => $composableBuilder(
+    column: $table.reminderOff,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CategoriesTableOrderingComposer get categoryId {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -2975,6 +3305,27 @@ class $$TasksTableAnnotationComposer
 
   GeneratedColumn<int> get targetDurationMinutes => $composableBuilder(
     column: $table.targetDurationMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get startMinute => $composableBuilder(
+    column: $table.startMinute,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get dueDate =>
+      $composableBuilder(column: $table.dueDate, builder: (column) => column);
+
+  GeneratedColumn<int> get dueMinute =>
+      $composableBuilder(column: $table.dueMinute, builder: (column) => column);
+
+  GeneratedColumn<int> get reminderMinutes => $composableBuilder(
+    column: $table.reminderMinutes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get reminderOff => $composableBuilder(
+    column: $table.reminderOff,
     builder: (column) => column,
   );
 
@@ -3094,6 +3445,11 @@ class $$TasksTableTableManager
                 Value<int> timeSpent = const Value.absent(),
                 Value<int?> targetDurationMinutes = const Value.absent(),
                 Value<int?> categoryId = const Value.absent(),
+                Value<int?> startMinute = const Value.absent(),
+                Value<DateTime?> dueDate = const Value.absent(),
+                Value<int?> dueMinute = const Value.absent(),
+                Value<int?> reminderMinutes = const Value.absent(),
+                Value<bool> reminderOff = const Value.absent(),
               }) => TasksCompanion(
                 id: id,
                 title: title,
@@ -3105,6 +3461,11 @@ class $$TasksTableTableManager
                 timeSpent: timeSpent,
                 targetDurationMinutes: targetDurationMinutes,
                 categoryId: categoryId,
+                startMinute: startMinute,
+                dueDate: dueDate,
+                dueMinute: dueMinute,
+                reminderMinutes: reminderMinutes,
+                reminderOff: reminderOff,
               ),
           createCompanionCallback:
               ({
@@ -3118,6 +3479,11 @@ class $$TasksTableTableManager
                 Value<int> timeSpent = const Value.absent(),
                 Value<int?> targetDurationMinutes = const Value.absent(),
                 Value<int?> categoryId = const Value.absent(),
+                Value<int?> startMinute = const Value.absent(),
+                Value<DateTime?> dueDate = const Value.absent(),
+                Value<int?> dueMinute = const Value.absent(),
+                Value<int?> reminderMinutes = const Value.absent(),
+                Value<bool> reminderOff = const Value.absent(),
               }) => TasksCompanion.insert(
                 id: id,
                 title: title,
@@ -3129,6 +3495,11 @@ class $$TasksTableTableManager
                 timeSpent: timeSpent,
                 targetDurationMinutes: targetDurationMinutes,
                 categoryId: categoryId,
+                startMinute: startMinute,
+                dueDate: dueDate,
+                dueMinute: dueMinute,
+                reminderMinutes: reminderMinutes,
+                reminderOff: reminderOff,
               ),
           withReferenceMapper: (p0) => p0
               .map(

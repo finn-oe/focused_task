@@ -1,0 +1,4 @@
+• Optional Start- und Fälligkeitszeiten für Aufgaben, mit Erinnerung vor dem Start oder so rechtzeitig, dass du vor der Frist fertig wirst.
+• Aufgaben zeigen Startzeit und Frist; Überfälliges fällt sofort auf.
+• Neue Einstellungen „Erinnerungen & Termine“: Standard-Erinnerung, „Plane deinen Tag“ und ein sanfter Hinweis, wenn du länger nicht fokussiert hast.
+• Das Aufgabenformular zeigt jetzt zuerst das Wichtigste.

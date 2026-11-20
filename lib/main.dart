@@ -35,6 +35,8 @@ class FocusedTaskApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Runs the launch work once; the UI does not wait for it.
     ref.watch(appStartupProvider);
+    // Keeps the reminders scheduled while the app runs; rebuilding the app for it isn't needed.
+    ref.listen(remindersNotifierProvider, (_, _) {});
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(settingsNotifierProvider.select((settings) => settings.themeMode));
     final locale = ref.watch(settingsNotifierProvider.select((settings) => settings.locale));

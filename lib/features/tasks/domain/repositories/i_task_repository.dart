@@ -25,9 +25,11 @@ abstract class ITaskRepository {
     TaskPriority priority = TaskPriority.low,
     int? targetDurationMinutes,
     int? categoryId,
+    TaskSchedule schedule = TaskSchedule.none,
   });
 
-  /// Saves the details of the form. [categoryId] is always written (`null` = no category).
+  /// Saves the details of the form. [categoryId] is always written (`null` = no category); [schedule] only when given
+  /// (`null` keeps the task's times, e.g. when the calendar moves it).
   Future<void> updateTaskDetails({
     required int taskId,
     required String title,
@@ -36,7 +38,12 @@ abstract class ITaskRepository {
     DateTime? assignedDate,
     TaskPriority? priority,
     required int? categoryId,
+    TaskSchedule? schedule,
   });
+
+  /// Open tasks with a start time or a deadline (#10), by day and plan order; sub-tasks are not loaded. Emits again
+  /// when such a task changes, also when its tracked time grows.
+  Stream<List<TaskEntity>> watchScheduledOpenTasks();
 
   Future<void> updateTaskOrder({required int taskId, required String sortOrder});
 

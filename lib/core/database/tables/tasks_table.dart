@@ -24,4 +24,18 @@ class Tasks extends Table {
 
   /// Set to `NULL` when the category is deleted, so the task stays (uncategorised).
   IntColumn get categoryId => integer().named('category_id').nullable().references(Categories, #id, onDelete: KeyAction.setNull)();
+
+  /// Start time on `assigned_date` in minutes after local midnight (#10).
+  IntColumn get startMinute => integer().named('start_minute').nullable()();
+
+  /// Deadline day (#10).
+  DateTimeColumn get dueDate => dateTime().named('due_date').nullable()();
+
+  /// Deadline time in minutes after local midnight; `NULL` = the default due time from the settings.
+  IntColumn get dueMinute => integer().named('due_minute').nullable()();
+
+  /// Reminder lead time; `NULL` = the default from the settings.
+  IntColumn get reminderMinutes => integer().named('reminder_minutes').nullable()();
+
+  BoolColumn get reminderOff => boolean().named('reminder_off').withDefault(const Constant(false))();
 }

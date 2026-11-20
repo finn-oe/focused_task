@@ -22,6 +22,7 @@ import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/rollo
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/session_recovery_dialog.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_move_feedback.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_schedule_chips.dart';
 
 /// Tasks of one day. The day comes from the URL (`/plan?date=YYYY-MM-DD`, missing = today) and the plan notifier
 /// follows it, so browser back/forward and deep links work.
@@ -208,6 +209,7 @@ class _PlanScreenState extends ConsumerState<PlanScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const ParkedThoughtsBanner(),
+                  if (shownDay.isSameDate(today)) const OverdueBanner(),
                   Expanded(
                     child: showBoard ? const CategoryBoard() : _DayTasks(onSwipeToPrevious: _previousDay, onSwipeToNext: _nextDay),
                   ),

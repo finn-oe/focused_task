@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/breaks/domain/interval_settings.dart';
+import 'package:focused_task/features/reminders/domain/reminder_settings.dart';
 import 'package:focused_task/features/settings/presentation/settings_screen.dart';
 
 import '../../helpers/fake_preferences.dart';
@@ -89,6 +90,38 @@ void main() {
 
       expect(container.read(intervalSettingsProvider).work, IntervalSettings.defaultWork);
       expect(container.read(intervalSettingsProvider).longBreakEvery, IntervalSettings.defaultLongBreakEvery);
+    });
+  });
+
+  group('SettingsNotifier reminders (#10)', () {
+    test('defaults: task reminders on (15 min, due at 17:00), daily planning and inactivity off', () async {
+      final container = await _container(FakeTaskRepository());
+      expect(container.read(reminderSettingsProvider), ReminderSettings.defaults);
+      expect((ReminderSettings.defaults.taskReminders, ReminderSettings.defaults.dailyPlanning, ReminderSettings.defaults.inactivity), (true, false, false));
+    });
+
+    test('changes are persisted and survive a restart; invalid stored values fall back', () async {
+      final container = await _container(FakeTaskRepository());
+      const changed = ReminderSettings(
+        taskReminders: false,
+        defaultLead: Duration(minutes: 30),
+        defaultDueMinute: 12 * 60,
+        dailyPlanning: true,
+        dailyPlanningMinute: 7 * 60,
+        inactivity: true,
+        workStartMinute: 8 * 60,
+        workEndMinute: 16 * 60,
+        idle: Duration(minutes: 45),
+      );
+      await container.read(settingsNotifierProvider.notifier).setReminders(changed);
+      expect(container.read(reminderSettingsProvider), changed);
+
+      final prefs = container.read(sharedPreferencesProvider);
+      final restarted = await _container(FakeTaskRepository(), {for (final key in prefs.getKeys()) key: prefs.get(key)!});
+      expect(restarted.read(reminderSettingsProvider), changed);
+
+      final broken = await _container(FakeTaskRepository(), {'settings.default_due_minute': 5000, 'settings.idle_minutes': 0});
+      expect(broken.read(reminderSettingsProvider), ReminderSettings.defaults);
     });
   });
 

@@ -258,6 +258,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     required List<TaskTodoEntity> todos,
     required DateTime assignedDate,
     int? categoryId,
+    TaskSchedule schedule = TaskSchedule.none,
   }) async {
     final lastSort = state.tasks.isEmpty ? null : state.tasks.last.sortOrder;
     final nextSort = FractionalIndexer.between(lastSort, null);
@@ -270,6 +271,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       priority: priority,
       targetDurationMinutes: targetDurationMinutes,
       categoryId: categoryId,
+      schedule: schedule,
     );
     if (todos.isNotEmpty) {
       await _repository.replaceTaskTodos(taskId, todos);
@@ -300,6 +302,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       todos: newTodos,
       assignedDate: date,
       categoryId: task.categoryId,
+      schedule: task.schedule,
     );
   }
 
@@ -311,6 +314,10 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       for (final (index, todo) in draft.todos.indexed)
         if (todo.title.trim().isNotEmpty) todo.copyWith(title: todo.title.trim(), sortOrder: index.toString().padLeft(5, '0')),
     ];
+    // The first reminder a user sets is when notifications are first needed (#10).
+    if (!draft.schedule.isEmpty && !draft.schedule.reminderOff && ref.read(reminderSettingsProvider).taskReminders) {
+      await ref.read(settingsNotifierProvider.notifier).ensureNotificationPermission();
+    }
 
     if (id == null) {
       await addTask(
@@ -321,6 +328,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
         todos: todos,
         assignedDate: draft.date,
         categoryId: draft.categoryId,
+        schedule: draft.schedule,
       );
       return;
     }
@@ -332,6 +340,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       assignedDate: draft.date,
       priority: draft.priority,
       categoryId: draft.categoryId,
+      schedule: draft.schedule,
     );
     await _repository.replaceTaskTodos(id, todos);
   }
@@ -407,12 +416,13 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     return _sessions.addManualTime(taskId: task.id, day: day, duration: duration);
   }
 
+  /// The task with its sub-tasks, e.g. to open it from a list that doesn't load them.
+  Future<TaskEntity?> taskById(int id) => _repository.getTaskById(id);
+
   Future<void> deleteTask(int id) async {
     await _repository.deleteTask(id);
   }
 
-  /// Moves the task at [oldIndex] of the shown list ([PlanModeState.visibleTasks]) to [newIndex]. With a category
-  /// filter, the task lands between its visible neighbours; the hidden tasks keep their places.
   /// Shows or hides the list's completed section.
   void toggleListCompleted() => state = state.copyWith(listCompletedExpanded: !state.listCompletedExpanded);
 
@@ -423,8 +433,8 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     state = state.copyWith(expandedBoardGroups: expanded);
   }
 
-  /// Moves the task at [oldIndex] of [PlanModeState.listTasks] to [newIndex]. With completed tasks collapsed, only the
-  /// open tasks are in that list; the new sort order lies between its new neighbours there.
+  /// Moves the task at [oldIndex] of [PlanModeState.listTasks] to [newIndex]: between its new neighbours there. With a
+  /// category filter or collapsed completed tasks, the hidden tasks keep their places. Times (#10) never change.
   Future<void> reorderTask(int oldIndex, int newIndex) async {
     final visible = [...state.listTasks(collapse: ref.read(collapseCompletedProvider))];
     if (visible.isEmpty) {

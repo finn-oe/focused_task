@@ -1,18 +1,22 @@
 import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/core/ui/keyboard.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_draft.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/task_schedule_screen.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/category_picker.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/duration_picker.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/sub_task_editor.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/schedule_labels.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/task_form_fields.dart';
 
 /// Adds a task, or edits [task] (also past ones).
@@ -70,6 +74,18 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
   void _leave() {
     setState(() => _leaving = true);
     Navigator.of(context).pop();
+  }
+
+  Future<void> _editSchedule() async {
+    final task = widget.task;
+    final request = TaskScheduleRequest(
+      schedule: _draft.schedule,
+      day: _draft.date,
+      targetMinutes: _draft.targetMinutes,
+      timeSpent: task == null ? Duration.zero : Duration(milliseconds: task.timeSpent),
+    );
+    final schedule = await context.push<TaskSchedule>(AppRoutes.taskSchedule, extra: request);
+    if (schedule != null && mounted) _update(_draft.copyWith(schedule: schedule));
   }
 
   Future<void> _save() async {
@@ -142,15 +158,6 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
                 date: _draft.date,
                 onChanged: (date) => _update(_draft.copyWith(date: date)),
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                onTapOutside: unfocusOnTapOutside,
-                controller: _descriptionController,
-                decoration: InputDecoration(labelText: l10n.taskFormDescriptionLabel, border: const OutlineInputBorder()),
-                maxLines: 4,
-                minLines: 2,
-                onChanged: (value) => _update(_draft.copyWith(description: value)),
-              ),
               _Section(title: l10n.taskFormDurationLabel),
               DurationPicker(
                 minutes: _draft.targetMinutes,
@@ -171,6 +178,18 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
                 initialTodos: _initial.todos,
                 onChanged: (todos) => _update(_draft.copyWith(todos: todos)),
               ),
+              const SizedBox(height: 24),
+              TextFormField(
+                onTapOutside: unfocusOnTapOutside,
+                controller: _descriptionController,
+                decoration: InputDecoration(labelText: l10n.taskFormDescriptionLabel, border: const OutlineInputBorder()),
+                maxLines: 4,
+                minLines: 2,
+                onChanged: (value) => _update(_draft.copyWith(description: value)),
+              ),
+              const SizedBox(height: 16),
+              // Optional extras behind one tap, so the basics above stay quick to reach (#10).
+              _ScheduleTile(schedule: _draft.schedule, onTap: _editSchedule),
               if (task != null) ...[const SizedBox(height: 16), _TrackedTimeTile(task: task)],
             ],
           ),
@@ -184,6 +203,31 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// "Schedule & reminder" with a one-line summary; opens the sub-page.
+class _ScheduleTile extends ConsumerWidget {
+  const _ScheduleTile({required this.schedule, required this.onTap});
+
+  final TaskSchedule schedule;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(reminderSettingsProvider);
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: ListTile(
+        key: const Key('taskFormSchedule'),
+        leading: const Icon(Icons.event_note_outlined),
+        title: Text(context.l10n.taskFormSchedule),
+        subtitle: Text(scheduleSummary(context, schedule, settings, now: clock.now())),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
       ),
     );
   }

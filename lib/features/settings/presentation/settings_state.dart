@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/features/breaks/domain/interval_settings.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
+import 'package:focused_task/features/reminders/domain/reminder_settings.dart';
 
 /// Outcome of the last cleanup run; the screen turns it into a localized message.
 class CleanupResult {
@@ -28,6 +29,7 @@ class SettingsState {
     this.intervals = IntervalSettings.off,
     this.focusMinimalLayout = false,
     this.collapseCompleted = false,
+    this.reminders = ReminderSettings.defaults,
     this.locale,
     this.lastCleanup,
   });
@@ -64,6 +66,9 @@ class SettingsState {
   /// The plan shows completed tasks in a section at the end that can be shown or hidden (#58); off by default.
   final bool collapseCompleted;
 
+  /// Task, daily planning and inactivity reminders (#10).
+  final ReminderSettings reminders;
+
   SettingsState copyWith({
     ThemeMode? themeMode,
     Locale? locale,
@@ -81,6 +86,7 @@ class SettingsState {
     IntervalSettings? intervals,
     bool? focusMinimalLayout,
     bool? collapseCompleted,
+    ReminderSettings? reminders,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -97,6 +103,7 @@ class SettingsState {
       intervals: intervals ?? this.intervals,
       focusMinimalLayout: focusMinimalLayout ?? this.focusMinimalLayout,
       collapseCompleted: collapseCompleted ?? this.collapseCompleted,
+      reminders: reminders ?? this.reminders,
     );
   }
 }

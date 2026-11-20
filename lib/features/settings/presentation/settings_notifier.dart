@@ -8,6 +8,7 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/services/notification_service.dart';
 import 'package:focused_task/features/breaks/domain/interval_settings.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
+import 'package:focused_task/features/reminders/domain/reminder_settings.dart';
 import 'package:focused_task/features/settings/presentation/settings_state.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
@@ -31,6 +32,15 @@ class SettingsNotifier extends Notifier<SettingsState> {
   static const String _intervalAutoStartKey = 'settings.interval_auto_start';
   static const String _focusMinimalLayoutKey = 'settings.focus_minimal_layout';
   static const String _collapseCompletedKey = 'settings.collapse_completed';
+  static const String _taskRemindersKey = 'settings.task_reminders';
+  static const String _reminderLeadMinutesKey = 'settings.reminder_lead_minutes';
+  static const String _defaultDueMinuteKey = 'settings.default_due_minute';
+  static const String _dailyPlanningKey = 'settings.daily_planning';
+  static const String _dailyPlanningMinuteKey = 'settings.daily_planning_minute';
+  static const String _inactivityKey = 'settings.inactivity_reminder';
+  static const String _workStartMinuteKey = 'settings.work_start_minute';
+  static const String _workEndMinuteKey = 'settings.work_end_minute';
+  static const String _idleMinutesKey = 'settings.idle_minutes';
 
   late SharedPreferences _prefs;
   late ITaskRepository _repository;
@@ -63,7 +73,49 @@ class SettingsNotifier extends Notifier<SettingsState> {
       intervals: _loadIntervals(prefs),
       focusMinimalLayout: prefs.getBool(_focusMinimalLayoutKey) ?? false,
       collapseCompleted: prefs.getBool(_collapseCompletedKey) ?? false,
+      reminders: _loadReminders(prefs),
     );
+  }
+
+  static ReminderSettings _loadReminders(SharedPreferences prefs) {
+    int minuteOfDay(String key, int fallback) {
+      final value = prefs.getInt(key);
+      return value == null || value < 0 || value >= 24 * 60 ? fallback : value;
+    }
+
+    Duration minutes(String key, Duration fallback) {
+      final value = prefs.getInt(key);
+      return value == null || value < 1 ? fallback : Duration(minutes: value);
+    }
+
+    return ReminderSettings(
+      taskReminders: prefs.getBool(_taskRemindersKey) ?? true,
+      defaultLead: minutes(_reminderLeadMinutesKey, ReminderSettings.defaultLeadTime),
+      defaultDueMinute: minuteOfDay(_defaultDueMinuteKey, ReminderSettings.defaultDueTime),
+      dailyPlanning: prefs.getBool(_dailyPlanningKey) ?? false,
+      dailyPlanningMinute: minuteOfDay(_dailyPlanningMinuteKey, ReminderSettings.defaultDailyPlanningTime),
+      inactivity: prefs.getBool(_inactivityKey) ?? false,
+      workStartMinute: minuteOfDay(_workStartMinuteKey, ReminderSettings.defaultWorkStart),
+      workEndMinute: minuteOfDay(_workEndMinuteKey, ReminderSettings.defaultWorkEnd),
+      idle: minutes(_idleMinutesKey, ReminderSettings.defaultIdle),
+    );
+  }
+
+  /// Changes the reminder settings (#10). Turning on a reminder type asks for notification permission the first time.
+  Future<void> setReminders(ReminderSettings reminders) async {
+    final before = state.reminders;
+    await _prefs.setBool(_taskRemindersKey, reminders.taskReminders);
+    await _prefs.setInt(_reminderLeadMinutesKey, reminders.defaultLead.inMinutes);
+    await _prefs.setInt(_defaultDueMinuteKey, reminders.defaultDueMinute);
+    await _prefs.setBool(_dailyPlanningKey, reminders.dailyPlanning);
+    await _prefs.setInt(_dailyPlanningMinuteKey, reminders.dailyPlanningMinute);
+    await _prefs.setBool(_inactivityKey, reminders.inactivity);
+    await _prefs.setInt(_workStartMinuteKey, reminders.workStartMinute);
+    await _prefs.setInt(_workEndMinuteKey, reminders.workEndMinute);
+    await _prefs.setInt(_idleMinutesKey, reminders.idle.inMinutes);
+    state = state.copyWith(reminders: reminders);
+    final turnedOn = (reminders.dailyPlanning && !before.dailyPlanning) || (reminders.inactivity && !before.inactivity) || (reminders.taskReminders && !before.taskReminders);
+    if (turnedOn) await ensureNotificationPermission();
   }
 
   static FocusGoal _loadFocusGoal(SharedPreferences prefs) {

@@ -146,6 +146,7 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, IC
     TaskPriority priority = TaskPriority.low,
     int? targetDurationMinutes,
     int? categoryId,
+    TaskSchedule schedule = TaskSchedule.none,
   }) async {
     final id = _nextId++;
     _put(
@@ -162,6 +163,7 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, IC
         targetDurationMinutes: targetDurationMinutes,
         todos: const [],
         categoryId: categoryId,
+        schedule: schedule,
       ),
     );
     return id;
@@ -176,6 +178,7 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, IC
     DateTime? assignedDate,
     TaskPriority? priority,
     required int? categoryId,
+    TaskSchedule? schedule,
   }) async {
     _update(
       taskId,
@@ -188,8 +191,17 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, IC
         assignedDate: assignedDate == null ? null : _day(assignedDate),
         categoryId: categoryId,
         clearCategory: categoryId == null,
+        schedule: schedule,
       ),
     );
+  }
+
+  List<TaskEntity> _scheduledOpen() => _inRangeTasks(DateRange(DateTime(1970), DateTime(9999))).where((task) => !task.isCompleted && !task.schedule.isEmpty).toList();
+
+  @override
+  Stream<List<TaskEntity>> watchScheduledOpenTasks() async* {
+    yield _scheduledOpen();
+    yield* _changes.stream.map((_) => _scheduledOpen());
   }
 
   @override

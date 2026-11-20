@@ -17,10 +17,13 @@ import 'package:focused_task/features/inbox/data/inbox_repository_impl.dart';
 import 'package:focused_task/features/inbox/domain/i_inbox_repository.dart';
 import 'package:focused_task/features/inbox/domain/inbox_item.dart';
 import 'package:focused_task/features/inbox/presentation/inbox_notifier.dart';
+import 'package:focused_task/features/reminders/domain/reminder_settings.dart';
+import 'package:focused_task/features/reminders/presentation/reminders_notifier.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/sessions/domain/focus_time.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
+import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 import 'package:focused_task/features/settings/presentation/settings_notifier.dart';
@@ -104,6 +107,22 @@ final focusGoalProvider = Provider<FocusGoal>((ref) => ref.watch(settingsNotifie
 
 /// Whether the plan collapses completed tasks into their own section (#58).
 final collapseCompletedProvider = Provider<bool>((ref) => ref.watch(settingsNotifierProvider.select((settings) => settings.collapseCompleted)));
+
+/// Task, daily planning and inactivity reminder settings (#10).
+final reminderSettingsProvider = Provider<ReminderSettings>((ref) => ref.watch(settingsNotifierProvider.select((settings) => settings.reminders)));
+
+/// Open tasks whose deadline has passed (#10), earliest deadline first. Evaluated when a scheduled task changes.
+final overdueTasksProvider = StreamProvider.autoDispose<List<TaskEntity>>((ref) {
+  final dueMinute = ref.watch(reminderSettingsProvider.select((settings) => settings.defaultDueMinute));
+  return ref.watch(taskRepositoryProvider).watchScheduledOpenTasks().map((tasks) {
+    final now = clock.now();
+    DateTime due(TaskEntity task) => task.schedule.dueAt(defaultDueMinute: dueMinute)!;
+    return tasks.where((task) => task.isOverdueAt(now, defaultDueMinute: dueMinute)).toList()..sort((a, b) => due(a).compareTo(due(b)));
+  });
+});
+
+/// Keeps task, daily planning and inactivity reminders scheduled (#10). Listened to by the app root.
+final remindersNotifierProvider = NotifierProvider<RemindersNotifier, RemindersState>(RemindersNotifier.new);
 
 /// The work/break cycle settings (#27).
 final intervalSettingsProvider = Provider<IntervalSettings>((ref) => ref.watch(settingsNotifierProvider.select((settings) => settings.intervals)));

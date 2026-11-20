@@ -50,6 +50,37 @@ void main() {
     expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '25 min')).selected, isTrue);
   });
 
+  testWidgets('schedule: add a task with a start time and a custom reminder, reopen it after a restart', (tester) async {
+    final app = await TestApp.start(tester);
+
+    await tester.tapAndSettle(find.text('Add Task'));
+    await tester.enterText(find.widgetWithText(TextFormField, 'Title'), 'Call Anna');
+    await tester.scrollUntilVisible(find.byKey(const Key('taskFormSchedule')), 200, scrollable: find.byType(Scrollable).first);
+    expect(find.text('Not set'), findsOneWidget);
+    await tester.tapAndSettle(find.byKey(const Key('taskFormSchedule')));
+
+    await tester.tapAndSettle(find.byKey(const Key('scheduleStart')));
+    await tester.tapAndSettle(find.text('OK')); // 9:00
+    await tester.tapAndSettle(find.byKey(const Key('scheduleReminder-10')));
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Start 9:00 AM · 10 min before'), findsOneWidget);
+    await tester.tapAndSettle(find.byTooltip('Save Task'));
+
+    expect(
+      find.descendant(of: find.byType(Card), matching: find.text('9:00 AM')),
+      findsOneWidget,
+      reason: 'the start chip on the tile',
+    );
+
+    await app.restart(tester);
+    await tester.tapAndSettle(find.byTooltip('Edit Task'));
+    await tester.scrollUntilVisible(find.byKey(const Key('taskFormSchedule')), 200, scrollable: find.byType(Scrollable).first);
+    expect(find.text('Start 9:00 AM · 10 min before'), findsOneWidget);
+    await tester.tapAndSettle(find.byKey(const Key('taskFormSchedule')));
+    expect(tester.widget<ChoiceChip>(find.byKey(const Key('scheduleReminder-10'))).selected, isTrue);
+  });
+
   testWidgets('focus: tick a sub-task, complete the task, see it in the statistics', (tester) async {
     final app = await TestApp.start(tester);
     final tasks = TaskRepositoryImpl(app.database);

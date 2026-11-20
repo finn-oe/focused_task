@@ -245,6 +245,60 @@ void main() {
       expect(open.map((task) => task.id), [a, b, later]);
     });
   });
+
+  group('start/due times (#10)', () {
+    final day = DateTime(2026, 11, 18);
+    final schedule = TaskSchedule(startMinute: 14 * 60, dueDate: DateTime(2026, 11, 20), dueMinute: 17 * 60 + 30, reminderMinutes: 30);
+
+    test('are stored with a new task and read back', () async {
+      final id = await repository.createTask(title: 'Call', assignedDate: day, sortOrder: 'a0', schedule: schedule);
+      final task = (await repository.getTaskById(id))!;
+      expect(task.schedule, schedule);
+      expect(task.startAt, DateTime(2026, 11, 18, 14));
+      expect((await repository.getTaskById(await createTask(day: day)))!.schedule, TaskSchedule.none, reason: 'times are optional');
+    });
+
+    test('the form can change and clear them; without a schedule they stay', () async {
+      final id = await repository.createTask(title: 'Call', assignedDate: day, sortOrder: 'a0', schedule: schedule);
+
+      await repository.updateTaskDetails(taskId: id, title: 'Call Anna', categoryId: null);
+      expect((await repository.getTaskById(id))!.schedule, schedule, reason: 'no schedule given (e.g. the calendar moving it)');
+
+      await repository.updateTaskDetails(taskId: id, title: 'Call Anna', categoryId: null, schedule: const TaskSchedule(reminderOff: true));
+      expect((await repository.getTaskById(id))!.schedule, const TaskSchedule(reminderOff: true));
+    });
+
+    test('moving and reordering a task keeps its times', () async {
+      final id = await repository.createTask(title: 'Call', assignedDate: day, sortOrder: 'a0', schedule: schedule);
+
+      await repository.updateTaskOrder(taskId: id, sortOrder: 'b0');
+      await repository.moveTasks(taskIds: [id], to: day.addDays(1));
+
+      final moved = (await repository.getTaskById(id))!;
+      expect(moved.schedule, schedule, reason: 'the due date stays');
+      expect(moved.startAt, DateTime(2026, 11, 19, 14), reason: 'the start time is now on the new day');
+    });
+
+    test('watchScheduledOpenTasks lists open tasks with a start or a deadline, and follows tracked time', () async {
+      final start = await repository.createTask(title: 'Start', assignedDate: day, sortOrder: 'a0', schedule: const TaskSchedule(startMinute: 600));
+      final due = await repository.createTask(
+        title: 'Due',
+        assignedDate: day,
+        sortOrder: 'a1',
+        schedule: TaskSchedule(dueDate: day),
+      );
+      await repository.createTask(title: 'Plain', assignedDate: day, sortOrder: 'a2');
+      final done = await repository.createTask(title: 'Done', assignedDate: day, sortOrder: 'a3', schedule: const TaskSchedule(startMinute: 600));
+      await repository.setTaskCompletion(taskId: done, isCompleted: true);
+
+      final stream = repository.watchScheduledOpenTasks();
+      expect((await stream.first).map((task) => task.id), [start, due]);
+
+      await sessions.addManualTime(taskId: due, day: day, duration: const Duration(minutes: 20));
+      final tracked = (await stream.first).firstWhere((task) => task.id == due);
+      expect(tracked.timeSpent, const Duration(minutes: 20).inMilliseconds);
+    });
+  });
 }
 
 StatsQuery _dayQuery(DateTime day) => StatsQuery(range: DateRange(day, day), granularity: StatsGranularity.hour);

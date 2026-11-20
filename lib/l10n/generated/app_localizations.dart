@@ -2107,6 +2107,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reviewed'**
   String get statsParkedThoughtReviewed;
+
+  /// No description provided for @taskFormSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule & reminder'**
+  String get taskFormSchedule;
+
+  /// No description provided for @taskFormScheduleNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get taskFormScheduleNotSet;
+
+  /// No description provided for @taskScheduleStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Start {time}'**
+  String taskScheduleStart(String time);
+
+  /// No description provided for @taskScheduleDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {date}'**
+  String taskScheduleDue(String date);
+
+  /// No description provided for @taskScheduleReminderBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} before'**
+  String taskScheduleReminderBefore(String duration);
+
+  /// No description provided for @taskScheduleReminderOff.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminder'**
+  String get taskScheduleReminderOff;
+
+  /// No description provided for @taskScheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule & reminder'**
+  String get taskScheduleTitle;
+
+  /// No description provided for @taskScheduleStartTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start time'**
+  String get taskScheduleStartTime;
+
+  /// No description provided for @taskScheduleStartHint.
+  ///
+  /// In en, this message translates to:
+  /// **'On the task\'s day ({day})'**
+  String taskScheduleStartHint(String day);
+
+  /// No description provided for @taskScheduleNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get taskScheduleNone;
+
+  /// No description provided for @taskScheduleDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Due date'**
+  String get taskScheduleDueDate;
+
+  /// No description provided for @taskScheduleDueTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Due time'**
+  String get taskScheduleDueTime;
+
+  /// No description provided for @taskScheduleDueTimeDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default ({time})'**
+  String taskScheduleDueTimeDefault(String time);
+
+  /// No description provided for @taskScheduleClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get taskScheduleClear;
+
+  /// No description provided for @taskScheduleReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder'**
+  String get taskScheduleReminder;
+
+  /// No description provided for @taskScheduleReminderDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default ({duration})'**
+  String taskScheduleReminderDefault(String duration);
+
+  /// No description provided for @taskScheduleReminderOffOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get taskScheduleReminderOffOption;
+
+  /// No description provided for @taskScheduleReminderAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder at {time}'**
+  String taskScheduleReminderAt(String time);
+
+  /// No description provided for @taskScheduleReminderNow.
+  ///
+  /// In en, this message translates to:
+  /// **'The reminder time has passed – you\'ll be reminded right away.'**
+  String get taskScheduleReminderNow;
+
+  /// No description provided for @taskScheduleReminderNeedsTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a start time or a due date to get a reminder.'**
+  String get taskScheduleReminderNeedsTime;
+
+  /// No description provided for @taskScheduleReminderDueHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Before the deadline, early enough for the time still left on the estimate.'**
+  String get taskScheduleReminderDueHint;
+
+  /// No description provided for @taskScheduleRemindersDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Task reminders are turned off in the settings.'**
+  String get taskScheduleRemindersDisabled;
+
+  /// No description provided for @taskStartsAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts at {time}'**
+  String taskStartsAt(String time);
+
+  /// No description provided for @planOverdueBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 task overdue} other{{count} tasks overdue}}'**
+  String planOverdueBanner(int count);
+
+  /// No description provided for @planOverdueShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get planOverdueShow;
+
+  /// No description provided for @planOverdueSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue tasks'**
+  String get planOverdueSheetTitle;
+
+  /// No description provided for @planOverduePlannedFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Planned for {day}'**
+  String planOverduePlannedFor(String day);
+
+  /// No description provided for @settingsReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders & dates'**
+  String get settingsReminders;
+
+  /// No description provided for @settingsRemindersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Task reminders, daily planning, inactivity and notifications'**
+  String get settingsRemindersHint;
+
+  /// No description provided for @settingsTaskReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Task reminders'**
+  String get settingsTaskReminders;
+
+  /// No description provided for @settingsTaskRemindersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Before a task\'s start time or deadline'**
+  String get settingsTaskRemindersHint;
+
+  /// No description provided for @settingsDefaultLead.
+  ///
+  /// In en, this message translates to:
+  /// **'Default reminder'**
+  String get settingsDefaultLead;
+
+  /// No description provided for @settingsDefaultDueTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Default due time'**
+  String get settingsDefaultDueTime;
+
+  /// No description provided for @settingsDefaultDueTimeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For deadlines with only a date'**
+  String get settingsDefaultDueTimeHint;
+
+  /// No description provided for @settingsDailyPlanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily planning'**
+  String get settingsDailyPlanning;
+
+  /// No description provided for @settingsDailyPlanningHint.
+  ///
+  /// In en, this message translates to:
+  /// **'\"Plan your day\" on working days when nothing is planned yet'**
+  String get settingsDailyPlanningHint;
+
+  /// No description provided for @settingsReminderTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get settingsReminderTime;
+
+  /// No description provided for @settingsInactivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactivity reminder'**
+  String get settingsInactivity;
+
+  /// No description provided for @settingsInactivityHint.
+  ///
+  /// In en, this message translates to:
+  /// **'During working hours on working days, when no focus session ran for a while'**
+  String get settingsInactivityHint;
+
+  /// No description provided for @settingsWorkStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Working hours from'**
+  String get settingsWorkStart;
+
+  /// No description provided for @settingsWorkEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Working hours until'**
+  String get settingsWorkEnd;
+
+  /// No description provided for @settingsIdleTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind after'**
+  String get settingsIdleTime;
+
+  /// No description provided for @settingsWorkingDaysFromGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Working days are set under Goals in the settings.'**
+  String get settingsWorkingDaysFromGoals;
+
+  /// No description provided for @reminderTaskStartBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts at {time}'**
+  String reminderTaskStartBody(String time);
+
+  /// No description provided for @reminderTaskDueBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Due {time}'**
+  String reminderTaskDueBody(String time);
+
+  /// No description provided for @reminderPlanDayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan your day'**
+  String get reminderPlanDayTitle;
+
+  /// No description provided for @reminderPlanDayBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is planned for today yet. Pick the tasks you want to focus on.'**
+  String get reminderPlanDayBody;
+
+  /// No description provided for @reminderInactivityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready for the next focus block?'**
+  String get reminderInactivityTitle;
+
+  /// No description provided for @reminderInactivityBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No focus session for {duration}.'**
+  String reminderInactivityBody(String duration);
+
+  /// No description provided for @taskOverdueDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue, was due {date}'**
+  String taskOverdueDue(String date);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
