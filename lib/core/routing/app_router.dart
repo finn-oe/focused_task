@@ -6,6 +6,7 @@ import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_period.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_screen.dart';
 import 'package:focused_task/features/categories/presentation/categories_screen.dart';
+import 'package:focused_task/features/recurrence/presentation/task_repeat_screen.dart';
 import 'package:focused_task/features/settings/presentation/reminders_settings_screen.dart';
 import 'package:focused_task/features/settings/presentation/settings_screen.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
@@ -35,6 +36,9 @@ abstract final class AppRoutes {
 
   /// Start time, deadline and reminder of the task in the form (#10); returns the edited schedule.
   static const taskSchedule = '/task-schedule';
+
+  /// Repeat of the task in the form (#24); returns a `TaskRepeatResult`.
+  static const taskRepeat = '/task-repeat';
 
   /// Category management, below [settings].
   static const categories = '/settings/categories';
@@ -148,6 +152,10 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.plan}) {
         builder: (context, state) => TaskScheduleScreen(
           request: state.extra as TaskScheduleRequest? ?? TaskScheduleRequest(schedule: TaskSchedule.none, day: DateTime.now().dateOnly),
         ),
+      ),
+      GoRoute(
+        path: AppRoutes.taskRepeat,
+        builder: (context, state) => TaskRepeatScreen(request: state.extra as TaskRepeatRequest? ?? TaskRepeatRequest(repeat: null, day: DateTime.now().dateOnly)),
       ),
     ],
   );

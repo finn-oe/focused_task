@@ -10,6 +10,7 @@ import 'package:focused_task/core/services/target_alarm.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/breaks/domain/interval_planner.dart';
 import 'package:focused_task/features/inbox/domain/i_inbox_repository.dart';
+import 'package:focused_task/features/recurrence/domain/i_recurrence_repository.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
@@ -153,6 +154,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
   late TargetAlarm _alarm;
   late NotificationService _notifications;
   late IInboxRepository _inbox;
+  late IRecurrenceRepository _recurrence;
   Timer? _ticker;
 
   /// When the app lost the user's attention, and the focus session that was running then (#28).
@@ -190,6 +192,7 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     _alarm = ref.watch(targetAlarmProvider);
     _notifications = ref.watch(notificationServiceProvider);
     _inbox = ref.watch(inboxRepositoryProvider);
+    _recurrence = ref.watch(recurrenceRepositoryProvider);
     ref.onDispose(_stopTicker);
     return FocusModeState.initial();
   }
@@ -207,6 +210,8 @@ class FocusModeNotifier extends Notifier<FocusModeState> {
     state = state.copyWith(request: request, selectedDay: request.day, isLoading: true, clearError: true);
 
     final category = request.categoryId;
+    // Today's recurring tasks (#24), also when the plan wasn't opened.
+    await _recurrence.ensureOccurrences(DateRange(request.day, request.day));
     final open = (await _repository.getTasksForDay(request.day)).where((task) => !task.isCompleted && (category == null || task.categoryId == category)).toList();
     final startIndex = open.indexWhere((task) => task.id == request.startTaskId);
     final queue = startIndex <= 0 ? open : [...open.sublist(startIndex), ...open.sublist(0, startIndex)];

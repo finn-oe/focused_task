@@ -27,6 +27,7 @@ Future<SharedPreferences> _pumpApp(WidgetTester tester, FakeTaskRepository repos
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        recurrenceRepositoryProvider.overrideWithValue(repository),
         inboxRepositoryProvider.overrideWithValue(repository),
         sharedPreferencesProvider.overrideWithValue(prefs),
         targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),

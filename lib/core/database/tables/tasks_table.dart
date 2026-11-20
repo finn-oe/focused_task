@@ -1,7 +1,10 @@
 import 'package:drift/drift.dart';
 
 import 'package:focused_task/core/database/tables/categories_table.dart';
+import 'package:focused_task/core/database/tables/recurrence_rules_table.dart';
 
+/// One occurrence per rule and day (#24), so creating occurrences twice adds nothing.
+@TableIndex(name: 'tasks_occurrence', columns: {#recurrenceId, #occurrenceDate}, unique: true)
 class Tasks extends Table {
   IntColumn get id => integer().autoIncrement()();
 
@@ -38,4 +41,10 @@ class Tasks extends Table {
   IntColumn get reminderMinutes => integer().named('reminder_minutes').nullable()();
 
   BoolColumn get reminderOff => boolean().named('reminder_off').withDefault(const Constant(false))();
+
+  /// The rule this task is an occurrence of (#24); `NULL` for one-off tasks or when the rule is gone.
+  IntColumn get recurrenceId => integer().named('recurrence_id').nullable().references(RecurrenceRules, #id, onDelete: KeyAction.setNull)();
+
+  /// The day the rule planned this occurrence for; stays when the task is moved, so it isn't created again.
+  DateTimeColumn get occurrenceDate => dateTime().named('occurrence_date').nullable()();
 }

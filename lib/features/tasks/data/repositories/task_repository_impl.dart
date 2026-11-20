@@ -201,6 +201,8 @@ class TaskRepositoryImpl implements ITaskRepository {
       targetDurationMinutes: task.targetDurationMinutes,
       lastSeenAt: data.openSession?.lastSeenAt,
       categoryId: task.categoryId,
+      recurrenceId: task.recurrenceId,
+      occurrenceDate: task.occurrenceDate,
       schedule: TaskSchedule(startMinute: task.startMinute, dueDate: task.dueDate, dueMinute: task.dueMinute, reminderMinutes: task.reminderMinutes, reminderOff: task.reminderOff),
       todos: data.todos.map((todo) => TaskTodoEntity(id: todo.id, title: todo.title, isCompleted: todo.isCompleted, sortOrder: todo.sortOrder)).toList(growable: false),
     );

@@ -3,6 +3,18 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.19.0] - 2026-11-20
+
+### Added
+- **Recurring tasks**: "Repeat" in the task form – every day, weekdays (Mon–Fri), weekly on chosen days, every N days or monthly on a day (the 31st falls back to the last day of shorter months), with an optional end date. Every occurrence is a normal task with its own completion, sub-tasks and tracked time. (#24)
+- Occurrences appear when their day is shown in the plan, the calendar or focus mode, and a week ahead for reminders; past days are never filled in afterwards. Deleted occurrences don't come back. (#24)
+- The start time, reminder and deadline (relative to the day, e.g. "the next day at 12:00") carry over to every occurrence, so their reminders work like those of any task. (#24)
+- Editing or deleting an occurrence asks **Only this** or **This and future**; a changed repeat applies to this and the following days. Occurrences with tracked time are always kept. (#24)
+- Recurring tasks show a ↻ icon in the plan and the calendar. (#24)
+
+### Changed
+- Database schema version 9 (new tables `recurrence_rules` and `recurrence_exceptions`, new optional columns on `tasks`). Existing data is kept. (#24)
+
 ## [1.18.0] - 2026-11-20
 
 ### Added

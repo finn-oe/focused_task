@@ -435,4 +435,35 @@ void main() {
     expect((task.title, task.assignedDate), ('Book dentist', DateTime.now().dateOnly.nextDay));
     expect((await app.database.select(app.database.inboxItems).getSingle()).resolvedAt, isNotNull);
   });
+
+  testWidgets('recurring task: repeat daily, it comes back tomorrow; deleting only one day keeps the others', (tester) async {
+    final app = await TestApp.start(tester);
+
+    await tester.tapAndSettle(find.text('Add Task'));
+    await tester.enterText(find.widgetWithText(TextFormField, 'Title'), 'Stretch');
+    await tester.settle();
+    await tester.scrollUntilVisible(find.byKey(const Key('taskFormRepeat')), 200, scrollable: find.byType(Scrollable).first);
+    await tester.tapAndSettle(find.byKey(const Key('taskFormRepeat')));
+    await tester.tapAndSettle(find.byKey(const Key('repeat-daily')));
+    await tester.pageBack();
+    await tester.settle();
+    expect(find.text('Every day'), findsOneWidget);
+    await tester.tapAndSettle(find.byTooltip('Save Task'));
+    expect(find.byTooltip('Repeats'), findsOneWidget);
+
+    await tester.tapAndSettle(find.byTooltip('Next day'));
+    expect(find.text('Stretch'), findsOneWidget, reason: 'the occurrence of tomorrow is created when the day is shown');
+
+    await tester.tapAndSettle(find.byTooltip('Edit Task'));
+    await tester.tapAndSettle(find.byTooltip('Delete Task'));
+    await tester.tapAndSettle(find.byKey(const Key('repeatDeleteOnlyThis')));
+    expect(find.text('Stretch'), findsNothing);
+
+    await app.restart(tester);
+    expect(find.text('Stretch'), findsOneWidget, reason: "today's occurrence stays");
+    await tester.tapAndSettle(find.byTooltip('Next day'));
+    expect(find.text('Stretch'), findsNothing, reason: 'the deleted occurrence does not come back');
+    await tester.tapAndSettle(find.byTooltip('Next day'));
+    expect(find.text('Stretch'), findsOneWidget);
+  });
 }

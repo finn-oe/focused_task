@@ -17,6 +17,8 @@ import 'package:focused_task/features/inbox/data/inbox_repository_impl.dart';
 import 'package:focused_task/features/inbox/domain/i_inbox_repository.dart';
 import 'package:focused_task/features/inbox/domain/inbox_item.dart';
 import 'package:focused_task/features/inbox/presentation/inbox_notifier.dart';
+import 'package:focused_task/features/recurrence/data/recurrence_repository_impl.dart';
+import 'package:focused_task/features/recurrence/domain/i_recurrence_repository.dart';
 import 'package:focused_task/features/reminders/domain/reminder_settings.dart';
 import 'package:focused_task/features/reminders/presentation/reminders_notifier.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
@@ -59,6 +61,11 @@ final focusSessionRepositoryProvider = Provider<IFocusSessionRepository>((ref) {
 
 final categoryRepositoryProvider = Provider<ICategoryRepository>((ref) {
   return CategoryRepositoryImpl(ref.watch(appDatabaseProvider));
+});
+
+/// Recurring tasks (#24).
+final recurrenceRepositoryProvider = Provider<IRecurrenceRepository>((ref) {
+  return RecurrenceRepositoryImpl(ref.watch(appDatabaseProvider));
 });
 
 final inboxRepositoryProvider = Provider<IInboxRepository>((ref) {

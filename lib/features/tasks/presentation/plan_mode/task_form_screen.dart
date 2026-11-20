@@ -9,6 +9,9 @@ import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/core/ui/keyboard.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
+import 'package:focused_task/features/recurrence/domain/repeat_pattern.dart';
+import 'package:focused_task/features/recurrence/presentation/repeat_labels.dart';
+import 'package:focused_task/features/recurrence/presentation/task_repeat_screen.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_draft.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
@@ -31,7 +34,7 @@ class TaskFormScreen extends ConsumerStatefulWidget {
 
 class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TaskDraft _initial;
+  late TaskDraft _initial;
   late TaskDraft _draft;
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
@@ -60,6 +63,23 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
     _draft = _initial;
     _titleController = TextEditingController(text: _initial.title);
     _descriptionController = TextEditingController(text: _initial.description);
+    if (task != null && task.isRecurring) _loadRepeat(task);
+  }
+
+  /// The repeat of an occurrence comes from its recurring task (#24).
+  Future<void> _loadRepeat(TaskEntity task) async {
+    final repeat = await ref.read(planModeNotifierProvider.notifier).repeatOf(task);
+    if (!mounted || repeat == null) return;
+    setState(() {
+      _initial = _initial.copyWith(repeat: repeat);
+      if (_draft.repeat == null) _draft = _draft.copyWith(repeat: repeat);
+    });
+  }
+
+  Future<void> _editRepeat() async {
+    final request = TaskRepeatRequest(repeat: _draft.repeat, day: _draft.date, isOccurrence: widget.task?.isRecurring ?? false);
+    final result = await context.push<TaskRepeatResult>(AppRoutes.taskRepeat, extra: request);
+    if (result != null && mounted) _update(result.repeat == null ? _draft.copyWith(clearRepeat: true) : _draft.copyWith(repeat: result.repeat));
   }
 
   @override
@@ -90,7 +110,19 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    await ref.read(planModeNotifierProvider.notifier).saveDraft(_draft, id: widget.task?.id);
+    var scope = RepeatScope.onlyThis;
+    // An edited occurrence (#24): only this one, or this and the following ones? A changed repeat always applies to
+    // the following ones.
+    if ((widget.task?.isRecurring ?? false) && _hasChanges) {
+      if (_draft.repeat != _initial.repeat) {
+        scope = RepeatScope.thisAndFuture;
+      } else {
+        final chosen = await showDialog<RepeatScope>(context: context, builder: (context) => const _RepeatScopeDialog());
+        if (chosen == null || !mounted) return;
+        scope = chosen;
+      }
+    }
+    await ref.read(planModeNotifierProvider.notifier).saveDraft(_draft, id: widget.task?.id, scope: scope);
     if (mounted) _leave();
   }
 
@@ -102,6 +134,17 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
 
   Future<void> _delete() async {
     final task = widget.task!;
+    if (task.isRecurring) {
+      final scope = await showDialog<RepeatScope>(
+        context: context,
+        builder: (context) => _DeleteOccurrenceDialog(task: task),
+      );
+      if (scope == null || !mounted) return;
+      final notifier = ref.read(planModeNotifierProvider.notifier);
+      await (scope == RepeatScope.onlyThis ? notifier.deleteTask(task.id) : notifier.deleteTaskAndFuture(task));
+      if (mounted) _leave();
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => _DeleteTaskDialog(task: task),
@@ -190,6 +233,8 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
               const SizedBox(height: 16),
               // Optional extras behind one tap, so the basics above stay quick to reach (#10).
               _ScheduleTile(schedule: _draft.schedule, onTap: _editSchedule),
+              const SizedBox(height: 8),
+              _RepeatTile(repeat: _draft.repeat, onTap: _editRepeat),
               if (task != null) ...[const SizedBox(height: 16), _TrackedTimeTile(task: task)],
             ],
           ),
@@ -229,6 +274,77 @@ class _ScheduleTile extends ConsumerWidget {
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),
+    );
+  }
+}
+
+/// "Repeat" with a one-line summary; opens the sub-page (#24).
+class _RepeatTile extends StatelessWidget {
+  const _RepeatTile({required this.repeat, required this.onTap});
+
+  final RepeatPattern? repeat;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: ListTile(
+        key: const Key('taskFormRepeat'),
+        leading: const Icon(Icons.repeat),
+        title: Text(context.l10n.taskFormRepeat),
+        subtitle: Text(repeatSummary(context, repeat)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+/// Asks whether a change to an occurrence applies only to it or also to the following ones.
+class _RepeatScopeDialog extends StatelessWidget {
+  const _RepeatScopeDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.taskRepeatScopeTitle),
+      content: Text(l10n.taskRepeatScopeMessage),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonCancel)),
+        TextButton(key: const Key('repeatScopeFuture'), onPressed: () => Navigator.of(context).pop(RepeatScope.thisAndFuture), child: Text(l10n.taskRepeatScopeThisAndFuture)),
+        FilledButton(key: const Key('repeatScopeOnlyThis'), onPressed: () => Navigator.of(context).pop(RepeatScope.onlyThis), child: Text(l10n.taskRepeatScopeOnlyThis)),
+      ],
+    );
+  }
+}
+
+/// Asks whether to delete only this occurrence or also the following ones.
+class _DeleteOccurrenceDialog extends StatelessWidget {
+  const _DeleteOccurrenceDialog({required this.task});
+
+  final TaskEntity task;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final colorScheme = Theme.of(context).colorScheme;
+    final destructive = FilledButton.styleFrom(backgroundColor: colorScheme.error, foregroundColor: colorScheme.onError);
+    return AlertDialog(
+      title: Text(l10n.taskRepeatDeleteTitle),
+      content: Text(l10n.taskRepeatDeleteMessage(task.title)),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.commonCancel)),
+        TextButton(key: const Key('repeatDeleteFuture'), onPressed: () => Navigator.of(context).pop(RepeatScope.thisAndFuture), child: Text(l10n.taskRepeatScopeThisAndFuture)),
+        FilledButton(
+          key: const Key('repeatDeleteOnlyThis'),
+          style: destructive,
+          onPressed: () => Navigator.of(context).pop(RepeatScope.onlyThis),
+          child: Text(l10n.taskRepeatScopeOnlyThis),
+        ),
+      ],
     );
   }
 }

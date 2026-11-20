@@ -8,6 +8,9 @@ import 'package:focused_task/features/categories/domain/i_category_repository.da
 import 'package:focused_task/features/categories/domain/task_category.dart';
 import 'package:focused_task/features/inbox/domain/i_inbox_repository.dart';
 import 'package:focused_task/features/inbox/domain/inbox_item.dart';
+import 'package:focused_task/features/recurrence/domain/i_recurrence_repository.dart';
+import 'package:focused_task/features/recurrence/domain/recurrence_expander.dart';
+import 'package:focused_task/features/recurrence/domain/recurrence_rule.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/sessions/domain/focus_time.dart' as focus_time;
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
@@ -17,15 +20,15 @@ import 'package:focused_task/features/tasks/domain/stats/stats_calculator.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 import 'package:focused_task/features/tasks/domain/repositories/i_task_repository.dart';
 
-/// Simple in-memory [ITaskRepository], [IFocusSessionRepository], [ICategoryRepository] **and** [IInboxRepository] for
-/// widget and notifier tests, so tasks, sessions, categories and parked thoughts share one consistent store. Override
-/// all four providers with the same instance.
+/// Simple in-memory [ITaskRepository], [IFocusSessionRepository], [ICategoryRepository], [IInboxRepository] **and**
+/// [IRecurrenceRepository] for widget and notifier tests, so tasks, sessions, categories, parked thoughts and recurring
+/// tasks share one consistent store. Override all five providers with the same instance.
 ///
 /// It mirrors the behaviour of the Drift implementation closely enough for presentation-layer tests.
 /// Repository behaviour itself is tested against a real in-memory database.
 ///
 /// Seeded tasks with a `latestStart` (and `lastSeenAt`) get an open session, like data left by a crash.
-class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, ICategoryRepository, IInboxRepository {
+class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, ICategoryRepository, IInboxRepository, IRecurrenceRepository {
   FakeTaskRepository({List<TaskEntity> tasks = const [], List<FocusSession> sessions = const [], List<TaskCategory> categories = const []}) {
     for (final category in categories) {
       _categories[category.id] = category;
@@ -277,7 +280,10 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, IC
 
   @override
   Future<void> deleteTask(int taskId) async {
-    _tasks.remove(taskId);
+    final removed = _tasks.remove(taskId);
+    final ruleId = removed?.recurrenceId;
+    final occurrence = removed?.occurrenceDate;
+    if (ruleId != null && occurrence != null) _exceptions.add((ruleId, _day(occurrence)));
     for (final session in _sessions.where((session) => session.taskId == taskId).toList()) {
       _replaceSession(session.copyWith(clearTaskId: true));
     }
@@ -499,4 +505,100 @@ class FakeTaskRepository implements ITaskRepository, IFocusSessionRepository, IC
 
   @override
   Future<void> reopenInboxItem(int id) async => _setResolved(id, null);
+
+  // --- IRecurrenceRepository ----------------------------------------------------------------------------------------
+
+  final Map<int, RecurrenceRule> _rules = {};
+  final Set<(int, DateTime)> _exceptions = {};
+  int _nextRuleId = 1;
+
+  /// All recurring tasks, by id.
+  Map<int, RecurrenceRule> get rules => Map.unmodifiable(_rules);
+
+  /// Deleted occurrences as `(rule id, date)`.
+  Set<(int, DateTime)> get exceptions => Set.unmodifiable(_exceptions);
+
+  @override
+  Future<RecurrenceRule?> getRule(int id) async => _rules[id];
+
+  @override
+  Future<int> createRule(RecurrenceRule rule, {int? taskId}) async {
+    final id = _nextRuleId++;
+    _rules[id] = rule.copyWith(id: id, startDate: _day(rule.startDate));
+    if (taskId != null) _update(taskId, (task) => task.copyWith(recurrenceId: id, occurrenceDate: _day(rule.startDate)));
+    return id;
+  }
+
+  @override
+  Future<int?> replaceFrom({required int ruleId, required DateTime from, required int taskId, RecurrenceRule? next, bool deleteTask = false}) async {
+    final rule = _rules[ruleId];
+    if (rule == null) return null;
+    final day = _day(from);
+    final nextId = next == null ? null : await createRule(next.copyWith(startDate: day));
+    TaskEntity link(TaskEntity task) => nextId == null ? task.copyWith(clearRecurrence: true) : task.copyWith(recurrenceId: nextId);
+    for (final task in _tasks.values.where((task) => task.recurrenceId == ruleId && task.id != taskId && !task.occurrenceDate!.isBefore(day)).toList()) {
+      if (!task.isCompleted && task.timeSpent == 0 && _openSessionOf(task.id) == null) {
+        _tasks.remove(task.id);
+      } else {
+        _tasks[task.id] = link(task);
+      }
+    }
+    if (deleteTask) {
+      _tasks.remove(taskId);
+    } else {
+      _update(taskId, link);
+    }
+    if (!rule.startDate.isBefore(day)) {
+      _rules.remove(ruleId);
+    } else {
+      _rules[ruleId] = rule.copyWith(pattern: rule.pattern.copyWith(endDate: day.addDays(-1)));
+    }
+    _changes.add(null);
+    return nextId;
+  }
+
+  @override
+  Future<void> endBefore({required int ruleId, required DateTime from, required int taskId}) => replaceFrom(ruleId: ruleId, from: from, taskId: taskId, deleteTask: true);
+
+  /// How often [ensureOccurrences] was called, and with which ranges.
+  final List<DateRange> ensuredRanges = [];
+
+  @override
+  Future<void> ensureOccurrences(DateRange range) async {
+    ensuredRanges.add(range);
+    final today = clock.now().dateOnly;
+    if (range.end.isBefore(today)) return;
+    final days = DateRange(range.start.isBefore(today) ? today : range.start, range.end);
+    var added = false;
+    for (final rule in _rules.values.toList()) {
+      final skipped = {
+        for (final (id, date) in _exceptions)
+          if (id == rule.id) date,
+      };
+      for (final date in const RecurrenceExpander().occurrences(rule, days, exceptions: skipped)) {
+        if (_tasks.values.any((task) => task.recurrenceId == rule.id && task.occurrenceDate == date)) continue;
+        final last = _forDay(date).lastOrNull?.sortOrder;
+        final id = _nextId++;
+        _tasks[id] = TaskEntity(
+          id: id,
+          title: rule.title,
+          description: rule.description,
+          assignedDate: date,
+          sortOrder: FractionalIndexer.between(last, null),
+          isCompleted: false,
+          priority: rule.priority,
+          timeSpent: 0,
+          latestStart: null,
+          targetDurationMinutes: rule.targetDurationMinutes,
+          todos: [for (final (index, title) in rule.todoTitles.indexed) TaskTodoEntity(id: id * 1000 + index, title: title, isCompleted: false, sortOrder: '$index')],
+          categoryId: rule.categoryId,
+          schedule: rule.scheduleOn(date),
+          recurrenceId: rule.id,
+          occurrenceDate: date,
+        );
+        added = true;
+      }
+    }
+    if (added) _changes.add(null);
+  }
 }

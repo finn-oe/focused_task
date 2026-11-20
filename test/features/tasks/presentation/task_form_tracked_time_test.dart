@@ -24,6 +24,7 @@ void main() {
           taskRepositoryProvider.overrideWithValue(repository),
           focusSessionRepositoryProvider.overrideWithValue(repository),
           categoryRepositoryProvider.overrideWithValue(repository),
+          recurrenceRepositoryProvider.overrideWithValue(repository),
           inboxRepositoryProvider.overrideWithValue(repository),
           reminderSettingsProvider.overrideWithValue(ReminderSettings.defaults),
         ],

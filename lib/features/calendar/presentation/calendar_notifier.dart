@@ -52,6 +52,8 @@ class CalendarNotifier extends Notifier<CalendarState> {
   CalendarState build() {
     _repository = ref.watch(taskRepositoryProvider);
     final sessions = ref.watch(focusSessionRepositoryProvider);
+    // Recurring tasks (#24) appear when their days are shown; the task stream picks them up.
+    ref.watch(recurrenceRepositoryProvider).ensureOccurrences(range).catchError(_onError);
 
     final subscriptions = [
       _repository.watchTasksInRange(range).listen(_onTasks, onError: _onError),

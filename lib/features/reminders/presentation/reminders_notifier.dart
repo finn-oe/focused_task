@@ -62,6 +62,13 @@ class RemindersNotifier extends Notifier<RemindersState> {
     final sessions = ref.watch(focusSessionRepositoryProvider);
 
     final today = clock.now().dateOnly;
+    // Recurring tasks (#24) of the next days get their reminders without their day being opened first.
+    unawaited(
+      ref
+          .watch(recurrenceRepositoryProvider)
+          .ensureOccurrences(DateRange(today, today.addDays(ReminderScheduler.lookAheadDays)))
+          .catchError((Object error) => debugPrint('Recurring tasks: $error')),
+    );
     final subscriptions = <StreamSubscription<Object?>>[
       tasks.watchScheduledOpenTasks().listen((scheduled) {
         _scheduledTasks = scheduled;

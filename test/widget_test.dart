@@ -16,6 +16,7 @@ Future<Widget> _app(FakeTaskRepository repository) async {
       taskRepositoryProvider.overrideWithValue(repository),
       focusSessionRepositoryProvider.overrideWithValue(repository),
       categoryRepositoryProvider.overrideWithValue(repository),
+      recurrenceRepositoryProvider.overrideWithValue(repository),
       inboxRepositoryProvider.overrideWithValue(repository),
       sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
     ],

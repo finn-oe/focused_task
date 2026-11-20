@@ -15,6 +15,8 @@ TaskEntity buildTask({
   List<TaskTodoEntity> todos = const [],
   int? categoryId,
   TaskSchedule schedule = TaskSchedule.none,
+  int? recurrenceId,
+  DateTime? occurrenceDate,
 }) {
   return TaskEntity(
     id: id,
@@ -30,5 +32,7 @@ TaskEntity buildTask({
     todos: todos,
     categoryId: categoryId,
     schedule: schedule,
+    recurrenceId: recurrenceId,
+    occurrenceDate: occurrenceDate ?? (recurrenceId == null ? null : assignedDate ?? DateTime(2026, 1, 1)),
   );
 }

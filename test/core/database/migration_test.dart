@@ -5,6 +5,8 @@ import 'package:focused_task/core/database/app_database.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/categories/data/category_repository_impl.dart';
 import 'package:focused_task/features/inbox/data/inbox_repository_impl.dart';
+import 'package:focused_task/features/recurrence/data/recurrence_repository_impl.dart';
+import 'package:focused_task/features/recurrence/domain/recurrence_rule.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
@@ -103,6 +105,25 @@ const _inboxV7 = '''CREATE TABLE inbox_items (
   )''';
 
 /// Drift stores `DateTime` as Unix seconds.
+/// Schema of version 8 (start/due times, #10), as created by app version 1.18.0.
+const _tasksV8 = '''CREATE TABLE tasks (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT NULL,
+    assigned_date INTEGER NOT NULL,
+    sort_order TEXT NOT NULL,
+    is_completed INTEGER NOT NULL DEFAULT 0 CHECK (is_completed IN (0, 1)),
+    priority INTEGER NOT NULL DEFAULT 0,
+    time_spent INTEGER NOT NULL DEFAULT 0,
+    target_duration_minutes INTEGER NULL,
+    category_id INTEGER NULL REFERENCES categories (id) ON DELETE SET NULL,
+    start_minute INTEGER NULL,
+    due_date INTEGER NULL,
+    due_minute INTEGER NULL,
+    reminder_minutes INTEGER NULL,
+    reminder_off INTEGER NOT NULL DEFAULT 0 CHECK (reminder_off IN (0, 1))
+  )''';
+
 int _seconds(DateTime value) => value.millisecondsSinceEpoch ~/ 1000;
 
 AppDatabase _open(List<String> statements) {
@@ -337,5 +358,71 @@ void main() {
       );
       expect((await tasks.getTaskById(1))!.schedule, TaskSchedule(startMinute: 540, dueDate: day));
     });
+  });
+
+  group('v8 → v9 (recurring tasks, #24)', () {
+    final day = DateTime(2026, 11, 10);
+    late AppDatabase database;
+
+    setUp(() {
+      database = _open([
+        _tasksV8,
+        _todos,
+        _sessionsV5,
+        _categoriesV6,
+        _inboxV7,
+        'CREATE INDEX focus_sessions_started_at ON focus_sessions (started_at)',
+        "INSERT INTO tasks (id, title, assigned_date, sort_order, time_spent, start_minute, due_date) VALUES (1, 'report', ${_seconds(day)}, 'a0', 1800000, 540, ${_seconds(day)})",
+        'PRAGMA user_version = 8',
+      ]);
+    });
+    tearDown(() => database.close());
+
+    test('existing tasks keep their data and times and are one-off tasks', () async {
+      final task = (await TaskRepositoryImpl(database).getTaskById(1))!;
+      expect((task.title, task.timeSpent, task.schedule), ('report', 1800000, TaskSchedule(startMinute: 540, dueDate: day)));
+      expect((task.recurrenceId, task.occurrenceDate, task.isRecurring), (null, null, false));
+      expect(await database.select(database.recurrenceRules).get(), isEmpty);
+
+      final version = await database.customSelect('PRAGMA user_version').getSingle();
+      expect(version.data.values.single, database.schemaVersion);
+    });
+
+    test('an existing task can start a rule; one occurrence per rule and day', () async {
+      final rules = RecurrenceRepositoryImpl(database);
+      final ruleId = await rules.createRule(
+        RecurrenceRule(
+          title: 'report',
+          pattern: const RepeatPattern(frequency: RepeatFrequency.daily),
+          startDate: day,
+        ),
+        taskId: 1,
+      );
+      final task = (await TaskRepositoryImpl(database).getTaskById(1))!;
+      expect((task.recurrenceId, task.occurrenceDate), (ruleId, day));
+
+      await expectLater(
+        database.customStatement(
+          "INSERT INTO tasks (title, assigned_date, sort_order, recurrence_id, occurrence_date) VALUES ('copy', ${_seconds(day)}, 'b0', $ruleId, ${_seconds(day)})",
+        ),
+        throwsA(anything),
+        reason: 'unique (recurrence_id, occurrence_date)',
+      );
+    });
+  });
+
+  test('v3 databases get the recurrence tables and columns too', () async {
+    final database = _open([
+      _tasksV3,
+      _todos,
+      "INSERT INTO tasks (title, assigned_date, sort_order) VALUES ('old', ${_seconds(DateTime(2026, 1, 5))}, 'a0')",
+      'PRAGMA user_version = 3',
+    ]);
+    addTearDown(database.close);
+    final task = (await TaskRepositoryImpl(database).getTasksForDay(DateTime(2026, 1, 5))).single;
+    expect((task.title, task.isRecurring), ('old', false));
+    expect(await database.select(database.recurrenceExceptions).get(), isEmpty);
+    final index = await database.customSelect("SELECT name FROM sqlite_master WHERE type = 'index' AND name = 'tasks_occurrence'").get();
+    expect(index, hasLength(1));
   });
 }
