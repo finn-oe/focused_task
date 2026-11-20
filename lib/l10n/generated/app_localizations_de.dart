@@ -523,6 +523,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsAskToMoveUnfinishedHint => 'Beim ersten Start des Tages anbieten, offene Aufgaben der letzten 7 Tage nach heute zu verschieben';
 
   @override
+  String get settingsCollapseCompleted => 'Erledigte Aufgaben einklappen';
+
+  @override
+  String get settingsCollapseCompletedHint => 'Erledigte Aufgaben landen in einem Bereich am Ende des Plans, den du ein- und ausblenden kannst';
+
+  @override
   String get settingsDataRetention => 'Datenaufbewahrung';
 
   @override
@@ -1034,6 +1040,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String planCategoryTracked(String duration) {
     return '$duration erfasst';
   }
+
+  @override
+  String planCompletedSection(int count) {
+    return 'Erledigt ($count)';
+  }
+
+  @override
+  String get planShowCompleted => 'Erledigte Aufgaben anzeigen';
+
+  @override
+  String get planHideCompleted => 'Erledigte Aufgaben ausblenden';
 
   @override
   String get statsByCategory => 'Fokuszeit pro Kategorie';

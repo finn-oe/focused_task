@@ -27,6 +27,7 @@ class SettingsState {
     this.focusGoal = FocusGoal.off,
     this.intervals = IntervalSettings.off,
     this.focusMinimalLayout = false,
+    this.collapseCompleted = false,
     this.locale,
     this.lastCleanup,
   });
@@ -60,6 +61,9 @@ class SettingsState {
   /// Focus mode shows only the timer, the task and its main button (#28).
   final bool focusMinimalLayout;
 
+  /// The plan shows completed tasks in a section at the end that can be shown or hidden (#58); off by default.
+  final bool collapseCompleted;
+
   SettingsState copyWith({
     ThemeMode? themeMode,
     Locale? locale,
@@ -76,6 +80,7 @@ class SettingsState {
     FocusGoal? focusGoal,
     IntervalSettings? intervals,
     bool? focusMinimalLayout,
+    bool? collapseCompleted,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -91,6 +96,7 @@ class SettingsState {
       focusGoal: focusGoal ?? this.focusGoal,
       intervals: intervals ?? this.intervals,
       focusMinimalLayout: focusMinimalLayout ?? this.focusMinimalLayout,
+      collapseCompleted: collapseCompleted ?? this.collapseCompleted,
     );
   }
 }

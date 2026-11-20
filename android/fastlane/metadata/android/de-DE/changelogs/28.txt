@@ -1,0 +1,2 @@
+• Neue Option für mehr Übersicht: Erledigte Aufgaben einklappen. In Einstellungen → Planung einschalten, dann landen erledigte Aufgaben in einem Bereich am Ende deines Plans, den du mit einem Tipp ein- und ausblendest.
+• Funktioniert in der Liste und auf dem Kategorie-Board.

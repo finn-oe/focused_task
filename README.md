@@ -31,6 +31,8 @@ compared to reality – so you can get a little more dedicated every day.
   month grid shows done/total tasks and a bar for the focus time of each day. Tap a day to open it in the plan.
 - **Daily rollover** – on the first start of a day, the app offers to move the open tasks of the last 7 days to
   today (can be turned off in Settings → Planning).
+- **Collapse completed tasks** – optional (Settings → Planning): completed tasks move into a "Completed (n)" section
+  at the end of the plan list and of each board group, collapsed by default and opened with a tap.
 - **Focus mode** – works through today's open tasks in order. Shows the time spent on the current task
   (or the time remaining until the target), the overall session time, and the sub-task progress.
 - **Breaks (intervals)** – optional Pomodoro-style cycles, off by default: work 25 min, then a 5 min break, and a

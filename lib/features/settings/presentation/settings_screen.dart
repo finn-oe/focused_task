@@ -72,6 +72,13 @@ class SettingsScreen extends ConsumerWidget {
             contentPadding: EdgeInsets.zero,
             onChanged: notifier.setAskToMoveUnfinished,
           ),
+          SwitchListTile(
+            title: Text(l10n.settingsCollapseCompleted),
+            subtitle: Text(l10n.settingsCollapseCompletedHint),
+            value: state.collapseCompleted,
+            contentPadding: EdgeInsets.zero,
+            onChanged: notifier.setCollapseCompleted,
+          ),
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.label_outline),

@@ -42,6 +42,17 @@ void main() {
       expect(settings.enableWakelock, isTrue);
       expect(settings.pauseOnBackground, isTrue);
     });
+
+    test('"Collapse completed tasks" is off by default and persisted (#58)', () async {
+      final container = await _container(FakeTaskRepository());
+      expect(container.read(settingsNotifierProvider).collapseCompleted, isFalse);
+
+      await container.read(settingsNotifierProvider.notifier).setCollapseCompleted(true);
+
+      expect(container.read(collapseCompletedProvider), isTrue);
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('settings.collapse_completed'), isTrue);
+    });
   });
 
   group('SettingsNotifier intervals', () {

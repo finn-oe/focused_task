@@ -18,10 +18,12 @@ import 'package:focused_task/core/utils/date_utils.dart';
 enum _TaskMenuAction { moveToToday, moveTo, copyTo }
 
 class TaskListItem extends ConsumerWidget {
-  const TaskListItem({super.key, required this.task, required this.index});
+  const TaskListItem({super.key, required this.task, this.index});
 
   final TaskEntity task;
-  final int index;
+
+  /// Position in the reorderable list for the drag handle; `null` = not reorderable (no handle).
+  final int? index;
 
   Future<void> _onMenuAction(BuildContext context, WidgetRef ref, _TaskMenuAction action, DateTime today) async {
     switch (action) {
@@ -229,10 +231,11 @@ class TaskListItem extends ConsumerWidget {
                 onPressed: () => context.go(AppRoutes.focusFor(FocusRequest(task.assignedDate, startTaskId: task.id))),
               ),
 
-            ReorderableDragStartListener(
-              index: index,
-              child: Icon(Icons.drag_handle, color: isCompleted ? colorScheme.onSurfaceVariant : null),
-            ),
+            if (index case final index?)
+              ReorderableDragStartListener(
+                index: index,
+                child: Icon(Icons.drag_handle, color: isCompleted ? colorScheme.onSurfaceVariant : null),
+              ),
           ],
         ),
       ),

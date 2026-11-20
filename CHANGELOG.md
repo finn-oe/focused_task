@@ -3,6 +3,11 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.17.0] - 2026-11-20
+
+### Added
+- **Collapse completed tasks** (Settings → Planning, off by default): the plan list shows the open tasks first and the completed ones in a "Completed (n)" section at the end that you can show or hide; each board group does the same. Completing a task moves it into the section, un-completing moves it back. The open tasks can still be reordered. (#58)
+
 ## [1.16.0] - 2026-11-20
 
 ### Added
