@@ -13,6 +13,7 @@ import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/settings/presentation/settings_screen.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/schedule_labels.dart';
 
 import 'test_app.dart';
 
@@ -67,14 +68,16 @@ void main() {
 
     await tester.tapAndSettle(find.byKey(const Key('scheduleStart')));
     await tester.tapAndSettle(find.text('OK')); // 9:00
+    // The system's 12/24 h setting decides the format ("9:00 AM" / "09:00"); the Linux runner uses 24 h.
+    final nine = timeOfDayLabel(tester.element(find.byType(Scaffold).last), 9 * 60);
     await tester.tapAndSettle(find.byKey(const Key('scheduleReminder-10')));
     await tester.pageBack();
     await tester.settle();
-    expect(find.text('Start 9:00 AM · 10 min before'), findsOneWidget);
+    expect(find.text('Start $nine · 10 min before'), findsOneWidget);
     await tester.tapAndSettle(find.byTooltip('Save Task'));
 
     expect(
-      find.descendant(of: find.byType(Card), matching: find.text('9:00 AM')),
+      find.descendant(of: find.byType(Card), matching: find.text(nine)),
       findsOneWidget,
       reason: 'the start chip on the tile',
     );
@@ -82,7 +85,7 @@ void main() {
     await app.restart(tester);
     await tester.tapAndSettle(find.byTooltip('Edit Task'));
     await tester.scrollUntilVisible(find.byKey(const Key('taskFormSchedule')), 200, scrollable: find.byType(Scrollable).first);
-    expect(find.text('Start 9:00 AM · 10 min before'), findsOneWidget);
+    expect(find.text('Start $nine · 10 min before'), findsOneWidget);
     await tester.tapAndSettle(find.byKey(const Key('taskFormSchedule')));
     expect(tester.widget<ChoiceChip>(find.byKey(const Key('scheduleReminder-10'))).selected, isTrue);
   });
