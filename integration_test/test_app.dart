@@ -55,9 +55,13 @@ class TestApp {
 /// Small helpers shared by the flows.
 extension FlowActions on WidgetTester {
   /// [pumpAndSettle] that gives up after 30 s instead of 10 min, so a hang fails with the stack of the step that hangs.
-  Future<void> settle() => pumpAndSettle(const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 30));
+  Future<void> settle() {
+    debugPrint('[flow] settle'); // TEMP: Linux CI hang (#62)
+    return pumpAndSettle(const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 30));
+  }
 
   Future<void> tapAndSettle(Finder finder) async {
+    debugPrint('[flow] tap ${finder.describeMatch(Plurality.one)}'); // TEMP: Linux CI hang (#62)
     await ensureVisible(finder);
     await tap(finder);
     await settle();
