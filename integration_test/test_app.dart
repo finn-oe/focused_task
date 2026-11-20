@@ -48,20 +48,23 @@ class TestApp {
         child: const FocusedTaskApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.settle();
   }
 }
 
 /// Small helpers shared by the flows.
 extension FlowActions on WidgetTester {
+  /// [pumpAndSettle] that gives up after 30 s instead of 10 min, so a hang fails with the stack of the step that hangs.
+  Future<void> settle() => pumpAndSettle(const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 30));
+
   Future<void> tapAndSettle(Finder finder) async {
     await ensureVisible(finder);
     await tap(finder);
-    await pumpAndSettle();
+    await settle();
   }
 
   Future<void> enterTextInField(String label, String text) async {
     await enterText(find.widgetWithText(TextField, label), text);
-    await pumpAndSettle();
+    await settle();
   }
 }

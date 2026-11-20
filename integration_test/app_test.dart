@@ -1,3 +1,7 @@
+// A hang fails the one flow instead of running into the CI job's timeout.
+@Timeout(Duration(minutes: 3))
+library;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -30,7 +34,7 @@ void main() {
       await tester.scrollUntilVisible(newSubTask, 200, scrollable: find.byType(Scrollable).first);
       await tester.enterText(newSubTask, subTask);
       await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
+      await tester.settle();
     }
     bool subTaskHasFocus() => tester.widget<EditableText>(find.descendant(of: newSubTask, matching: find.byType(EditableText))).focusNode.hasFocus;
     expect(subTaskHasFocus(), isTrue, reason: 'Enter keeps the keyboard open for the next sub-task');
@@ -39,7 +43,7 @@ void main() {
     // A plain heading: the tap lands on the form's empty background, i.e. outside every field.
     await tester.ensureVisible(find.text('Sub-tasks'));
     await tester.tap(find.text('Sub-tasks'), warnIfMissed: false);
-    await tester.pumpAndSettle();
+    await tester.settle();
     expect(subTaskHasFocus(), isFalse);
     await tester.tapAndSettle(find.byTooltip('Save Task'));
 
@@ -56,7 +60,7 @@ void main() {
     await tester.tapAndSettle(find.text('Add Task'));
     await tester.enterText(find.widgetWithText(TextFormField, 'Title'), 'Call Anna');
     // Typing animates the title's caret back on screen; scrolling before that settles races it (flaky on Linux CI).
-    await tester.pumpAndSettle();
+    await tester.settle();
     await tester.scrollUntilVisible(find.byKey(const Key('taskFormSchedule')), 200, scrollable: find.byType(Scrollable).first);
     expect(find.text('Not set'), findsOneWidget);
     await tester.tapAndSettle(find.byKey(const Key('taskFormSchedule')));
@@ -65,7 +69,7 @@ void main() {
     await tester.tapAndSettle(find.text('OK')); // 9:00
     await tester.tapAndSettle(find.byKey(const Key('scheduleReminder-10')));
     await tester.pageBack();
-    await tester.pumpAndSettle();
+    await tester.settle();
     expect(find.text('Start 9:00 AM · 10 min before'), findsOneWidget);
     await tester.tapAndSettle(find.byTooltip('Save Task'));
 
@@ -88,7 +92,7 @@ void main() {
     final tasks = TaskRepositoryImpl(app.database);
     final id = await tasks.createTask(title: 'Deep work', assignedDate: DateTime.now(), sortOrder: 'a0', targetDurationMinutes: 25);
     await tasks.replaceTaskTodos(id, const [TaskTodoEntity(title: 'First step', isCompleted: false, sortOrder: 'a0')]);
-    await tester.pumpAndSettle();
+    await tester.settle();
 
     await tester.tapAndSettle(find.text('Start focus'));
     expect(find.text('Deep work'), findsOneWidget);
@@ -184,7 +188,7 @@ void main() {
     final tasks = TaskRepositoryImpl(app.database);
     final today = DateTime.now().dateOnly;
     final id = await tasks.createTask(title: 'Weekly review', assignedDate: today, sortOrder: 'a0');
-    await tester.pumpAndSettle();
+    await tester.settle();
 
     await tester.tapAndSettle(find.text('Calendar').first);
     expect(find.text('Weekly review'), findsOneWidget);
@@ -254,7 +258,7 @@ void main() {
     final app = await TestApp.start(tester);
     final tasks = TaskRepositoryImpl(app.database);
     final id = await tasks.createTask(title: 'Write report', assignedDate: DateTime.now(), sortOrder: 'a0');
-    await tester.pumpAndSettle();
+    await tester.settle();
     expect(find.byKey(const Key('planGoalRing')), findsNothing, reason: 'the goal is off by default');
 
     await tester.tapAndSettle(find.text('Settings').first);
@@ -283,7 +287,7 @@ void main() {
     final midnight = DateTime.now().dateOnly;
     final session = await sessions.start(taskId: id, at: midnight);
     await sessions.end(session.id, midnight.add(const Duration(minutes: 30)), EndReason.manual);
-    await tester.pumpAndSettle();
+    await tester.settle();
     expect(find.byTooltip('Daily goal reached: 30 min of 30 min'), findsOneWidget);
 
     await tester.tapAndSettle(find.byKey(const Key('planGoalRing')));
@@ -295,7 +299,7 @@ void main() {
     final app = await TestApp.start(tester);
     final tasks = TaskRepositoryImpl(app.database);
     await tasks.createTask(title: 'Groceries', assignedDate: DateTime.now(), sortOrder: 'a0');
-    await tester.pumpAndSettle();
+    await tester.settle();
     expect(find.byTooltip('Show as board'), findsNothing, reason: 'the plan stays a plain list without categories');
 
     await tester.tapAndSettle(find.text('Settings').first);
@@ -348,7 +352,7 @@ void main() {
     final tasks = TaskRepositoryImpl(app.database);
     await tasks.createTask(title: 'Write report', assignedDate: DateTime.now(), sortOrder: 'a0');
     await tasks.createTask(title: 'Groceries', assignedDate: DateTime.now(), sortOrder: 'a1');
-    await tester.pumpAndSettle();
+    await tester.settle();
 
     await tester.tapAndSettle(find.text('Settings').first);
     await tester.tapAndSettle(find.text('Collapse completed tasks'));
@@ -407,13 +411,13 @@ void main() {
     addTearDown(tester.view.reset);
     final app = await TestApp.start(tester);
     await TaskRepositoryImpl(app.database).createTask(title: 'Deep work', assignedDate: DateTime.now(), sortOrder: 'a0');
-    await tester.pumpAndSettle();
+    await tester.settle();
 
     await tester.tapAndSettle(find.text('Start focus'));
     await tester.tapAndSettle(find.byTooltip('I got distracted'));
     await tester.enterText(find.byKey(const Key('focusParkThought')), 'Book dentist');
     await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
+    await tester.settle();
     // The close button in the app bar; the snack bars cover the bottom of the screen.
     await tester.tapAndSettle(find.byTooltip('Exit focus'));
 
