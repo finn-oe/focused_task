@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
@@ -6,6 +7,8 @@ import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/core/ui/category_palette.dart';
+import 'package:focused_task/core/ui/progress_ring.dart';
+import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
@@ -98,7 +101,7 @@ class _GroupTarget extends ConsumerWidget {
   }
 }
 
-/// Dot, name, number of open tasks and "Focus on …".
+/// Completion ring (dot while empty), name, number of open tasks, tracked time and "Focus on …".
 class _GroupHeader extends StatelessWidget {
   const _GroupHeader({required this.group, required this.day});
 
@@ -111,18 +114,35 @@ class _GroupHeader extends StatelessWidget {
     final theme = Theme.of(context);
     final category = group.category;
     final name = category?.name ?? l10n.planNoCategory;
+    final tracked = group.trackedAt(clock.now());
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 4, 4),
       child: Row(
         children: [
-          if (category != null) ...[CategoryDot(colorIndex: category.colorIndex, size: 12), const SizedBox(width: 8)],
-          Flexible(
-            child: Text(name, style: theme.textTheme.titleMedium, overflow: TextOverflow.ellipsis),
-          ),
+          _GroupProgress(group: group),
           const SizedBox(width: 8),
-          Text(l10n.planCategoryOpenTasks(group.openCount), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          const Spacer(),
+          // Name and open count give way first (ellipsis), so ring, time and focus button always fit.
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  flex: 2,
+                  child: Text(name, style: theme.textTheme.titleMedium, overflow: TextOverflow.ellipsis),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    l10n.planCategoryOpenTasks(group.openCount),
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 4),
+          if (tracked >= const Duration(minutes: 1)) _TrackedTime(key: ValueKey('boardGroupTracked-${category?.id ?? 'none'}'), tracked: tracked),
           // Without a category, "Start focus" in the app bar already covers all tasks.
           if (category != null && group.openCount > 0)
             IconButton(
@@ -131,7 +151,60 @@ class _GroupHeader extends StatelessWidget {
               onPressed: () => context.go(AppRoutes.focusFor(FocusRequest(day, categoryId: category.id))),
             )
           else
-            const SizedBox(height: kMinInteractiveDimension),
+            const SizedBox(height: kMinInteractiveDimension, width: 8),
+        ],
+      ),
+    );
+  }
+}
+
+/// How many of the group's tasks are done, as a ring in the category colour; the plain dot while the group is empty.
+class _GroupProgress extends StatelessWidget {
+  const _GroupProgress({required this.group});
+
+  final BoardGroup group;
+
+  static const _size = 20.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final category = group.category;
+    final rate = group.completionRate;
+    if (rate == null) {
+      // Same width as the ring, so the names line up.
+      return SizedBox(
+        width: _size,
+        child: category == null ? null : Center(child: CategoryDot(colorIndex: category.colorIndex, size: 12)),
+      );
+    }
+
+    final label = context.l10n.planCategoryProgress(group.completedCount, group.totalCount, (rate * 100).round());
+    return Tooltip(
+      key: ValueKey('boardGroupRing-${category?.id ?? 'none'}'),
+      message: label,
+      child: ProgressRing(progress: rate, done: group.openCount == 0, size: _size, color: category == null ? null : CategoryColor.of(category.colorIndex).color(context)),
+    );
+  }
+}
+
+/// The group's tracked time, `HH:MM`.
+class _TrackedTime extends StatelessWidget {
+  const _TrackedTime({super.key, required this.tracked});
+
+  final Duration tracked;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final text = tracked.toFormattedString();
+    return Tooltip(
+      message: context.l10n.planCategoryTracked(text),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.timer_outlined, size: 16, color: theme.colorScheme.primary),
+          const SizedBox(width: 2),
+          Text(text, style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.primary)),
         ],
       ),
     );

@@ -1025,6 +1025,17 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String planCategoryProgress(int done, int total, int percent) {
+    String _temp0 = intl.Intl.pluralLogic(total, locale: localeName, other: '$total Aufgaben', one: '1 Aufgabe');
+    return '$done von $_temp0 erledigt ($percent %)';
+  }
+
+  @override
+  String planCategoryTracked(String duration) {
+    return '$duration erfasst';
+  }
+
+  @override
   String get statsByCategory => 'Fokuszeit pro Kategorie';
 
   @override

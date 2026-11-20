@@ -3,6 +3,11 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.16.0] - 2026-11-20
+
+### Added
+- **Category board**: every category shows a completion ring in its colour ("2 of 5 tasks done (40%)" as tooltip, a check mark when all are done) and the time tracked on its tasks that day (`HH:MM`). (#57)
+
 ## [1.15.1] - 2026-11-20
 
 ### Added

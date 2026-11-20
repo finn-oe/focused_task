@@ -282,6 +282,8 @@
   "planBoardDragTooltip": "In eine andere Kategorie ziehen",
   "planNoTasksInCategory": "Keine Aufgaben dieser Kategorie an diesem Tag.",
   "planCategoryOpenTasks": "{count, plural, =0{keine offen} =1{1 offen} other{{count} offen}}",
+  "planCategoryProgress": "{done} von {total, plural, =1{1 Aufgabe} other{{total} Aufgaben}} erledigt ({percent} %)",
+  "planCategoryTracked": "{duration} erfasst",
   "statsByCategory": "Fokuszeit pro Kategorie",
   "statsNoCategory": "Ohne Kategorie",
   "focusTitleCategory": "Fokus: {name}",

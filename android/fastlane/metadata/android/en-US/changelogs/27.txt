@@ -1,0 +1,3 @@
+• The category board shows how far each category is: a ring fills as you complete its tasks.
+• See how much time you spent on each category today, right in its header.
+• The keyboard now closes when you tap outside a text field, so Save is never hidden after adding sub-tasks. There's also a Save button at the top of the task form.

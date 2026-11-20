@@ -5,8 +5,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
+import 'package:focused_task/core/ui/progress_ring.dart';
 
-/// A small ring that fills with [progress] (0–1) and shows a check mark once [reached].
+/// The daily goal's ring: [progress] (0–1) towards the goal, a check mark once [reached].
 class GoalProgressRing extends StatelessWidget {
   const GoalProgressRing({super.key, required this.progress, required this.reached, this.size = 28});
 
@@ -15,27 +16,7 @@ class GoalProgressRing extends StatelessWidget {
   final double size;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return SizedBox.square(
-      dimension: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox.square(
-            dimension: size,
-            child: CircularProgressIndicator(
-              value: reached ? 1 : progress.clamp(0, 1),
-              strokeWidth: size / 8,
-              color: colors.primary,
-              backgroundColor: colors.surfaceContainerHighest,
-            ),
-          ),
-          if (reached) Icon(Icons.check, size: size * 0.55, color: colors.primary),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => ProgressRing(progress: progress, done: reached, size: size);
 }
 
 /// Today's focus time vs. the daily goal, for the plan header. Tap → statistics. Nothing without a goal.
