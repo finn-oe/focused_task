@@ -148,6 +148,7 @@ class _StatsContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final goal = ref.watch(focusGoalProvider);
     final categories = ref.watch(categoriesNotifierProvider);
+    final parked = ref.watch(recentParkedThoughtsProvider(report.query.range)).value ?? const [];
     return LayoutBuilder(
       builder: (context, constraints) {
         final cards = [
@@ -155,6 +156,7 @@ class _StatsContent extends ConsumerWidget {
           BestHoursCard(report: report),
           TopTasksCard(report: report),
           if (report.hasCategorizedFocus) CategoryFocusCard(report: report, categoryOf: categories.byId),
+          if (parked.isNotEmpty) ParkedThoughtsCard(items: parked),
         ];
         final twoColumns = constraints.maxWidth >= _twoColumnWidth;
         return Column(

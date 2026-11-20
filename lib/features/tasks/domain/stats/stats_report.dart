@@ -123,7 +123,7 @@ class StatsReport {
   /// Up to five tasks with the most focus time, most first.
   final List<TaskFocusTime> topTasks;
 
-  /// `null` while interruptions aren't recorded yet (#28) or without focus time.
+  /// Interruptions (#28) per hour of focus time; `null` without focus time.
   final double? interruptionsPerFocusHour;
 
   /// Focus time per category, most first; categories without focus time in the range are left out.

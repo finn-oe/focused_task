@@ -9,6 +9,7 @@ import 'package:focused_task/core/ui/charts/heatmap_chart.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/categories/domain/task_category.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
+import 'package:focused_task/features/inbox/domain/inbox_item.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 
 /// Shown instead of the cards when a period has neither focus time nor planned tasks.
@@ -73,7 +74,6 @@ class StatsSummaryTiles extends StatelessWidget {
         icon: Icons.notifications_paused_outlined,
         title: l10n.statsInterruptions,
         value: interruptions == null ? l10n.statsNoValue : l10n.statsInterruptionsValue(interruptions),
-        detail: interruptions == null ? l10n.statsNotTrackedYet : null,
       ),
     ];
 
@@ -120,6 +120,46 @@ class _StatTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The most recent thoughts parked in the period, newest first; reviewed ones are ticked.
+class ParkedThoughtsCard extends StatelessWidget {
+  const ParkedThoughtsCard({super.key, required this.items});
+
+  final List<InboxItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    final format = DateFormat.MMMd(Localizations.localeOf(context).toLanguageTag()).add_Hm();
+    return StatsCard(
+      key: const Key('statsParkedThoughts'),
+      title: l10n.statsParkedThoughts,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: 8,
+        children: [
+          for (final item in items)
+            Row(
+              spacing: 12,
+              children: [
+                item.isResolved
+                    ? Tooltip(
+                        message: l10n.statsParkedThoughtReviewed,
+                        child: Icon(Icons.check_circle_outline, size: 20, color: theme.colorScheme.primary),
+                      )
+                    : Icon(Icons.lightbulb_outline, size: 20, color: theme.colorScheme.onSurfaceVariant),
+                Expanded(
+                  child: Text(item.text, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
+                ),
+                Text(format.format(item.createdAt), style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              ],
+            ),
+        ],
       ),
     );
   }

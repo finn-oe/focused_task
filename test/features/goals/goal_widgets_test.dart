@@ -34,6 +34,7 @@ Future<void> _pump(WidgetTester tester, Widget child, {FocusGoal goal = _goal, F
         taskRepositoryProvider.overrideWithValue(repo),
         focusSessionRepositoryProvider.overrideWithValue(repo),
         categoryRepositoryProvider.overrideWithValue(repo),
+        inboxRepositoryProvider.overrideWithValue(repo),
         focusGoalProvider.overrideWithValue(goal),
       ],
       child: localizedApp(home: Scaffold(body: child)),
@@ -118,6 +119,7 @@ void main() {
               taskRepositoryProvider.overrideWithValue(repository),
               focusSessionRepositoryProvider.overrideWithValue(repository),
               categoryRepositoryProvider.overrideWithValue(repository),
+              inboxRepositoryProvider.overrideWithValue(repository),
               focusGoalProvider.overrideWithValue(_goal),
             ],
             child: localizedApp(home: const FinishedForTodayScreen()),
@@ -168,6 +170,7 @@ void main() {
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        inboxRepositoryProvider.overrideWithValue(repository),
         sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
       ],
     );

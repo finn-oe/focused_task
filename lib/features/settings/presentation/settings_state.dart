@@ -26,6 +26,7 @@ class SettingsState {
     this.notificationsDenied = false,
     this.focusGoal = FocusGoal.off,
     this.intervals = IntervalSettings.off,
+    this.focusMinimalLayout = false,
     this.locale,
     this.lastCleanup,
   });
@@ -56,6 +57,9 @@ class SettingsState {
   /// Pomodoro-style work/break cycles in focus mode; off by default.
   final IntervalSettings intervals;
 
+  /// Focus mode shows only the timer, the task and its main button (#28).
+  final bool focusMinimalLayout;
+
   SettingsState copyWith({
     ThemeMode? themeMode,
     Locale? locale,
@@ -71,6 +75,7 @@ class SettingsState {
     bool? notificationsDenied,
     FocusGoal? focusGoal,
     IntervalSettings? intervals,
+    bool? focusMinimalLayout,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -85,6 +90,7 @@ class SettingsState {
       notificationsDenied: notificationsDenied ?? this.notificationsDenied,
       focusGoal: focusGoal ?? this.focusGoal,
       intervals: intervals ?? this.intervals,
+      focusMinimalLayout: focusMinimalLayout ?? this.focusMinimalLayout,
     );
   }
 }

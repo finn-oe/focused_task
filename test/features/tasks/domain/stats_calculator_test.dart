@@ -193,11 +193,10 @@ void main() {
       expect(report.buckets.fold(Duration.zero, (sum, bucket) => sum + bucket.focus), report.focusTotal);
     });
 
-    test('interruptions per focus hour once they are tracked', () {
+    test('interruptions per focus hour', () {
       final sessions = [_session(monday.add(const Duration(hours: 9)), _minute * 120, interruptions: 3)];
 
-      expect(calculator.compute(week, tasks: const [], sessions: sessions, today: monday).interruptionsPerFocusHour, isNull);
-      expect(const StatsCalculator(interruptionsTracked: true).compute(week, tasks: const [], sessions: sessions, today: monday).interruptionsPerFocusHour, 1.5);
+      expect(calculator.compute(week, tasks: const [], sessions: sessions, today: monday).interruptionsPerFocusHour, 1.5);
     });
 
     test('focus time per category, most first; the category comes with the session or from the task', () {

@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -39,6 +40,18 @@ void main() {
 
       final later = task.elapsedAt(DateTime.now().add(const Duration(hours: 5)));
       expect(later.inMinutes, 60, reason: 'elapsed time must not grow after completion');
+    });
+
+    test('the session ends at the injected clock time, not the system time', () async {
+      final id = await createTask();
+      final start = DateTime(2030, 1, 1, 9);
+      await sessions.start(taskId: id, at: start);
+
+      await withClock(Clock.fixed(start.add(const Duration(minutes: 20))), () => repository.setTaskCompletion(taskId: id, isCompleted: true));
+
+      final session = await database.select(database.focusSessions).getSingle();
+      expect(session.endedAt, start.add(const Duration(minutes: 20)));
+      expect((await repository.getTaskById(id))!.timeSpent, const Duration(minutes: 20).inMilliseconds);
     });
 
     test('un-completing does not restart the timer', () async {

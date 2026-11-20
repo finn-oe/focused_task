@@ -28,6 +28,7 @@ Future<GoRouter> _pumpApp(WidgetTester tester, {double width = 800, String initi
         taskRepositoryProvider.overrideWithValue(fake),
         focusSessionRepositoryProvider.overrideWithValue(fake),
         categoryRepositoryProvider.overrideWithValue(fake),
+        inboxRepositoryProvider.overrideWithValue(fake),
         sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
       ],
       child: localizedRouterApp(routerConfig: router),

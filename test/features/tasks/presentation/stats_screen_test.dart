@@ -38,6 +38,7 @@ Future<FakeTaskRepository> _pump(WidgetTester tester, {Size size = const Size(80
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        inboxRepositoryProvider.overrideWithValue(repository),
         focusGoalProvider.overrideWithValue(goal),
       ],
       child: localizedApp(home: const StatsScreen()),
@@ -62,7 +63,7 @@ void main() {
       expect(find.byType(HeatmapChart), findsOneWidget);
       expect(find.text('Deep work'), findsOneWidget, reason: 'top tasks');
       expect(find.text('Completed tasks took 83% of their target (median).'), findsOneWidget);
-      expect(find.text('Not tracked yet'), findsOneWidget, reason: 'interruptions come with #28');
+      expect(find.text('Not tracked yet'), findsNothing, reason: 'interruptions are tracked since #28');
     });
   });
 
@@ -156,6 +157,7 @@ void main() {
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        inboxRepositoryProvider.overrideWithValue(repository),
       ],
     );
     final today = DateTime(2026, 11, 17);

@@ -9,13 +9,10 @@ import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 /// Focus time always comes from the session log, by the time it actually happened (sessions are split at local
 /// midnight, hour and range boundaries); task counts come from the tasks by their assigned day.
 class StatsCalculator {
-  const StatsCalculator({this.interruptionsTracked = false});
+  const StatsCalculator();
 
   /// Number of top tasks in the report.
   static const topTaskCount = 5;
-
-  /// Whether sessions record interruptions yet (#28). Until then the report shows no interruption rate.
-  final bool interruptionsTracked;
 
   /// [tasks] are the tasks assigned to `query.range`; [sessions] overlap it (any kind, also open ones); [today] decides
   /// which days have elapsed.
@@ -56,7 +53,7 @@ class StatsCalculator {
       averageSessionLength: sessionCount == 0 ? Duration.zero : focusTotal ~/ sessionCount,
       focusByWeekdayHour: _focusByWeekdayHour(focusSessions, from, toExclusive),
       topTasks: _topTasks(focusSessions, range, taskList),
-      interruptionsPerFocusHour: !interruptionsTracked || focusHours == 0 ? null : interruptions / focusHours,
+      interruptionsPerFocusHour: focusHours == 0 ? null : interruptions / focusHours,
       focusByCategory: _focusByCategory(focusSessions, from, toExclusive, taskList),
       breakTotal: sessions.fold(Duration.zero, (sum, session) => sum + breakTimeWithin(session, from, toExclusive)),
     );

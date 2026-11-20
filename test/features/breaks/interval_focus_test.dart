@@ -33,6 +33,7 @@ class _Focus {
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        inboxRepositoryProvider.overrideWithValue(repository),
         targetAlarmProvider.overrideWithValue(alarm),
         notificationServiceProvider.overrideWithValue(notifications),
         focusGoalProvider.overrideWithValue(FocusGoal.off),

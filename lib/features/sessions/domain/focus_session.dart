@@ -78,7 +78,7 @@ class FocusSession {
     return value.isNegative ? Duration.zero : value;
   }
 
-  FocusSession copyWith({DateTime? endedAt, DateTime? lastSeenAt, EndReason? endReason, int? taskId, bool clearTaskId = false}) {
+  FocusSession copyWith({DateTime? endedAt, DateTime? lastSeenAt, EndReason? endReason, int? taskId, bool clearTaskId = false, int? interruptions}) {
     return FocusSession(
       id: id,
       taskId: clearTaskId ? null : taskId ?? this.taskId,
@@ -87,7 +87,7 @@ class FocusSession {
       endedAt: endedAt ?? this.endedAt,
       lastSeenAt: lastSeenAt ?? this.lastSeenAt,
       endReason: endReason ?? this.endReason,
-      interruptions: interruptions,
+      interruptions: interruptions ?? this.interruptions,
       taskTitle: taskTitle,
       taskCategoryId: taskCategoryId,
     );

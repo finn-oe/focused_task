@@ -23,6 +23,7 @@ void main() {
           taskRepositoryProvider.overrideWithValue(repository),
           focusSessionRepositoryProvider.overrideWithValue(repository),
           categoryRepositoryProvider.overrideWithValue(repository),
+          inboxRepositoryProvider.overrideWithValue(repository),
         ],
         child: localizedApp(home: TaskFormScreen(task: task)),
       ),

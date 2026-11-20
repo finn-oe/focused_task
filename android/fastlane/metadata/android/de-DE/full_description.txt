@@ -11,6 +11,8 @@ FOKUSSIEREN
 • Der Fokusmodus zeigt immer eine Aufgabe: ihre Zeit, ihre Teilaufgaben und was als Nächstes kommt.
 • Optionale Pausen wie bei Pomodoro: 25 Minuten arbeiten, dann kurz Pause machen, nach jeder vierten Runde länger. Alle Zeiten sind einstellbar.
 • Nur eine Kategorie bearbeiten, eine Aufgabe nach hinten schieben oder eine Teilaufgabe hinzufügen, ohne den Fokus zu verlassen.
+• Einen spontanen Gedanken mit einer Zeile parken und bei der Aufgabe bleiben; später durchsehen und eine Aufgabe daraus machen.
+• Die minimale Ansicht zeigt nur den Timer und deine Aufgabe.
 • Pausiert auf Wunsch, wenn du die App verlässt, und hält den Bildschirm an.
 
 ERFASSEN
@@ -22,6 +24,7 @@ REFLEKTIEREN
 • Statistik pro Tag, Woche, Monat oder Jahr: Fokuszeit, erledigte Aufgaben, geplante vs. tatsächliche Zeit, deine besten Fokusstunden und Top-Aufgaben.
 • Ein tägliches Fokusziel für deine Arbeitstage, mit Serien.
 • Pausenzeit wird getrennt gezeigt und zählt nie als Fokuszeit.
+• Sieh, wie oft du pro Fokusstunde unterbrochen wurdest.
 
 PRIVAT
 • Alle Daten bleiben auf deinem Gerät. Kein Konto, keine Werbung, kein Tracking.

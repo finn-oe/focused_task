@@ -818,12 +818,6 @@ abstract class AppLocalizations {
   /// **'{value}'**
   String statsInterruptionsValue(double value);
 
-  /// No description provided for @statsNotTrackedYet.
-  ///
-  /// In en, this message translates to:
-  /// **'Not tracked yet'**
-  String get statsNotTrackedYet;
-
   /// No description provided for @statsNoValue.
   ///
   /// In en, this message translates to:
@@ -1939,6 +1933,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'+ {duration} breaks'**
   String statsBreakTime(String duration);
+
+  /// No description provided for @settingsMinimalFocusLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimal focus layout'**
+  String get settingsMinimalFocusLayout;
+
+  /// No description provided for @settingsMinimalFocusLayoutHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only the timer, the task and its main button. Can also be switched in focus mode.'**
+  String get settingsMinimalFocusLayoutHint;
+
+  /// No description provided for @focusDistracted.
+  ///
+  /// In en, this message translates to:
+  /// **'I got distracted'**
+  String get focusDistracted;
+
+  /// No description provided for @focusDistractedNoted.
+  ///
+  /// In en, this message translates to:
+  /// **'Noted. Back to {task}.'**
+  String focusDistractedNoted(String task);
+
+  /// No description provided for @focusMinimalLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimal layout'**
+  String get focusMinimalLayout;
+
+  /// No description provided for @focusFullLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Show everything'**
+  String get focusFullLayout;
+
+  /// No description provided for @focusParkThought.
+  ///
+  /// In en, this message translates to:
+  /// **'Park a thought…'**
+  String get focusParkThought;
+
+  /// No description provided for @focusThoughtParked.
+  ///
+  /// In en, this message translates to:
+  /// **'Parked for later.'**
+  String get focusThoughtParked;
+
+  /// No description provided for @focusAwayFor.
+  ///
+  /// In en, this message translates to:
+  /// **'You were away {duration}.'**
+  String focusAwayFor(String duration);
+
+  /// No description provided for @inboxCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 parked thought} other{{count} parked thoughts}}'**
+  String inboxCount(int count);
+
+  /// No description provided for @inboxReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get inboxReview;
+
+  /// No description provided for @inboxTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Parked thoughts'**
+  String get inboxTitle;
+
+  /// No description provided for @inboxHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn them into tasks or let them go.'**
+  String get inboxHint;
+
+  /// No description provided for @inboxToTodayTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add as a task for today'**
+  String get inboxToTodayTooltip;
+
+  /// No description provided for @inboxToTomorrowTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add as a task for tomorrow'**
+  String get inboxToTomorrowTooltip;
+
+  /// No description provided for @inboxDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get inboxDismiss;
+
+  /// No description provided for @inboxAddedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to today.'**
+  String get inboxAddedToday;
+
+  /// No description provided for @inboxAddedTomorrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to tomorrow.'**
+  String get inboxAddedTomorrow;
+
+  /// No description provided for @inboxDismissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismissed.'**
+  String get inboxDismissed;
+
+  /// No description provided for @inboxAllReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'All reviewed.'**
+  String get inboxAllReviewed;
+
+  /// No description provided for @statsParkedThoughts.
+  ///
+  /// In en, this message translates to:
+  /// **'Parked thoughts'**
+  String get statsParkedThoughts;
+
+  /// No description provided for @statsParkedThoughtReviewed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviewed'**
+  String get statsParkedThoughtReviewed;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

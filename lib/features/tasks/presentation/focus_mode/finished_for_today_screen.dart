@@ -8,6 +8,7 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
+import 'package:focused_task/features/inbox/presentation/inbox_review_sheet.dart';
 import 'package:focused_task/features/tasks/domain/stats/stats_report.dart';
 
 class FinishedForTodayScreen extends ConsumerWidget {
@@ -46,6 +47,7 @@ class FinishedForTodayScreen extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(l10n.finishedMessage, style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
                 if (report != null) ...[const SizedBox(height: 24), TodaySummaryCard(focus: report.focusTotal, tasksDone: report.tasksCompleted, goal: status)],
+                const ParkedThoughtsBanner(),
                 const SizedBox(height: 32),
                 FilledButton.icon(onPressed: () => context.go(AppRoutes.stats), icon: const Icon(Icons.insights_outlined), label: Text(l10n.finishedViewStatistics)),
                 const SizedBox(height: 12),

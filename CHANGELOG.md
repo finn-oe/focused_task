@@ -3,6 +3,22 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.15.0] - 2026-11-20
+
+### Added
+- **Distraction inbox**: "Park a thought…" in focus mode saves a stray thought without leaving the task. Afterwards "3 parked thoughts" on the plan and the finished screen opens a review to turn each thought into a task for today or tomorrow, or dismiss it (with undo). (#28)
+- **Interruptions**: leaving focus for 2 seconds or more (window loses focus, app switch, screen lock) counts as one interruption per switch, and "I got distracted" in the focus app bar counts one by hand. Leaving during a break doesn't count. (#28)
+- "You were away 4 min." when you come back to focus after a minute or more. (#28)
+- **Minimal focus layout**: only the timer, the task and its main button, switched in focus mode or in the settings and remembered. (#28)
+- Statistics show the interruptions per focus hour and the most recent parked thoughts. (#28)
+
+### Changed
+- Database schema version 7 (new `inbox_items` table). Existing data is kept. (#28)
+
+### Fixed
+- Snack bars from focus mode no longer cover the plan after leaving focus. (#28)
+- Completing a task from the plan ended its session at the system time instead of the app clock (only visible in tests). (#28)
+
 ## [1.14.0] - 2026-11-19
 
 ### Added

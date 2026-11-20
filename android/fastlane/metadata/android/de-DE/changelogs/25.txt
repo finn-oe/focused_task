@@ -1,0 +1,4 @@
+• Gedanken parken: Ein spontaner Einfall landet mit einer Zeile in deiner Inbox, und du bleibst bei deiner Aufgabe. Später machst du daraus eine Aufgabe für heute oder morgen.
+• Sieh, wie oft du rausgerissen wirst: Ein App-Wechsel im Fokus zählt als Unterbrechung, „Ich wurde abgelenkt“ zählt eine von Hand.
+• Die minimale Fokusansicht zeigt nur den Timer und deine Aufgabe.
+• Die Statistik zeigt Unterbrechungen pro Fokusstunde und deine letzten geparkten Gedanken.

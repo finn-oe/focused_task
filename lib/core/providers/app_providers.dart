@@ -13,6 +13,10 @@ import 'package:focused_task/features/categories/data/category_repository_impl.d
 import 'package:focused_task/features/categories/domain/i_category_repository.dart';
 import 'package:focused_task/features/categories/presentation/categories_notifier.dart';
 import 'package:focused_task/features/goals/domain/focus_goal.dart';
+import 'package:focused_task/features/inbox/data/inbox_repository_impl.dart';
+import 'package:focused_task/features/inbox/domain/i_inbox_repository.dart';
+import 'package:focused_task/features/inbox/domain/inbox_item.dart';
+import 'package:focused_task/features/inbox/presentation/inbox_notifier.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
 import 'package:focused_task/features/sessions/domain/focus_time.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
@@ -52,6 +56,18 @@ final focusSessionRepositoryProvider = Provider<IFocusSessionRepository>((ref) {
 
 final categoryRepositoryProvider = Provider<ICategoryRepository>((ref) {
   return CategoryRepositoryImpl(ref.watch(appDatabaseProvider));
+});
+
+final inboxRepositoryProvider = Provider<IInboxRepository>((ref) {
+  return InboxRepositoryImpl(ref.watch(appDatabaseProvider));
+});
+
+/// Parked thoughts waiting for review (#28), and what to do with them.
+final inboxNotifierProvider = NotifierProvider<InboxNotifier, InboxState>(InboxNotifier.new);
+
+/// The most recent thoughts parked in a period (for the statistics), newest first.
+final recentParkedThoughtsProvider = StreamProvider.autoDispose.family<List<InboxItem>, DateRange>((ref, range) {
+  return ref.watch(inboxRepositoryProvider).watchInboxItemsCreated(range.start, range.end.nextDay);
 });
 
 /// All task categories (#2), also archived ones, and the actions to manage them.

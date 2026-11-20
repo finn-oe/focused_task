@@ -48,6 +48,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
   Future<void> _exitToPlan() async {
     await ref.read(focusModeNotifierProvider.notifier).exitFocus();
     if (!mounted) return;
+    // "Parked for later" and the like belong to focus; they must not cover the plan.
+    ScaffoldMessenger.of(context).clearSnackBars();
     context.go(AppRoutes.plan);
   }
 
@@ -83,12 +85,14 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
       if (previous?.isOnBreak != true && next.isOnBreak) {
         context.go(AppRoutes.breakTime);
       }
+      showWelcomeBack(context, ref, next);
     });
 
     final state = ref.watch(focusModeNotifierProvider);
     final notifier = ref.read(focusModeNotifierProvider.notifier);
     final settings = ref.watch(settingsNotifierProvider);
     final category = ref.watch(categoriesNotifierProvider.select((categories) => categories.byId(widget.request.categoryId)));
+    final minimal = settings.focusMinimalLayout;
 
     return FocusLifecycleObserver(
       pauseOnBackground: settings.pauseOnBackground,
@@ -101,6 +105,8 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         context.go(AppRoutes.pause);
       },
       onResume: () {},
+      onLeave: notifier.appLeft,
+      onReturn: notifier.appReturned,
       child: PopScope(
         canPop: false,
         // Android back gesture / browser back: end the session properly instead of leaving it running.
@@ -108,15 +114,27 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
           if (!didPop) _exitToPlan();
         },
         child: Scaffold(
-          appBar: AppBar(
-            title: Text(category == null ? context.l10n.focusTitle : context.l10n.focusTitleCategory(category.name)),
-            scrolledUnderElevation: 0.0,
-            surfaceTintColor: Colors.transparent,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            leading: IconButton(tooltip: context.l10n.focusExitTooltip, onPressed: _exitToPlan, icon: const Icon(Icons.close)),
-          ),
+          appBar: minimal
+              ? null
+              : AppBar(
+                  title: Text(category == null ? context.l10n.focusTitle : context.l10n.focusTitleCategory(category.name)),
+                  scrolledUnderElevation: 0.0,
+                  surfaceTintColor: Colors.transparent,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  leading: IconButton(tooltip: context.l10n.focusExitTooltip, onPressed: _exitToPlan, icon: const Icon(Icons.close)),
+                  actions: [
+                    if (state.currentTask != null) const _DistractedButton(),
+                    IconButton(
+                      tooltip: context.l10n.focusMinimalLayout,
+                      onPressed: () => ref.read(settingsNotifierProvider.notifier).setFocusMinimalLayout(true),
+                      icon: const Icon(Icons.fullscreen),
+                    ),
+                  ],
+                ),
           body: state.isLoading
               ? const Center(child: CircularProgressIndicator())
+              : minimal
+              ? _MinimalFocusBody(state: state, onComplete: notifier.completeCurrentTask)
               : _FocusBody(
                   state: state,
                   onComplete: () async {
@@ -228,6 +246,8 @@ class _FocusBody extends ConsumerWidget {
                 else
                   const Spacer(),
                 const _QuickSubTaskField(),
+                const SizedBox(height: 8),
+                const _ParkThoughtField(),
               ],
             ),
           ),
@@ -256,6 +276,151 @@ class _FocusBody extends ConsumerWidget {
           OutlinedButton(onPressed: onExit, child: Text(context.l10n.focusExit)),
         ],
       ),
+    );
+  }
+}
+
+/// "You were away 4 min." after returning to a running session; the focus and the pause screen both show it.
+void showWelcomeBack(BuildContext context, WidgetRef ref, FocusModeState state) {
+  final away = state.awayFor;
+  if (away == null) return;
+  ref.read(focusModeNotifierProvider.notifier).clearAwayFor();
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.l10n.focusAwayFor(context.l10n.durationLabel(away)))));
+}
+
+/// "I got distracted": counts an interruption and nudges back to the task.
+class _DistractedButton extends ConsumerWidget {
+  const _DistractedButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    return IconButton(
+      tooltip: l10n.focusDistracted,
+      icon: const Icon(Icons.psychology_alt_outlined),
+      onPressed: () async {
+        final task = ref.read(focusModeNotifierProvider).currentTask;
+        await ref.read(focusModeNotifierProvider.notifier).recordDistraction();
+        if (!context.mounted || task == null) return;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(l10n.focusDistractedNoted(task.title))));
+      },
+    );
+  }
+}
+
+/// Minimal layout: a large timer, the task title, the main button and the thought inbox – nothing else.
+class _MinimalFocusBody extends ConsumerWidget {
+  const _MinimalFocusBody({required this.state, required this.onComplete});
+
+  final FocusModeState state;
+  final VoidCallback onComplete;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final l10n = context.l10n;
+    final task = state.currentTask;
+    final target = task?.targetDurationMinutes;
+    final elapsed = state.currentTaskDuration;
+    final remaining = target == null ? null : Duration(minutes: target) - elapsed;
+    final overdue = remaining != null && remaining.isNegative;
+    final timer = remaining == null ? elapsed.toClockString() : (overdue ? '+${remaining.toClockString()}' : remaining.toClockString());
+
+    return SafeArea(
+      child: Stack(
+        children: [
+          Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        timer,
+                        key: const Key('focusMinimalTimer'),
+                        style: theme.textTheme.displayLarge?.copyWith(color: overdue ? theme.colorScheme.error : null),
+                      ),
+                    ),
+                    if (state.intervals case final intervals? when intervals.phase == IntervalPhase.work) ...[
+                      const SizedBox(height: 8),
+                      _BreakCountdown(remaining: intervals.remaining(state.now)),
+                    ],
+                    const SizedBox(height: 24),
+                    Text(task?.title ?? l10n.focusNoUnfinishedTasks, textAlign: TextAlign.center, style: theme.textTheme.headlineMedium),
+                    if (task != null) ...[
+                      const SizedBox(height: 32),
+                      FilledButton(onPressed: onComplete, child: Text(l10n.focusCompleteTask)),
+                      const SizedBox(height: 16),
+                      const _ParkThoughtField(),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 4,
+            right: 4,
+            child: IconButton(
+              tooltip: l10n.focusFullLayout,
+              onPressed: () => ref.read(settingsNotifierProvider.notifier).setFocusMinimalLayout(false),
+              icon: const Icon(Icons.fullscreen_exit),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Parks a thought in the distraction inbox; Enter saves, the field clears and keeps the focus.
+class _ParkThoughtField extends ConsumerStatefulWidget {
+  const _ParkThoughtField();
+
+  @override
+  ConsumerState<_ParkThoughtField> createState() => _ParkThoughtFieldState();
+}
+
+class _ParkThoughtFieldState extends ConsumerState<_ParkThoughtField> {
+  final _controller = TextEditingController();
+  final _focus = FocusNode();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _park() async {
+    final text = _controller.text;
+    _controller.clear();
+    _focus.requestFocus();
+    if (text.trim().isEmpty) return;
+    final l10n = context.l10n;
+    await ref.read(focusModeNotifierProvider.notifier).parkThought(text);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.focusThoughtParked), duration: const Duration(seconds: 2)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      key: const Key('focusParkThought'),
+      controller: _controller,
+      focusNode: _focus,
+      textInputAction: TextInputAction.done,
+      decoration: InputDecoration(hintText: context.l10n.focusParkThought, prefixIcon: const Icon(Icons.lightbulb_outline), isDense: true),
+      onEditingComplete: _park,
     );
   }
 }

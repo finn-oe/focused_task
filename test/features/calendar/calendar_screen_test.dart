@@ -29,6 +29,7 @@ Future<GoRouter> _pumpCalendar(WidgetTester tester, FakeTaskRepository repositor
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        inboxRepositoryProvider.overrideWithValue(repository),
         sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
         targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
         notificationServiceProvider.overrideWithValue(FakeNotificationService()),
