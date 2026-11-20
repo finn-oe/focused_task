@@ -986,6 +986,18 @@ abstract class AppLocalizations {
   /// **'On the first start of a day, offer to move open tasks of the last 7 days to today'**
   String get settingsAskToMoveUnfinishedHint;
 
+  /// No description provided for @settingsCollapseCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse completed tasks'**
+  String get settingsCollapseCompleted;
+
+  /// No description provided for @settingsCollapseCompletedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed tasks move into a section at the end of the plan that you can show or hide'**
+  String get settingsCollapseCompletedHint;
+
   /// No description provided for @settingsDataRetention.
   ///
   /// In en, this message translates to:
@@ -1795,6 +1807,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{duration} tracked'**
   String planCategoryTracked(String duration);
+
+  /// No description provided for @planCompletedSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed ({count})'**
+  String planCompletedSection(int count);
+
+  /// No description provided for @planShowCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Show completed tasks'**
+  String get planShowCompleted;
+
+  /// No description provided for @planHideCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide completed tasks'**
+  String get planHideCompleted;
 
   /// No description provided for @statsByCategory.
   ///

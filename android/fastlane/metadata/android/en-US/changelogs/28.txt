@@ -1,0 +1,2 @@
+• New option to save space: collapse completed tasks. Turn it on in Settings → Planning, and finished tasks move into a section at the end of your plan that you can show or hide with one tap.
+• Works in the list and on the category board.

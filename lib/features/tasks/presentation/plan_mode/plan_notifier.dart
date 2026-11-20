@@ -19,7 +19,16 @@ import 'package:focused_task/core/utils/date_utils.dart';
 enum PlanView { list, board }
 
 class PlanModeState {
-  const PlanModeState({required this.selectedDay, required this.tasks, required this.isLoading, this.error, this.view = PlanView.list, this.categoryFilter});
+  const PlanModeState({
+    required this.selectedDay,
+    required this.tasks,
+    required this.isLoading,
+    this.error,
+    this.view = PlanView.list,
+    this.categoryFilter,
+    this.listCompletedExpanded = false,
+    this.expandedBoardGroups = const {},
+  });
 
   factory PlanModeState.initial({PlanView view = PlanView.list}) {
     return PlanModeState(selectedDay: clock.now().dateOnly, tasks: const [], isLoading: true, view: view);
@@ -33,6 +42,12 @@ class PlanModeState {
 
   /// The list shows only the tasks of this category; `null` = all tasks.
   final int? categoryFilter;
+
+  /// The list's completed section is open. Kept while the app runs, also when changing the day.
+  final bool listCompletedExpanded;
+
+  /// Board groups (by category id, `null` = no category) whose completed section is open.
+  final Set<int?> expandedBoardGroups;
 
   /// The day's tasks grouped for the board, in plan order within a group: one group per active category (also empty
   /// ones, so tasks can be dropped there), archived categories that still have tasks here, and "no category" last.
@@ -53,6 +68,13 @@ class PlanModeState {
   /// Tasks the list shows: all of the day, or those of [categoryFilter].
   List<TaskEntity> get visibleTasks => categoryFilter == null ? tasks : tasks.where((task) => task.categoryId == categoryFilter).toList(growable: false);
 
+  /// The tasks of the reorderable list: all [visibleTasks], or only the open ones when completed tasks are collapsed
+  /// (the setting, `collapseCompletedProvider`, #58).
+  List<TaskEntity> listTasks({required bool collapse}) => collapse ? visibleTasks.where((task) => !task.isCompleted).toList(growable: false) : visibleTasks;
+
+  /// The completed tasks of the collapsible section; empty unless [collapse].
+  List<TaskEntity> listCompletedTasks({required bool collapse}) => collapse ? visibleTasks.where((task) => task.isCompleted).toList(growable: false) : const [];
+
   PlanModeState copyWith({
     DateTime? selectedDay,
     List<TaskEntity>? tasks,
@@ -62,6 +84,8 @@ class PlanModeState {
     PlanView? view,
     int? categoryFilter,
     bool clearCategoryFilter = false,
+    bool? listCompletedExpanded,
+    Set<int?>? expandedBoardGroups,
   }) {
     return PlanModeState(
       selectedDay: selectedDay ?? this.selectedDay,
@@ -70,6 +94,8 @@ class PlanModeState {
       error: clearError ? null : error ?? this.error,
       view: view ?? this.view,
       categoryFilter: clearCategoryFilter ? null : categoryFilter ?? this.categoryFilter,
+      listCompletedExpanded: listCompletedExpanded ?? this.listCompletedExpanded,
+      expandedBoardGroups: expandedBoardGroups ?? this.expandedBoardGroups,
     );
   }
 }
@@ -89,6 +115,10 @@ class BoardGroup {
 
   /// Share of completed tasks (0–1); `null` for an empty group.
   double? get completionRate => tasks.isEmpty ? null : completedCount / tasks.length;
+
+  List<TaskEntity> get openTasks => tasks.where((task) => !task.isCompleted).toList(growable: false);
+
+  List<TaskEntity> get completedTasks => tasks.where((task) => task.isCompleted).toList(growable: false);
 
   /// Time tracked on the group's tasks at [now], a running session included – the same sum as the list's day total.
   Duration trackedAt(DateTime now) => tasks.fold(Duration.zero, (sum, task) => sum + task.elapsedAt(now));
@@ -383,8 +413,20 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
 
   /// Moves the task at [oldIndex] of the shown list ([PlanModeState.visibleTasks]) to [newIndex]. With a category
   /// filter, the task lands between its visible neighbours; the hidden tasks keep their places.
+  /// Shows or hides the list's completed section.
+  void toggleListCompleted() => state = state.copyWith(listCompletedExpanded: !state.listCompletedExpanded);
+
+  /// Shows or hides the completed section of the board group of [categoryId] (`null` = no category).
+  void toggleBoardGroupCompleted(int? categoryId) {
+    final expanded = {...state.expandedBoardGroups};
+    if (!expanded.remove(categoryId)) expanded.add(categoryId);
+    state = state.copyWith(expandedBoardGroups: expanded);
+  }
+
+  /// Moves the task at [oldIndex] of [PlanModeState.listTasks] to [newIndex]. With completed tasks collapsed, only the
+  /// open tasks are in that list; the new sort order lies between its new neighbours there.
   Future<void> reorderTask(int oldIndex, int newIndex) async {
-    final visible = [...state.visibleTasks];
+    final visible = [...state.listTasks(collapse: ref.read(collapseCompletedProvider))];
     if (visible.isEmpty) {
       return;
     }

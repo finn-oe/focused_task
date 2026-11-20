@@ -13,9 +13,11 @@ import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/inbox/presentation/inbox_review_sheet.dart';
 import 'package:focused_task/features/goals/presentation/goal_progress_ring.dart';
+import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/category_board.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/completed_section_header.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/rollover_sheet.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/session_recovery_dialog.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_list_item.dart';
@@ -340,6 +342,9 @@ class _DayTasks extends ConsumerWidget {
     final now = clock.now();
     final total = state.tasks.fold(Duration.zero, (sum, task) => sum + task.elapsedAt(now));
     final tasks = state.visibleTasks;
+    final collapse = ref.watch(collapseCompletedProvider);
+    final listTasks = state.listTasks(collapse: collapse);
+    final completedTasks = state.listCompletedTasks(collapse: collapse);
 
     return Column(
       children: [
@@ -373,13 +378,14 @@ class _DayTasks extends ConsumerWidget {
                 ? Center(child: Text(state.categoryFilter == null ? l10n.planNoTasks : l10n.planNoTasksInCategory))
                 : ReorderableListView.builder(
                     padding: const EdgeInsets.only(bottom: 88), // keep the last task clear of the add button
-                    itemCount: tasks.length,
+                    itemCount: listTasks.length,
                     onReorderItem: notifier.reorderTask,
                     buildDefaultDragHandles: false,
                     itemBuilder: (context, index) {
-                      final task = tasks[index];
+                      final task = listTasks[index];
                       return TaskListItem(key: ValueKey(task.id), task: task, index: index);
                     },
+                    footer: completedTasks.isEmpty ? null : _CompletedTasks(tasks: completedTasks, expanded: state.listCompletedExpanded),
                   ),
           ),
         ),
@@ -388,6 +394,27 @@ class _DayTasks extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             child: Text(l10n.planLoadError(state.error!), style: TextStyle(color: theme.colorScheme.error)),
           ),
+      ],
+    );
+  }
+}
+
+/// The completed tasks below the open ones while "Collapse completed tasks" is on (#58). Not reorderable.
+class _CompletedTasks extends ConsumerWidget {
+  const _CompletedTasks({required this.tasks, required this.expanded});
+
+  final List<TaskEntity> tasks;
+  final bool expanded;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      key: const Key('planCompletedSection'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CompletedSectionHeader(count: tasks.length, expanded: expanded, onToggle: ref.read(planModeNotifierProvider.notifier).toggleListCompleted),
+        if (expanded)
+          for (final task in tasks) TaskListItem(key: ValueKey(task.id), task: task),
       ],
     );
   }

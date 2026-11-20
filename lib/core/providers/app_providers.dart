@@ -102,6 +102,9 @@ final statsReportProvider = StreamProvider.autoDispose.family<StatsReport, Stats
 /// The daily focus goal from the settings.
 final focusGoalProvider = Provider<FocusGoal>((ref) => ref.watch(settingsNotifierProvider.select((settings) => settings.focusGoal)));
 
+/// Whether the plan collapses completed tasks into their own section (#58).
+final collapseCompletedProvider = Provider<bool>((ref) => ref.watch(settingsNotifierProvider.select((settings) => settings.collapseCompleted)));
+
 /// The work/break cycle settings (#27).
 final intervalSettingsProvider = Provider<IntervalSettings>((ref) => ref.watch(settingsNotifierProvider.select((settings) => settings.intervals)));
 

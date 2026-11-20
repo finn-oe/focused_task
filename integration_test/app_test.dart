@@ -310,6 +310,29 @@ void main() {
     expect(find.byTooltip('1 of 1 task done (100%)'), findsNWidgets(2));
   });
 
+  testWidgets('collapse completed tasks: turn it on, complete a task, open the section', (tester) async {
+    final app = await TestApp.start(tester);
+    final tasks = TaskRepositoryImpl(app.database);
+    await tasks.createTask(title: 'Write report', assignedDate: DateTime.now(), sortOrder: 'a0');
+    await tasks.createTask(title: 'Groceries', assignedDate: DateTime.now(), sortOrder: 'a1');
+    await tester.pumpAndSettle();
+
+    await tester.tapAndSettle(find.text('Settings').first);
+    await tester.tapAndSettle(find.text('Collapse completed tasks'));
+    await tester.tapAndSettle(find.text('Plan').first);
+    expect(find.text('Completed (1)'), findsNothing, reason: 'nothing completed yet');
+
+    await tester.tapAndSettle(find.descendant(of: find.widgetWithText(ListTile, 'Groceries'), matching: find.byIcon(Icons.circle_outlined)));
+    expect(find.text('Completed (1)'), findsOneWidget);
+    expect(find.text('Groceries'), findsNothing, reason: 'collapsed by default');
+
+    await tester.tapAndSettle(find.text('Completed (1)'));
+    expect(find.text('Groceries'), findsOneWidget);
+
+    await app.restart(tester);
+    expect(find.text('Completed (1)'), findsOneWidget, reason: 'the setting is remembered');
+  });
+
   testWidgets('intervals: a break left open by a crash is closed without asking; turned on, focus shows the next break', (tester) async {
     // The desktop window size differs per machine (and on CI); this size keeps every control on screen.
     tester.view.physicalSize = const Size(1000, 1200);

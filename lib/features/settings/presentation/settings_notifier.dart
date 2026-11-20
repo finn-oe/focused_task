@@ -30,6 +30,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
   static const String _intervalLongBreakEveryKey = 'settings.interval_long_break_every';
   static const String _intervalAutoStartKey = 'settings.interval_auto_start';
   static const String _focusMinimalLayoutKey = 'settings.focus_minimal_layout';
+  static const String _collapseCompletedKey = 'settings.collapse_completed';
 
   late SharedPreferences _prefs;
   late ITaskRepository _repository;
@@ -61,6 +62,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
       focusGoal: _loadFocusGoal(prefs),
       intervals: _loadIntervals(prefs),
       focusMinimalLayout: prefs.getBool(_focusMinimalLayoutKey) ?? false,
+      collapseCompleted: prefs.getBool(_collapseCompletedKey) ?? false,
     );
   }
 
@@ -190,6 +192,11 @@ class SettingsNotifier extends Notifier<SettingsState> {
   Future<void> setFocusMinimalLayout(bool value) async {
     await _prefs.setBool(_focusMinimalLayoutKey, value);
     state = state.copyWith(focusMinimalLayout: value);
+  }
+
+  Future<void> setCollapseCompleted(bool value) async {
+    await _prefs.setBool(_collapseCompletedKey, value);
+    state = state.copyWith(collapseCompleted: value);
   }
 
   Future<void> setEnableWakelock(bool value) async {

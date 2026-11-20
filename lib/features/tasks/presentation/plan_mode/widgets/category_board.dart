@@ -12,6 +12,7 @@ import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_notifier.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/completed_section_header.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/task_form_fields.dart';
 
 /// Width from which the groups are columns side by side instead of sections below each other.
@@ -74,7 +75,25 @@ class _GroupTarget extends ConsumerWidget {
       onWillAcceptWithDetails: (details) => details.data.categoryId != categoryId,
       onAcceptWithDetails: (details) => ref.read(planModeNotifierProvider.notifier).setTaskCategory(details.data, categoryId),
       builder: (context, candidates, _) {
-        final tasks = [for (final task in group.tasks) _BoardTaskCard(key: ValueKey(task.id), task: task), if (group.tasks.isEmpty) _DropHint(highlighted: candidates.isNotEmpty)];
+        final state = ref.watch(planModeNotifierProvider);
+        // With "Collapse completed tasks" (#58), the done ones go into a section that can be shown or hidden.
+        final collapse = ref.watch(collapseCompletedProvider) && group.completedCount > 0;
+        final expanded = state.expandedBoardGroups.contains(categoryId);
+        final tasks = [
+          for (final task in collapse ? group.openTasks : group.tasks) _BoardTaskCard(key: ValueKey(task.id), task: task),
+          if (group.tasks.isEmpty) _DropHint(highlighted: candidates.isNotEmpty),
+          if (collapse) ...[
+            CompletedSectionHeader(
+              key: ValueKey('boardCompleted-${categoryId ?? 'none'}'),
+              count: group.completedCount,
+              expanded: expanded,
+              dense: true,
+              onToggle: () => ref.read(planModeNotifierProvider.notifier).toggleBoardGroupCompleted(categoryId),
+            ),
+            if (expanded)
+              for (final task in group.completedTasks) _BoardTaskCard(key: ValueKey(task.id), task: task),
+          ],
+        ];
         return AnimatedContainer(
           key: ValueKey('boardGroup-${categoryId ?? 'none'}'),
           duration: const Duration(milliseconds: 150),

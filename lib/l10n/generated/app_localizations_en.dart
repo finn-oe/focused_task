@@ -523,6 +523,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAskToMoveUnfinishedHint => 'On the first start of a day, offer to move open tasks of the last 7 days to today';
 
   @override
+  String get settingsCollapseCompleted => 'Collapse completed tasks';
+
+  @override
+  String get settingsCollapseCompletedHint => 'Completed tasks move into a section at the end of the plan that you can show or hide';
+
+  @override
   String get settingsDataRetention => 'Data Retention';
 
   @override
@@ -1031,6 +1037,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String planCategoryTracked(String duration) {
     return '$duration tracked';
   }
+
+  @override
+  String planCompletedSection(int count) {
+    return 'Completed ($count)';
+  }
+
+  @override
+  String get planShowCompleted => 'Show completed tasks';
+
+  @override
+  String get planHideCompleted => 'Hide completed tasks';
 
   @override
   String get statsByCategory => 'Focus time per category';
