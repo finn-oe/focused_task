@@ -29,6 +29,7 @@ List<Override> _overrides(FakeTaskRepository repository, SharedPreferences prefe
   taskRepositoryProvider.overrideWithValue(repository),
   focusSessionRepositoryProvider.overrideWithValue(repository),
   categoryRepositoryProvider.overrideWithValue(repository),
+  recurrenceRepositoryProvider.overrideWithValue(repository),
   inboxRepositoryProvider.overrideWithValue(repository),
   sharedPreferencesProvider.overrideWithValue(preferences),
   targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),

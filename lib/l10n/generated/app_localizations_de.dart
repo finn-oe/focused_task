@@ -1393,4 +1393,90 @@ class AppLocalizationsDe extends AppLocalizations {
   String taskOverdueDue(String date) {
     return 'Überfällig, war fällig $date';
   }
+
+  @override
+  String get taskFormRepeat => 'Wiederholen';
+
+  @override
+  String get taskRepeatTitle => 'Wiederholen';
+
+  @override
+  String get taskRepeatNever => 'Nie';
+
+  @override
+  String get taskRepeatDaily => 'Jeden Tag';
+
+  @override
+  String get taskRepeatWeekdays => 'Werktags (Mo–Fr)';
+
+  @override
+  String get taskRepeatWeekly => 'Wöchentlich';
+
+  @override
+  String taskRepeatWeeklyOn(String days) {
+    return 'Wöchentlich am $days';
+  }
+
+  @override
+  String get taskRepeatIntervalOption => 'Alle paar Tage';
+
+  @override
+  String taskRepeatEveryDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: 'Alle $count Tage', one: 'Jeden Tag');
+    return '$_temp0';
+  }
+
+  @override
+  String taskRepeatMonthly(int day) {
+    return 'Monatlich am $day.';
+  }
+
+  @override
+  String get taskRepeatMonthlyHint => 'Monate ohne diesen Tag nehmen ihren letzten Tag.';
+
+  @override
+  String get taskRepeatIntervalLabel => 'Tage Abstand';
+
+  @override
+  String get taskRepeatFewerDays => 'Weniger Tage';
+
+  @override
+  String get taskRepeatMoreDays => 'Mehr Tage';
+
+  @override
+  String get taskRepeatEnds => 'Endet';
+
+  @override
+  String get taskRepeatEndsNever => 'Nie';
+
+  @override
+  String taskRepeatUntil(String pattern, String date) {
+    return '$pattern, bis $date';
+  }
+
+  @override
+  String get taskRepeatSeriesHint => 'Eine Änderung der Wiederholung gilt für diesen und alle folgenden Tage.';
+
+  @override
+  String get taskRecurringLabel => 'Wiederholt sich';
+
+  @override
+  String get taskRepeatScopeTitle => 'Wiederkehrende Aufgabe ändern';
+
+  @override
+  String get taskRepeatScopeMessage => 'Änderungen nur für diesen Tag speichern oder auch für alle folgenden?';
+
+  @override
+  String get taskRepeatScopeOnlyThis => 'Nur diese';
+
+  @override
+  String get taskRepeatScopeThisAndFuture => 'Diese und folgende';
+
+  @override
+  String get taskRepeatDeleteTitle => 'Wiederkehrende Aufgabe löschen';
+
+  @override
+  String taskRepeatDeleteMessage(String title) {
+    return '„$title“ nur an diesem Tag löschen oder auch alle folgenden? Erfasste Zeit bleibt in der Statistik.';
+  }
 }

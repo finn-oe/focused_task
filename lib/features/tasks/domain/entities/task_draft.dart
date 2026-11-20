@@ -1,3 +1,4 @@
+import 'package:focused_task/features/recurrence/domain/repeat_pattern.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
 /// The editable values of a task in the form. Value equality tells whether there are unsaved changes.
@@ -11,6 +12,7 @@ class TaskDraft {
     required this.todos,
     this.categoryId,
     this.schedule = TaskSchedule.none,
+    this.repeat,
   });
 
   /// An empty task on [date], optionally in [categoryId].
@@ -47,6 +49,10 @@ class TaskDraft {
   /// Start time, deadline and reminder (#10), edited on the form's sub-page.
   final TaskSchedule schedule;
 
+  /// How the task repeats (#24); `null` = it doesn't. A task's own draft (`fromTask`) doesn't know its rule, the form
+  /// loads it.
+  final RepeatPattern? repeat;
+
   bool get hasTitle => title.trim().isNotEmpty;
 
   TaskDraft copyWith({
@@ -60,6 +66,8 @@ class TaskDraft {
     int? categoryId,
     bool clearCategory = false,
     TaskSchedule? schedule,
+    RepeatPattern? repeat,
+    bool clearRepeat = false,
   }) {
     return TaskDraft(
       title: title ?? this.title,
@@ -70,6 +78,7 @@ class TaskDraft {
       todos: todos == null ? this.todos : List.unmodifiable(todos),
       categoryId: clearCategory ? null : categoryId ?? this.categoryId,
       schedule: schedule ?? this.schedule,
+      repeat: clearRepeat ? null : repeat ?? this.repeat,
     );
   }
 
@@ -93,9 +102,10 @@ class TaskDraft {
         other.priority == priority &&
         other.categoryId == categoryId &&
         other.schedule == schedule &&
+        other.repeat == repeat &&
         _sameTodos(other.todos, todos);
   }
 
   @override
-  int get hashCode => Object.hash(title.trim(), description.trim(), date.year, date.month, date.day, targetMinutes, priority, categoryId, schedule, todos.length);
+  int get hashCode => Object.hash(title.trim(), description.trim(), date.year, date.month, date.day, targetMinutes, priority, categoryId, schedule, repeat, todos.length);
 }

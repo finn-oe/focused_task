@@ -7,6 +7,7 @@ PLANEN
 • Wochen- und Monatskalender, um Aufgaben zwischen Tagen zu verschieben.
 • Unerledigte Aufgaben der letzten Tage mit einem Tipp auf heute holen.
 • Optionale Start- und Fälligkeitszeiten mit Erinnerungen, dazu ein sanfter Hinweis, den Tag zu planen oder den nächsten Fokus-Block zu starten.
+• Wiederkehrende Aufgaben: täglich, werktags, an bestimmten Tagen, alle paar Tage oder monatlich.
 
 FOKUSSIEREN
 • Der Fokusmodus zeigt immer eine Aufgabe: ihre Zeit, ihre Teilaufgaben und was als Nächstes kommt.

@@ -7,6 +7,7 @@ PLAN
 • Week and month calendar to move tasks between days.
 • Unfinished tasks from the last days can be moved to today with one tap.
 • Optional start and due times with reminders, and a gentle nudge to plan your day or start the next focus block.
+• Recurring tasks: every day, on weekdays, on chosen days, every few days or monthly.
 
 FOCUS
 • Focus mode shows one task at a time: its timer, its sub-tasks and what comes next.

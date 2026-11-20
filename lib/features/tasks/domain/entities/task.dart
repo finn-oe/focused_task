@@ -45,6 +45,8 @@ class TaskEntity {
     required this.todos,
     this.categoryId,
     this.schedule = TaskSchedule.none,
+    this.recurrenceId,
+    this.occurrenceDate,
   });
 
   final int id;
@@ -71,6 +73,14 @@ class TaskEntity {
 
   /// Optional start time, deadline and reminder (#10).
   final TaskSchedule schedule;
+
+  /// The recurring task (#24) this task is an occurrence of; `null` for a one-off task.
+  final int? recurrenceId;
+
+  /// The day the recurring task planned this occurrence for (it stays when the task is moved).
+  final DateTime? occurrenceDate;
+
+  bool get isRecurring => recurrenceId != null;
 
   /// The start time on the task's day, or `null`.
   DateTime? get startAt => schedule.startOn(assignedDate);
@@ -117,8 +127,13 @@ class TaskEntity {
     int? categoryId,
     bool clearCategory = false,
     TaskSchedule? schedule,
+    int? recurrenceId,
+    DateTime? occurrenceDate,
+    bool clearRecurrence = false,
   }) {
     return TaskEntity(
+      recurrenceId: clearRecurrence ? null : recurrenceId ?? this.recurrenceId,
+      occurrenceDate: clearRecurrence ? null : occurrenceDate ?? this.occurrenceDate,
       id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,

@@ -1,0 +1,4 @@
+• Wiederkehrende Aufgaben: täglich, werktags, an bestimmten Wochentagen, alle paar Tage oder monatlich – auf Wunsch mit Enddatum.
+• Jeder Tag hat seine eigene Aufgabe: erledigen, Zeit erfassen oder auslassen, ohne die anderen zu ändern.
+• Startzeit, Erinnerung und Frist gelten für jeden Tag.
+• Nur einen Tag ändern oder löschen – oder diesen und alle folgenden.

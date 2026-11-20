@@ -33,6 +33,7 @@ void _run(
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        recurrenceRepositoryProvider.overrideWithValue(repository),
         inboxRepositoryProvider.overrideWithValue(repository),
         targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
         notificationServiceProvider.overrideWithValue(FakeNotificationService()),

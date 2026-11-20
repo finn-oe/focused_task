@@ -40,6 +40,7 @@ Widget _app(FakeTaskRepository repository, SharedPreferences preferences, {Inter
       taskRepositoryProvider.overrideWithValue(repository),
       focusSessionRepositoryProvider.overrideWithValue(repository),
       categoryRepositoryProvider.overrideWithValue(repository),
+      recurrenceRepositoryProvider.overrideWithValue(repository),
       inboxRepositoryProvider.overrideWithValue(repository),
       targetAlarmProvider.overrideWithValue(FakeTargetAlarm()),
       sharedPreferencesProvider.overrideWithValue(preferences),

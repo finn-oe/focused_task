@@ -1,0 +1,4 @@
+• Recurring tasks: repeat a task every day, on weekdays, on chosen days of the week, every few days or monthly, with an optional end date.
+• Every day's task is its own: complete it, track time on it or skip it without touching the others.
+• Start time, reminder and deadline carry over to every day.
+• Change or delete just one day, or that day and all following ones.

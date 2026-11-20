@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:focused_task/core/database/tables/categories_table.dart';
 import 'package:focused_task/core/database/tables/focus_sessions_table.dart';
 import 'package:focused_task/core/database/tables/inbox_items_table.dart';
+import 'package:focused_task/core/database/tables/recurrence_rules_table.dart';
 import 'package:focused_task/core/database/tables/tasks_table.dart';
 import 'package:focused_task/core/database/tables/task_todos_table.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
@@ -30,12 +31,12 @@ class SessionWithTitle {
   final int? categoryId;
 }
 
-@DriftDatabase(tables: [Categories, Tasks, TaskTodos, FocusSessions, InboxItems])
+@DriftDatabase(tables: [Categories, RecurrenceRules, RecurrenceExceptions, Tasks, TaskTodos, FocusSessions, InboxItems])
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration {
@@ -55,8 +56,8 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('ALTER TABLE tasks ADD COLUMN last_seen_at INTEGER NULL');
         }
         if (from < 5) {
-          // Rebuilds `tasks` in the current schema, so `category_id` (schema 6) and the times (schema 8) already exist
-          // afterwards.
+          // Rebuilds `tasks` in the current schema, so `category_id` (schema 6), the times (schema 8) and the recurrence
+          // columns (schema 9) already exist afterwards.
           await _migrateToSessionLog(m);
         }
         if (from < 6) {
@@ -73,6 +74,16 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(tasks, tasks.dueMinute);
           await m.addColumn(tasks, tasks.reminderMinutes);
           await m.addColumn(tasks, tasks.reminderOff);
+        }
+        // Recurring tasks (#24). Rebuilt databases (from < 5) have the task columns already.
+        if (from < 9) {
+          await m.createTable(recurrenceRules);
+          await m.createTable(recurrenceExceptions);
+          if (from >= 5) {
+            await m.addColumn(tasks, tasks.recurrenceId);
+            await m.addColumn(tasks, tasks.occurrenceDate);
+          }
+          await m.createIndex(tasksOccurrence);
         }
       },
       beforeOpen: (details) async {
@@ -110,7 +121,12 @@ class AppDatabase extends _$AppDatabase {
       }
     }
 
-    await m.alterTable(TableMigration(tasks, newColumns: [tasks.categoryId, tasks.startMinute, tasks.dueDate, tasks.dueMinute, tasks.reminderMinutes, tasks.reminderOff]));
+    await m.alterTable(
+      TableMigration(
+        tasks,
+        newColumns: [tasks.categoryId, tasks.startMinute, tasks.dueDate, tasks.dueMinute, tasks.reminderMinutes, tasks.reminderOff, tasks.recurrenceId, tasks.occurrenceDate],
+      ),
+    );
   }
 
   Expression<bool> _isInDay(Tasks table, DateTime day) {
@@ -445,6 +461,107 @@ class AppDatabase extends _$AppDatabase {
     await (update(inboxItems)..where((item) => item.id.equals(id))).write(InboxItemsCompanion(resolvedAt: Value(at)));
   }
 
+  // --- Recurring tasks (#24) ------------------------------------------------------------------------------------
+
+  Future<RecurrenceRuleRow?> getRecurrenceRule(int id) => (select(recurrenceRules)..where((rule) => rule.id.equals(id))).getSingleOrNull();
+
+  /// Rules that can have occurrences in `[start, end]` (inclusive dates).
+  Future<List<RecurrenceRuleRow>> getRecurrenceRulesOverlapping(DateTime start, DateTime end) {
+    return (select(recurrenceRules)
+          ..where((rule) => rule.startDate.isSmallerThanValue(end.nextDay) & (rule.endDate.isNull() | rule.endDate.isBiggerOrEqualValue(start.dateOnly)))
+          ..orderBy([(rule) => OrderingTerm.asc(rule.id)]))
+        .get();
+  }
+
+  /// Deleted occurrences of [ruleIds] in `[start, end]`.
+  Future<List<RecurrenceExceptionRow>> getRecurrenceExceptions(List<int> ruleIds, DateTime start, DateTime end) {
+    return (select(
+      recurrenceExceptions,
+    )..where((exception) => exception.ruleId.isIn(ruleIds) & exception.date.isBiggerOrEqualValue(start.dateOnly) & exception.date.isSmallerThanValue(end.nextDay))).get();
+  }
+
+  /// `(rule, date)` of the occurrences of [ruleIds] that exist (as tasks) for dates in `[start, end]`.
+  Future<Set<(int, DateTime)>> getExistingOccurrences(List<int> ruleIds, DateTime start, DateTime end) async {
+    final rows = await (select(
+      tasks,
+    )..where((task) => task.recurrenceId.isIn(ruleIds) & task.occurrenceDate.isBiggerOrEqualValue(start.dateOnly) & task.occurrenceDate.isSmallerThanValue(end.nextDay))).get();
+    return {for (final task in rows) (task.recurrenceId!, task.occurrenceDate!.dateOnly)};
+  }
+
+  /// Saves a rule. With [taskId], that task becomes the occurrence of the rule's start date.
+  Future<int> createRecurrenceRule(RecurrenceRulesCompanion rule, {int? taskId}) {
+    return transaction(() async {
+      final id = await into(recurrenceRules).insert(rule);
+      if (taskId != null) {
+        await (update(tasks)..where((task) => task.id.equals(taskId))).write(TasksCompanion(recurrenceId: Value(id), occurrenceDate: Value(rule.startDate.value.dateOnly)));
+      }
+      return id;
+    });
+  }
+
+  /// Inserts occurrence [task] (with `recurrence_id` and `occurrence_date`) after the tasks of its day, with the
+  /// sub-tasks [todoTitles], unless the rule already has one for that date. Returns whether it was inserted.
+  Future<bool> insertOccurrence(TasksCompanion task, List<String> todoTitles) {
+    return transaction(() async {
+      final day = task.assignedDate.value.dateOnly;
+      final last =
+          await (select(tasks)
+                ..where((t) => _isInDay(t, day))
+                ..orderBy([(t) => OrderingTerm.desc(t.sortOrder)])
+                ..limit(1))
+              .getSingleOrNull();
+      final row = task.copyWith(assignedDate: Value(day), sortOrder: Value(FractionalIndexer.between(last?.sortOrder, null)));
+      // `INSERT OR IGNORE` on the unique (recurrence_id, occurrence_date) index: a second call adds nothing.
+      await into(tasks).insert(row, mode: InsertMode.insertOrIgnore);
+      final changes = await customSelect('SELECT changes() AS n, last_insert_rowid() AS id').getSingle();
+      if (changes.read<int>('n') == 0) return false;
+      final id = changes.read<int>('id');
+      for (final (index, title) in todoTitles.indexed) {
+        await into(taskTodos).insert(TaskTodosCompanion.insert(taskId: id, title: title, sortOrder: index.toString().padLeft(5, '0')));
+      }
+      return true;
+    });
+  }
+
+  /// "This and future" (#24): rule [ruleId] ends the day before [from] (or is deleted if it starts on or after it) and
+  /// [next] (if given) is saved from [from]. Task [taskId] moves to the new rule, becomes a one-off task, or is deleted
+  /// with [deleteTask]. Later occurrences that are open, untracked and not running are removed; the others move to the
+  /// new rule (or become one-off tasks). Returns the id of the new rule.
+  Future<int?> splitRecurrenceRule({required int ruleId, required DateTime from, required int taskId, RecurrenceRulesCompanion? next, bool deleteTask = false}) {
+    final day = from.dateOnly;
+    return transaction(() async {
+      final rule = await getRecurrenceRule(ruleId);
+      if (rule == null) return null;
+      final nextId = next == null ? null : await into(recurrenceRules).insert(next.copyWith(startDate: Value(day)));
+      final later = await (select(tasks)..where((task) => task.recurrenceId.equals(ruleId) & task.occurrenceDate.isBiggerOrEqualValue(day) & task.id.equals(taskId).not())).get();
+      for (final task in later) {
+        final untouched = !task.isCompleted && task.timeSpent == 0 && await _openSessionOf(task.id) == null;
+        if (untouched) {
+          await (delete(tasks)..where((t) => t.id.equals(task.id))).go();
+        } else {
+          await (update(tasks)..where((t) => t.id.equals(task.id))).write(_linkTo(nextId));
+        }
+      }
+      if (deleteTask) {
+        await (delete(tasks)..where((t) => t.id.equals(taskId))).go();
+      } else {
+        await (update(tasks)..where((t) => t.id.equals(taskId))).write(_linkTo(nextId));
+      }
+      if (!rule.startDate.isBefore(day)) {
+        await (delete(recurrenceRules)..where((r) => r.id.equals(ruleId))).go();
+      } else {
+        await (update(recurrenceRules)..where((r) => r.id.equals(ruleId))).write(RecurrenceRulesCompanion(endDate: Value(day.addDays(-1))));
+        await (delete(recurrenceExceptions)..where((e) => e.ruleId.equals(ruleId) & e.date.isBiggerOrEqualValue(day))).go();
+      }
+      return nextId;
+    });
+  }
+
+  /// Moves a task to rule [ruleId] (keeping its occurrence date); without one, it becomes a one-off task.
+  static TasksCompanion _linkTo(int? ruleId) {
+    return ruleId == null ? const TasksCompanion(recurrenceId: Value(null), occurrenceDate: Value(null)) : TasksCompanion(recurrenceId: Value(ruleId));
+  }
+
   // --- Categories -----------------------------------------------------------------------------------------------
 
   /// All categories (also archived ones) in their order.
@@ -467,8 +584,23 @@ class AppDatabase extends _$AppDatabase {
     await (delete(categories)..where((category) => category.id.equals(id))).go();
   }
 
+  /// Deletes the task. An occurrence of a recurring task (#24) leaves an exception, so it isn't created again.
   Future<int> deleteTask(int taskId) {
-    return (delete(tasks)..where((t) => t.id.equals(taskId))).go();
+    return transaction(() async {
+      final task = await (select(tasks)..where((t) => t.id.equals(taskId))).getSingleOrNull();
+      if (task != null) await _rememberDeletedOccurrence(task);
+      return (delete(tasks)..where((t) => t.id.equals(taskId))).go();
+    });
+  }
+
+  Future<void> _rememberDeletedOccurrence(Task task) async {
+    final ruleId = task.recurrenceId;
+    final date = task.occurrenceDate;
+    if (ruleId == null || date == null) return;
+    await into(recurrenceExceptions).insert(
+      RecurrenceExceptionsCompanion.insert(ruleId: ruleId, date: date.dateOnly),
+      mode: InsertMode.insertOrIgnore,
+    );
   }
 
   /// Completed tasks before [cutoffDay] without an open session (an unfinished session must stay recoverable).
@@ -477,8 +609,15 @@ class AppDatabase extends _$AppDatabase {
     return task.isCompleted.equals(true) & task.assignedDate.isSmallerThanValue(cutoffDay.dateOnly) & notExistsQuery(openSession);
   }
 
+  /// Deletes old completed tasks; deleted occurrences of recurring tasks are remembered (see [deleteTask]).
   Future<int> deleteCompletedTasksBefore(DateTime cutoffDay) {
-    return (delete(tasks)..where((task) => _isCleanupCandidate(task, cutoffDay))).go();
+    return transaction(() async {
+      final recurring = await (select(tasks)..where((task) => _isCleanupCandidate(task, cutoffDay) & task.recurrenceId.isNotNull())).get();
+      for (final task in recurring) {
+        await _rememberDeletedOccurrence(task);
+      }
+      return (delete(tasks)..where((task) => _isCleanupCandidate(task, cutoffDay))).go();
+    });
   }
 
   Future<int> countCompletedTasksBefore(DateTime cutoffDay) {

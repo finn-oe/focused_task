@@ -38,6 +38,7 @@ Future<FakeTaskRepository> _pump(WidgetTester tester, {Size size = const Size(80
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        recurrenceRepositoryProvider.overrideWithValue(repository),
         inboxRepositoryProvider.overrideWithValue(repository),
         focusGoalProvider.overrideWithValue(goal),
       ],
@@ -157,6 +158,7 @@ void main() {
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        recurrenceRepositoryProvider.overrideWithValue(repository),
         inboxRepositoryProvider.overrideWithValue(repository),
       ],
     );

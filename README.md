@@ -40,6 +40,12 @@ compared to reality – so you can get a little more dedicated every day.
   estimate (estimate − tracked). Times never change the order; moving a task keeps its start time and due date. Tiles
   show "14:00" and "Due Fri" (warning colour within a day, error colour when overdue); today's plan shows
   "2 tasks overdue" with their list.
+- **Recurring tasks** – "Repeat" in the task form (a sub-page next to "Schedule & reminder"): never, every day,
+  weekdays (Mon–Fri), weekly on chosen days, every N days, or monthly on a day (months without it use their last day),
+  with an optional end date. Each occurrence is a normal task with its own completion, sub-tasks and tracked time,
+  created when its day is shown (plan, calendar, focus; reminders look a week ahead) – past days are never filled in.
+  The start time, reminder and a deadline relative to the day carry over to every occurrence. Editing or deleting an
+  occurrence asks: **Only this** or **This and future**. Recurring tasks show a ↻ icon.
 - **Reminders & dates** (Settings → Notifications) – task reminders on/off, default lead time and due time; optional
   "Plan your day" at a chosen time on working days without tasks; an optional inactivity reminder during working hours
   (09:00–17:00, after 60 min without a focus session by default; not while a session runs); the notification checks.
@@ -157,6 +163,7 @@ lib/
     ├── categories/         # task categories: TaskCategory, ICategoryRepository, management screen
     ├── goals/              # daily focus goal: FocusGoal, StreakCalculator, progress ring
     ├── inbox/              # distraction inbox: InboxItem, IInboxRepository, review sheet
+    ├── recurrence/         # recurring tasks: RecurrenceRule, RecurrenceExpander (pure), IRecurrenceRepository, repeat page
     ├── reminders/          # ReminderSettings, ReminderScheduler (pure), RemindersNotifier (system notifications)
     ├── settings/           # preferences (shared_preferences)
     └── tasks/
@@ -183,7 +190,12 @@ How the pieces fit together:
   `reminder_off`, all optional. The pure `ReminderScheduler` computes when each reminder fires; `RemindersNotifier`
   replans on startup and whenever scheduled tasks, sessions or settings change, and remembers delivered reminders so
   a passed one is shown only once.
-- **Routes:** `/plan` (home), `/task-form`, `/task-schedule`, `/focus?day=…&task=…&category=…`, `/pause`, `/break`, `/finished-for-today`, `/stats`,
+- **Recurring tasks:** `recurrence_rules` holds the template and the pattern (`frequency`, `interval_days`,
+  `weekdays_mask`, `month_day`, `start_date`, `end_date`, times with a relative `due_offset_days`);
+  `recurrence_exceptions` the days whose occurrence was deleted. Occurrences are `tasks` rows with `recurrence_id` and
+  `occurrence_date` (unique together), inserted with `INSERT OR IGNORE`, so creating them twice adds nothing. "This
+  and future" ends the old rule the day before and starts a new one; occurrences with tracked time are kept.
+- **Routes:** `/plan` (home), `/task-form`, `/task-schedule`, `/task-repeat`, `/focus?day=…&task=…&category=…`, `/pause`, `/break`, `/finished-for-today`, `/stats`,
   `/settings`, `/settings/categories`, `/settings/reminders`.
 
 More detail and the rules for contributors are in [CLAUDE.md](CLAUDE.md).

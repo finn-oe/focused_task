@@ -416,8 +416,21 @@ class _TaskTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Text(
-      task.title,
+    return Text.rich(
+      TextSpan(
+        children: [
+          // Recurring tasks (#24) are marked like in the plan.
+          if (task.isRecurring)
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(Icons.repeat, size: 14, color: theme.colorScheme.onSurfaceVariant, semanticLabel: context.l10n.taskRecurringLabel),
+              ),
+            ),
+          TextSpan(text: task.title),
+        ],
+      ),
       maxLines: maxLines,
       overflow: maxLines == null ? null : TextOverflow.ellipsis,
       style: task.isCompleted

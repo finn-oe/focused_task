@@ -1,11 +1,71 @@
 ---
 name: next-issue
-description: Implement the next issue of the Focused Task roadmap (#38) end to end - pick it, implement it with tests, fix or file what you find on the way, bump the version, write the CHANGELOG and the Play Store release notes, and open the PR. Use when asked to "continue with the roadmap", "do the next issue", "work on my issues" or /next-issue.
+description: Implement the next issue of the Focused Task roadmap (#38) end to end - release the last merged PR (signed bundle, tag, GitHub Release) and report it with the Play Store texts, pick the next issue, implement it with tests, fix or file what you find on the way, bump the version, write the CHANGELOG and the Play Store release notes, and open the PR. Use when asked to "continue with the roadmap", "do the next issue", "work on my issues", /next-issue, or when the user says a roadmap PR was merged ("I've merged it") or asks for the release / Play Store files.
 ---
 
 # Next roadmap issue
 
 Implements one issue from the roadmap in #38, from picking it to an open PR that is ready to release. Read `CLAUDE.md` first. It is the source of truth; this skill only says in what order to do things. One issue per run, one issue per PR.
+
+## 0. Release the last merged PR and report (always first)
+
+Run this at the start of every run, and on its own when the owner says a roadmap PR was merged or asks for the release files. Its job is to release what was merged and give the owner everything for Play Console **without being asked**, in the fixed report below. The owner has asked for this to happen automatically: when the checks in step 0.1 pass, tag and publish without asking again.
+
+### 0.1 Check that it is ready to release
+
+```bash
+git checkout main && git pull && git fetch --tags
+grep '^version' pubspec.yaml          # e.g. 1.15.0+25 -> X.Y.Z = 1.15.0, versionCode N = 25
+git tag -l "vX.Y.Z"                   # empty = merged but not released yet: continue; otherwise skip to step 1
+gh pr list --state merged --limit 1 --json number,title,mergedAt,mergeCommit   # the PR that brought X.Y.Z
+gh pr checks <pr>                                                               # every check of the PR passed
+gh run list --branch main --limit 3 --json headSha,status,conclusion,workflowName  # the run on the merge commit
+```
+
+- The PR must be **merged**, every PR check must have **passed**, and the CI run on the merge commit on `main` must be **completed with success**. If that run is still running, wait for it (`gh run watch <id>` in the background). If anything failed, don't release: say what failed in the report (section 3) and fix it first.
+- **Signing:** check only that `android/key.properties` exists (`test -f`). Never read, print or copy it or the keystore. If it is missing, stop and tell the owner; never build or publish an unsigned or debug-signed release.
+
+### 0.2 Build, tag and publish
+
+1. **Build** both in the background (a few minutes each): `flutter build appbundle --release` and `flutter build apk --release`. Copy them to the repo root as `focused_task-X.Y.Z.aab` and `focused_task-X.Y.Z.apk` (gitignored).
+2. **Check the signatures** without printing certificate details:
+   - AAB: `keytool -printcert -jarfile focused_task-X.Y.Z.aab` has an `Owner:` line that is not `CN=Android Debug`.
+   - APK: `apksigner verify --print-certs` from the SDK's `build-tools` (on Windows run the `.bat` through `cmd //c`). `keytool` can't read v2 signatures. The signer DN must not be `CN=Android Debug`.
+3. **Tag** the merge commit: `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`.
+4. **GitHub Release:** extract the "GitHub Release notes" section of `release-notes/vX.Y.Z.md` into a temp file in the scratchpad, then `gh release create vX.Y.Z focused_task-X.Y.Z.apk focused_task-X.Y.Z.aab --title "vX.Y.Z" --notes-file <file>`.
+5. **Verify the release:** `gh release view vX.Y.Z --json url,tagName,isDraft,assets`, plus `gh release list --limit 1` (it must be *Latest*). Check that it isn't a draft, both assets are there with their sizes, and the tag points to the merge commit.
+6. **Tick the issue in #38** (`- [x] **n.** #<issue> (PR #<pr>, vX.Y.Z)`).
+
+Only release the **latest** version, even if older ones were never released; mention those in section 5 instead.
+
+### 0.3 Report to the owner
+
+End with exactly these five sections, in this order, in the reply itself (not just file paths):
+
+1. **Release file**: a clickable link to the local `focused_task-X.Y.Z.aab` with its size and the Play Console release name `X.Y.Z (N)`. Below it, the direct download link of the `.aab` asset from the GitHub Release.
+2. **Release text** for Play Console's "Release notes" field, in **one** code block, in exactly this format (the texts of `android/fastlane/metadata/android/{en-US,de-DE}/changelogs/N.txt`, unchanged), with the character count of each language below the block (at most 500):
+
+   ```
+   <en-US>
+   • …
+   </en-US>
+   <de-DE>
+   • …
+   </de-DE>
+   ```
+
+   If `release-notes/vX.Y.Z.md` says the store listing changed, add the changed `full_description.txt` / `short_description.txt` per language in further code blocks under this section.
+3. **Summary**: a few plain bullets about what changed for the user, from the CHANGELOG section. Then a confirmation with the real facts: the PR (link) was merged into `main` (merge commit), the number of PR checks that passed, the result of the CI run on `main` (link), and the local test numbers from the PR. Anything that did not pass goes here, plainly.
+4. **GitHub Release**: confirm it with the facts from step 0.2.5: the release URL, the tag and its commit, *Latest*, not a draft, both assets with their sizes, the notes taken from the CHANGELOG, and both files signed with the release key.
+5. **Next**: what else may need doing, for example:
+   - upload the `.aab` and paste the texts in Play Console, then delete the local `.apk`/`.aab`;
+   - versions that were merged but never released;
+   - uncommitted changes (and where they will go);
+   - follow-up issues created in this run;
+   - owner actions from issues (secrets, settings);
+   - the next roadmap issue and whether something blocks it.
+
+Then go on with step 1, unless the owner only asked for the release.
 
 ## 1. Pick the issue
 
@@ -135,4 +195,4 @@ gh pr create --title "<Feature> (#<n>)" --body-file <file>
 
 - The PR body has `Fixes #<n>`, *What* (with the decisions from step 2), *Also* (step 6), *Tests* (with the real numbers) and *Release* (version and a link to the release sheet).
 - In the desktop app, bind the PR (`ccd_pr` tools) and turn on Auto-fix if the user wants it. Don't poll CI yourself.
-- **Never merge, tag or release yourself.** A merge is a release, and release builds are signed with `android/key.properties` and the keystore, which exist only on the owner's machine. Never print, generate or commit them. Tell the user that the PR is ready, that the steps are in `release-notes/vX.Y.Z.md`, and which issue comes next.
+- **Never merge yourself.** The owner merges; the next run (or "I've merged it") releases it with step 0. A merge is a release, and release builds are signed with `android/key.properties` and the keystore, which exist only on the owner's machine. Never print, generate or commit them. Tell the user that the PR is ready, that the Play Store texts are in `release-notes/vX.Y.Z.md`, that saying "I've merged it" (or running `/next-issue`) releases it and brings the full report, and which issue comes next.

@@ -163,6 +163,13 @@ class TaskListItem extends ConsumerWidget {
               const SizedBox(width: 6),
             ],
             if (task.priority != TaskPriority.low) ...[PriorityFlag(priority: task.priority, size: 16), const SizedBox(width: 4)],
+            if (task.isRecurring) ...[
+              Tooltip(
+                message: l10n.taskRecurringLabel,
+                child: Icon(Icons.repeat, key: ValueKey('taskRecurring-${task.id}'), size: 16, color: colorScheme.onSurfaceVariant, semanticLabel: l10n.taskRecurringLabel),
+              ),
+              const SizedBox(width: 4),
+            ],
             Flexible(
               child: Text(
                 task.title,

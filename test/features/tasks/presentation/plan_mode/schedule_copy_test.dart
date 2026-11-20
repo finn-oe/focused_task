@@ -25,6 +25,7 @@ void main() {
         taskRepositoryProvider.overrideWithValue(repository),
         focusSessionRepositoryProvider.overrideWithValue(repository),
         categoryRepositoryProvider.overrideWithValue(repository),
+        recurrenceRepositoryProvider.overrideWithValue(repository),
         inboxRepositoryProvider.overrideWithValue(repository),
         sharedPreferencesProvider.overrideWithValue(await fakePreferences()),
         notificationServiceProvider.overrideWithValue(FakeNotificationService()),

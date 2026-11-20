@@ -9,6 +9,8 @@ import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/utils/fractional_indexer.dart';
 import 'package:focused_task/features/categories/domain/i_category_repository.dart';
 import 'package:focused_task/features/categories/domain/task_category.dart';
+import 'package:focused_task/features/recurrence/domain/i_recurrence_repository.dart';
+import 'package:focused_task/features/recurrence/domain/recurrence_rule.dart';
 import 'package:focused_task/features/sessions/domain/i_focus_session_repository.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_draft.dart';
@@ -175,6 +177,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
 
   late ITaskRepository _repository;
   late ICategoryRepository _categories;
+  late IRecurrenceRepository _recurrence;
   late IFocusSessionRepository _sessions;
   late SharedPreferences _prefs;
   StreamSubscription<List<TaskEntity>>? _subscription;
@@ -185,6 +188,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     _sessions = ref.watch(focusSessionRepositoryProvider);
     _prefs = ref.watch(sharedPreferencesProvider);
     _categories = ref.watch(categoryRepositoryProvider);
+    _recurrence = ref.watch(recurrenceRepositoryProvider);
     ref.onDispose(() => _subscription?.cancel());
     // A filter by a category that was archived or deleted would hide tasks for no visible reason.
     ref.listen(categoriesNotifierProvider, (_, categories) {
@@ -207,6 +211,8 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
 
   void _subscribe(DateTime day) {
     _subscription?.cancel();
+    // Recurring tasks (#24) appear when their day is shown; the stream below picks them up.
+    _ensureOccurrences(day);
 
     _subscription = _repository
         .watchTasksForDay(day)
@@ -218,6 +224,14 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
             state = state.copyWith(isLoading: false, error: error.toString());
           },
         );
+  }
+
+  Future<void> _ensureOccurrences(DateTime day) async {
+    try {
+      await _recurrence.ensureOccurrences(DateRange(day, day));
+    } catch (error) {
+      if (ref.mounted) state = state.copyWith(error: error.toString());
+    }
   }
 
   Future<void> setSelectedDay(DateTime day) async {
@@ -250,7 +264,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     await _categories.setTaskCategory(taskId: task.id, categoryId: categoryId);
   }
 
-  Future<void> addTask({
+  Future<int> addTask({
     required String title,
     String? description,
     int? targetDurationMinutes,
@@ -276,6 +290,7 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
     if (todos.isNotEmpty) {
       await _repository.replaceTaskTodos(taskId, todos);
     }
+    return taskId;
   }
 
   Future<void> duplicateTaskToDate({required TaskEntity task, required DateTime date, required bool keepTodoCompletion, required bool subtractTimeSpent}) async {
@@ -307,7 +322,12 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
   }
 
   /// Saves the form: updates the task with [id], or creates a new one when [id] is `null`.
-  Future<void> saveDraft(TaskDraft draft, {int? id}) async {
+  ///
+  /// Recurring tasks (#24): a new task with a repeat becomes the first occurrence of a new rule; a one-off task that gets
+  /// a repeat starts a rule on its day. For an occurrence, [scope] says whether only this task changes or this one and
+  /// the following ones (the rule is replaced from this occurrence's date). A changed repeat always applies to this and
+  /// the following ones.
+  Future<void> saveDraft(TaskDraft draft, {int? id, RepeatScope scope = RepeatScope.onlyThis}) async {
     final title = draft.title.trim();
     final description = draft.description.trim().isEmpty ? null : draft.description.trim();
     final todos = [
@@ -319,8 +339,9 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       await ref.read(settingsNotifierProvider.notifier).ensureNotificationPermission();
     }
 
+    final repeat = draft.repeat;
     if (id == null) {
-      await addTask(
+      final taskId = await addTask(
         title: title,
         description: description,
         targetDurationMinutes: draft.targetMinutes,
@@ -330,8 +351,10 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
         categoryId: draft.categoryId,
         schedule: draft.schedule,
       );
+      if (repeat != null) await _startRule(draft, repeat, taskId);
       return;
     }
+    final existing = await _repository.getTaskById(id);
     await _repository.updateTaskDetails(
       taskId: id,
       title: title,
@@ -343,12 +366,42 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
       schedule: draft.schedule,
     );
     await _repository.replaceTaskTodos(id, todos);
+
+    final ruleId = existing?.recurrenceId;
+    if (ruleId == null) {
+      if (repeat != null) await _startRule(draft, repeat, id);
+      return;
+    }
+    final rule = await _recurrence.getRule(ruleId);
+    final repeatChanged = rule?.pattern != repeat;
+    if (scope == RepeatScope.onlyThis && !repeatChanged) return;
+    final from = existing!.occurrenceDate ?? existing.assignedDate;
+    await _recurrence.replaceFrom(
+      ruleId: ruleId,
+      from: from,
+      taskId: id,
+      next: repeat == null ? null : RecurrenceRule.fromDraft(draft, repeat, startDate: from),
+    );
+    await _ensureOccurrences(state.selectedDay);
+  }
+
+  /// Makes task [taskId] the first occurrence of a new rule for [draft], from the task's day.
+  Future<void> _startRule(TaskDraft draft, RepeatPattern repeat, int taskId) async {
+    await _recurrence.createRule(RecurrenceRule.fromDraft(draft, repeat, startDate: draft.date), taskId: taskId);
+    await _ensureOccurrences(state.selectedDay);
+  }
+
+  /// The repeat of [task], or `null` for a one-off task.
+  Future<RepeatPattern?> repeatOf(TaskEntity task) async {
+    final ruleId = task.recurrenceId;
+    return ruleId == null ? null : (await _recurrence.getRule(ruleId))?.pattern;
   }
 
   /// Creates a copy of [draft] with all sub-tasks unchecked.
   Future<void> duplicateDraft(TaskDraft draft) {
     return saveDraft(
       draft.copyWith(
+        clearRepeat: true,
         todos: [for (final todo in draft.todos) TaskTodoEntity(title: todo.title, isCompleted: false, sortOrder: todo.sortOrder)],
       ),
     );
@@ -419,8 +472,17 @@ class PlanModeNotifier extends Notifier<PlanModeState> {
   /// The task with its sub-tasks, e.g. to open it from a list that doesn't load them.
   Future<TaskEntity?> taskById(int id) => _repository.getTaskById(id);
 
+  /// Deletes the task. An occurrence of a recurring task (#24) doesn't come back.
   Future<void> deleteTask(int id) async {
     await _repository.deleteTask(id);
+  }
+
+  /// Deletes the occurrence [task] and ends its recurring task (#24) before it; later occurrences that are open and
+  /// untracked go too, the others stay as one-off tasks.
+  Future<void> deleteTaskAndFuture(TaskEntity task) async {
+    final ruleId = task.recurrenceId;
+    if (ruleId == null) return deleteTask(task.id);
+    await _recurrence.endBefore(ruleId: ruleId, from: task.occurrenceDate ?? task.assignedDate, taskId: task.id);
   }
 
   /// Shows or hides the list's completed section.

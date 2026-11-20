@@ -2407,6 +2407,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Overdue, was due {date}'**
   String taskOverdueDue(String date);
+
+  /// No description provided for @taskFormRepeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get taskFormRepeat;
+
+  /// No description provided for @taskRepeatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get taskRepeatTitle;
+
+  /// No description provided for @taskRepeatNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get taskRepeatNever;
+
+  /// No description provided for @taskRepeatDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Every day'**
+  String get taskRepeatDaily;
+
+  /// No description provided for @taskRepeatWeekdays.
+  ///
+  /// In en, this message translates to:
+  /// **'Every weekday (Mon–Fri)'**
+  String get taskRepeatWeekdays;
+
+  /// No description provided for @taskRepeatWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get taskRepeatWeekly;
+
+  /// No description provided for @taskRepeatWeeklyOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly on {days}'**
+  String taskRepeatWeeklyOn(String days);
+
+  /// No description provided for @taskRepeatIntervalOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Every few days'**
+  String get taskRepeatIntervalOption;
+
+  /// No description provided for @taskRepeatEveryDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every day} other{Every {count} days}}'**
+  String taskRepeatEveryDays(int count);
+
+  /// No description provided for @taskRepeatMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly on day {day}'**
+  String taskRepeatMonthly(int day);
+
+  /// No description provided for @taskRepeatMonthlyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Months without this day use their last day.'**
+  String get taskRepeatMonthlyHint;
+
+  /// No description provided for @taskRepeatIntervalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Days between'**
+  String get taskRepeatIntervalLabel;
+
+  /// No description provided for @taskRepeatFewerDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Fewer days'**
+  String get taskRepeatFewerDays;
+
+  /// No description provided for @taskRepeatMoreDays.
+  ///
+  /// In en, this message translates to:
+  /// **'More days'**
+  String get taskRepeatMoreDays;
+
+  /// No description provided for @taskRepeatEnds.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
+  String get taskRepeatEnds;
+
+  /// No description provided for @taskRepeatEndsNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get taskRepeatEndsNever;
+
+  /// No description provided for @taskRepeatUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'{pattern}, until {date}'**
+  String taskRepeatUntil(String pattern, String date);
+
+  /// No description provided for @taskRepeatSeriesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A change to the repeat applies to this and all following days.'**
+  String get taskRepeatSeriesHint;
+
+  /// No description provided for @taskRecurringLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeats'**
+  String get taskRecurringLabel;
+
+  /// No description provided for @taskRepeatScopeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change recurring task'**
+  String get taskRepeatScopeTitle;
+
+  /// No description provided for @taskRepeatScopeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the changes only for this day, or for this and all following days?'**
+  String get taskRepeatScopeMessage;
+
+  /// No description provided for @taskRepeatScopeOnlyThis.
+  ///
+  /// In en, this message translates to:
+  /// **'Only this'**
+  String get taskRepeatScopeOnlyThis;
+
+  /// No description provided for @taskRepeatScopeThisAndFuture.
+  ///
+  /// In en, this message translates to:
+  /// **'This and future'**
+  String get taskRepeatScopeThisAndFuture;
+
+  /// No description provided for @taskRepeatDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete recurring task'**
+  String get taskRepeatDeleteTitle;
+
+  /// No description provided for @taskRepeatDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{title}” only on this day, or this and all following ones? Tracked time stays in the statistics.'**
+  String taskRepeatDeleteMessage(String title);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
