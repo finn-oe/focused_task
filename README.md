@@ -23,6 +23,7 @@ compared to reality – so you can get a little more dedicated every day.
   Settings → Categories (add, rename, colour, reorder, archive, delete). Pick a category in the task form. The plan
   list shows a coloured dot per task and filter chips; the **board** (toggle in the plan's app bar) groups the day's
   tasks by category in columns (wide) or sections (phone) – drag a task by its handle to change its category.
+  Each board header shows a completion ring in the category's colour and the time tracked on its tasks that day.
   "Focus on <category>" from the filter or a board header works through that category's open tasks only, and the
   statistics show the focus time per category. Without categories the plan looks exactly as before.
 - **Calendar** – week and month views (`/calendar?view=month&date=2026-11-17`). The week shows each day's tasks

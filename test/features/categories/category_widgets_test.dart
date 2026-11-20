@@ -156,6 +156,34 @@ void main() {
     expect(inGroup(2, 'Groceries'), findsOneWidget);
   });
 
+  testWidgets('board headers show the completion ring and the tracked time per category (#57)', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    final repository = FakeTaskRepository(
+      categories: [_work, _study],
+      tasks: [
+        buildTask(id: 1, title: 'Report', assignedDate: today, sortOrder: 'a0', categoryId: 1, isCompleted: true, timeSpent: const Duration(minutes: 80).inMilliseconds),
+        buildTask(id: 2, title: 'Exam prep', assignedDate: today, sortOrder: 'a1', categoryId: 2),
+        buildTask(id: 3, title: 'Slides', assignedDate: today, sortOrder: 'a2', categoryId: 1, timeSpent: const Duration(minutes: 25).inMilliseconds),
+      ],
+    );
+    // A 360 px phone at 1.5x text: an overflow would fail the test.
+    await _pumpApp(tester, repository, size: const Size(360, 800), view: PlanView.board);
+
+    Finder inGroup(int? id, Finder finder) => find.descendant(of: find.byKey(ValueKey('boardGroup-${id ?? 'none'}')), matching: finder);
+    expect(inGroup(1, find.byTooltip('1 of 2 tasks done (50%)')), findsOneWidget);
+    expect(inGroup(1, find.text('01:45')), findsOneWidget);
+    expect(inGroup(2, find.byTooltip('0 of 1 task done (0%)')), findsOneWidget);
+    expect(find.byKey(const ValueKey('boardGroupTracked-2')), findsNothing, reason: 'no time tracked on Study');
+    expect(find.byKey(const ValueKey('boardGroupRing-none')), findsNothing, reason: 'an empty group shows no ring');
+
+    await tester.tap(inGroup(1, find.byType(Checkbox)).last);
+    await tester.pumpAndSettle();
+
+    expect(inGroup(1, find.byTooltip('2 of 2 tasks done (100%)')), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsOneWidget, reason: 'a finished category shows a check mark');
+  });
+
   testWidgets('the board header starts focus on its category', (tester) async {
     final router = await _pumpApp(tester, repositoryWithCategories(), size: const Size(400, 800), view: PlanView.board);
 

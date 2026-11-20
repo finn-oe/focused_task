@@ -82,6 +82,16 @@ class BoardGroup {
   final List<TaskEntity> tasks;
 
   int get openCount => tasks.where((task) => !task.isCompleted).length;
+
+  int get completedCount => tasks.length - openCount;
+
+  int get totalCount => tasks.length;
+
+  /// Share of completed tasks (0–1); `null` for an empty group.
+  double? get completionRate => tasks.isEmpty ? null : completedCount / tasks.length;
+
+  /// Time tracked on the group's tasks at [now], a running session included – the same sum as the list's day total.
+  Duration trackedAt(DateTime now) => tasks.fold(Duration.zero, (sum, task) => sum + task.elapsedAt(now));
 }
 
 /// What "Start focus" in the plan should do for the shown day.

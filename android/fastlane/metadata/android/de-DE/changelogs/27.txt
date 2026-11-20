@@ -1,0 +1,3 @@
+• Das Kategorie-Board zeigt, wie weit jede Kategorie ist: Ein Ring füllt sich, während du ihre Aufgaben erledigst.
+• Sieh direkt im Kopf jeder Kategorie, wie viel Zeit du heute dafür aufgewendet hast.
+• Die Tastatur schließt sich jetzt, wenn du neben ein Textfeld tippst – Speichern bleibt nach dem Anlegen von Unteraufgaben erreichbar. Dazu gibt es oben im Aufgabenformular einen Speichern-Button.

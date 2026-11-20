@@ -1784,6 +1784,18 @@ abstract class AppLocalizations {
   /// **'{count, plural, =0{none open} =1{1 open} other{{count} open}}'**
   String planCategoryOpenTasks(int count);
 
+  /// No description provided for @planCategoryProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total, plural, =1{1 task} other{{total} tasks}} done ({percent}%)'**
+  String planCategoryProgress(int done, int total, int percent);
+
+  /// No description provided for @planCategoryTracked.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} tracked'**
+  String planCategoryTracked(String duration);
+
   /// No description provided for @statsByCategory.
   ///
   /// In en, this message translates to:

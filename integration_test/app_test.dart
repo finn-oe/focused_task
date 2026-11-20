@@ -297,6 +297,17 @@ void main() {
 
     await app.restart(tester);
     expect(find.byTooltip('Show as list'), findsOneWidget, reason: 'the board view is remembered');
+
+    // Each group shows how many of its tasks are done (#57).
+    expect(find.byTooltip('1 of 1 task done (100%)'), findsOneWidget, reason: 'Work');
+    expect(find.byTooltip('0 of 1 task done (0%)'), findsOneWidget, reason: 'no category');
+    await tester.tapAndSettle(
+      find.descendant(
+        of: find.ancestor(of: find.text('Groceries'), matching: find.byType(Card)),
+        matching: find.byType(Checkbox),
+      ),
+    );
+    expect(find.byTooltip('1 of 1 task done (100%)'), findsNWidgets(2));
   });
 
   testWidgets('intervals: a break left open by a crash is closed without asking; turned on, focus shows the next break', (tester) async {
