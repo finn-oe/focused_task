@@ -32,8 +32,16 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
     }
+    bool subTaskHasFocus() => tester.widget<EditableText>(find.descendant(of: newSubTask, matching: find.byType(EditableText))).focusNode.hasFocus;
+    expect(subTaskHasFocus(), isTrue, reason: 'Enter keeps the keyboard open for the next sub-task');
 
-    await tester.tapAndSettle(find.text('Save Task'));
+    // Tapping outside the fields closes the keyboard; the app bar's save is reachable either way (#56).
+    // A plain heading: the tap lands on the form's empty background, i.e. outside every field.
+    await tester.ensureVisible(find.text('Sub-tasks'));
+    await tester.tap(find.text('Sub-tasks'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+    expect(subTaskHasFocus(), isFalse);
+    await tester.tapAndSettle(find.byTooltip('Save Task'));
 
     expect(find.text('Write report'), findsOneWidget);
     await tester.tapAndSettle(find.byTooltip('Edit Task'));

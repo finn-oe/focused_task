@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
+import 'package:focused_task/core/ui/keyboard.dart';
 import 'package:focused_task/features/tasks/domain/entities/task_draft.dart';
 
 /// Target duration: preset chips, "Custom" (hours + minutes, up to 12 h) and "None".
@@ -76,6 +77,7 @@ class _DurationPickerState extends State<DurationPicker> {
             children: [
               Expanded(
                 child: TextField(
+                  onTapOutside: unfocusOnTapOutside,
                   controller: _hours,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(2)],
@@ -86,6 +88,7 @@ class _DurationPickerState extends State<DurationPicker> {
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
+                  onTapOutside: unfocusOnTapOutside,
                   controller: _minutes,
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(2)],

@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
+import 'package:focused_task/core/ui/keyboard.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
@@ -121,11 +122,14 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
                 onPressed: _delete,
               ),
             ],
+            // Reachable while the keyboard covers the bottom button (#56).
+            IconButton(key: const Key('taskFormSaveAction'), tooltip: l10n.taskFormSave, icon: const Icon(Icons.check), onPressed: _save),
           ],
         ),
         body: Form(
           key: _formKey,
           child: ListView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.all(16),
             children: [
               TaskTitleField(
@@ -140,6 +144,7 @@ class _TaskFormScreenState extends ConsumerState<TaskFormScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                onTapOutside: unfocusOnTapOutside,
                 controller: _descriptionController,
                 decoration: InputDecoration(labelText: l10n.taskFormDescriptionLabel, border: const OutlineInputBorder()),
                 maxLines: 4,

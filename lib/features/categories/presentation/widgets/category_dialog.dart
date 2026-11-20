@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/ui/category_palette.dart';
+import 'package:focused_task/core/ui/keyboard.dart';
 import 'package:focused_task/features/categories/domain/task_category.dart';
 
 /// Creates a category, or edits [category] (name and colour). Returns the category's id, or `null` if cancelled.
@@ -72,6 +73,7 @@ class _CategoryDialogState extends ConsumerState<_CategoryDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextFormField(
+              onTapOutside: unfocusOnTapOutside,
               controller: _name,
               autofocus: true,
               decoration: InputDecoration(labelText: l10n.categoriesNameLabel, border: const OutlineInputBorder()),

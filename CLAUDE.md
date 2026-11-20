@@ -79,6 +79,7 @@ Rules:
 - No hard-coded colours – use `Theme.of(context).colorScheme`. Charts: reuse `BarChart` / `HeatmapChart` from `lib/core/ui/charts/` (no chart package). No duplicated helpers – shared formatting lives in `lib/core/utils/`.
 - Use strong types; avoid `dynamic`.
 - No hard-coded user-facing strings – see *Strings*.
+- Every `TextField` / `TextFormField` sets `onTapOutside: unfocusOnTapOutside` (`lib/core/ui/keyboard.dart`), so a tap outside closes the keyboard on phones too; `test/core/ui/keyboard_test.dart` checks it. Scrollable forms use `keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag`.
 - Destructive actions (delete, cleanup) need a confirmation or undo.
 - Do not add dependencies casually. Remove unused ones.
 

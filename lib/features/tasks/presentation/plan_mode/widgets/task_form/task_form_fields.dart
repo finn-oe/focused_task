@@ -2,6 +2,7 @@ import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
+import 'package:focused_task/core/ui/keyboard.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
 /// Title with validation: a task needs a title.
@@ -16,6 +17,7 @@ class TaskTitleField extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return TextFormField(
+      onTapOutside: unfocusOnTapOutside,
       controller: controller,
       autofocus: autofocus,
       textInputAction: TextInputAction.next,

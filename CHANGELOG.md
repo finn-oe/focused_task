@@ -3,6 +3,15 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.15.1] - 2026-11-20
+
+### Added
+- A *Save* button (check mark) in the task form's app bar, reachable while the keyboard is open. (#56)
+
+### Fixed
+- Tapping outside a text field now closes the on-screen keyboard everywhere in the app (task form, sub-tasks, duration, categories, focus mode). Before, after adding sub-tasks the keyboard stayed open and covered the *Save* button. (#56)
+- Scrolling the task form or focus mode closes the keyboard. (#56)
+
 ## [1.15.0] - 2026-11-20
 
 ### Added
