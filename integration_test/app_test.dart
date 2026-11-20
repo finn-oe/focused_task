@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_screen.dart';
 import 'package:focused_task/features/sessions/data/focus_session_repository_impl.dart';
+import 'package:focused_task/features/sessions/domain/focus_session.dart';
 import 'package:focused_task/features/settings/presentation/settings_screen.dart';
 import 'package:focused_task/features/tasks/data/repositories/task_repository_impl.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
@@ -235,7 +236,12 @@ void main() {
     expect(find.text('Not reached (0 min of 30 min)'), findsOneWidget);
     await tester.tapAndSettle(find.text('Back to Plan'));
 
-    await FocusSessionRepositoryImpl(app.database).addManualTime(taskId: id, day: DateTime.now(), duration: const Duration(minutes: 30));
+    // 30 min at the very start of today: "Add time" never goes into the future, so shortly after midnight it would put
+    // part of the time on yesterday and the goal would not be reached.
+    final sessions = FocusSessionRepositoryImpl(app.database);
+    final midnight = DateTime.now().dateOnly;
+    final session = await sessions.start(taskId: id, at: midnight);
+    await sessions.end(session.id, midnight.add(const Duration(minutes: 30)), EndReason.manual);
     await tester.pumpAndSettle();
     expect(find.byTooltip('Daily goal reached: 30 min of 30 min'), findsOneWidget);
 
@@ -286,6 +292,10 @@ void main() {
   });
 
   testWidgets('intervals: a break left open by a crash is closed without asking; turned on, focus shows the next break', (tester) async {
+    // The desktop window size differs per machine (and on CI); this size keeps every control on screen.
+    tester.view.physicalSize = const Size(1000, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final app = await TestApp.start(
       tester,
       seed: (database) async {
@@ -316,6 +326,10 @@ void main() {
   });
 
   testWidgets('distractions: count one, park a thought in focus, review it on the plan and turn it into a task', (tester) async {
+    // The desktop window size differs per machine (and on CI); this size keeps every control on screen.
+    tester.view.physicalSize = const Size(1000, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     final app = await TestApp.start(tester);
     await TaskRepositoryImpl(app.database).createTask(title: 'Deep work', assignedDate: DateTime.now(), sortOrder: 'a0');
     await tester.pumpAndSettle();
