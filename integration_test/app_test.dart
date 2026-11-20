@@ -55,6 +55,8 @@ void main() {
 
     await tester.tapAndSettle(find.text('Add Task'));
     await tester.enterText(find.widgetWithText(TextFormField, 'Title'), 'Call Anna');
+    // Typing animates the title's caret back on screen; scrolling before that settles races it (flaky on Linux CI).
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(find.byKey(const Key('taskFormSchedule')), 200, scrollable: find.byType(Scrollable).first);
     expect(find.text('Not set'), findsOneWidget);
     await tester.tapAndSettle(find.byKey(const Key('taskFormSchedule')));
