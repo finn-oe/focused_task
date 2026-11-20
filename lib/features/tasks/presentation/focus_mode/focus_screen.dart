@@ -6,11 +6,12 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:focused_task/core/l10n/l10n.dart';
 import 'package:focused_task/core/providers/app_providers.dart';
 import 'package:focused_task/core/routing/app_router.dart';
+import 'package:focused_task/core/ui/keyboard.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
-import 'package:focused_task/features/breaks/domain/interval_planner.dart';
-import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/lifecycle_observer.dart';
+import 'package:focused_task/features/breaks/domain/interval_planner.dart';
 import 'package:focused_task/features/sessions/domain/focus_session.dart';
+import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_notifier.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/widgets/timer_box.dart';
 
@@ -333,6 +334,7 @@ class _MinimalFocusBody extends ConsumerWidget {
         children: [
           Center(
             child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
@@ -415,6 +417,7 @@ class _ParkThoughtFieldState extends ConsumerState<_ParkThoughtField> {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      onTapOutside: unfocusOnTapOutside,
       key: const Key('focusParkThought'),
       controller: _controller,
       focusNode: _focus,
@@ -501,6 +504,7 @@ class _QuickSubTaskFieldState extends ConsumerState<_QuickSubTaskField> {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      onTapOutside: unfocusOnTapOutside,
       controller: _controller,
       focusNode: _focus,
       textInputAction: TextInputAction.done,

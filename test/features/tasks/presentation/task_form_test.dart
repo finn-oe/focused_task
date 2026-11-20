@@ -50,6 +50,9 @@ Future<FakeTaskRepository> _openForm(WidgetTester tester, {TaskEntity? task, Siz
 
 Finder get _formList => find.byType(Scrollable).first;
 
+EditableText _editable(WidgetTester tester, String label) =>
+    tester.widget<EditableText>(find.descendant(of: find.widgetWithText(TextField, label), matching: find.byType(EditableText)));
+
 void main() {
   final today = DateTime.now().dateOnly;
 
@@ -201,5 +204,57 @@ void main() {
     expect(find.byTooltip('Edit Task'), findsOneWidget);
     expect(find.byTooltip('Move or copy'), findsOneWidget);
     expect(find.byIcon(Icons.flag), findsOneWidget, reason: 'medium priority shows a flag');
+  });
+
+  group('keyboard (#56)', () {
+    testWidgets('tapping outside the fields closes the keyboard after adding sub-tasks', (tester) async {
+      await _openForm(tester, size: const Size(400, 700));
+      final newSubTask = find.widgetWithText(TextField, 'Add sub-task');
+      await tester.scrollUntilVisible(newSubTask, 200, scrollable: _formList);
+      await tester.enterText(newSubTask, 'Outline');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+      expect(_editable(tester, 'Add sub-task').focusNode.hasFocus, isTrue);
+
+      // A plain heading: the tap lands on the form's empty background, i.e. outside every field.
+      await tester.tap(find.text('Sub-tasks'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(_editable(tester, 'Add sub-task').focusNode.hasFocus, isFalse);
+      expect(tester.testTextInput.isVisible, isFalse);
+    });
+
+    testWidgets('the app bar save works while the sub-task field has focus', (tester) async {
+      final repository = await _openForm(tester, size: const Size(400, 700));
+      await tester.enterText(find.widgetWithText(TextFormField, 'Title'), 'Write report');
+      final newSubTask = find.widgetWithText(TextField, 'Add sub-task');
+      await tester.scrollUntilVisible(newSubTask, 200, scrollable: _formList);
+      for (final title in ['Outline', 'Draft']) {
+        await tester.enterText(newSubTask, title);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pump();
+      }
+      expect(tester.testTextInput.isVisible, isTrue);
+
+      await tester.tap(find.byTooltip('Save Task'));
+      await tester.pumpAndSettle();
+
+      expect(repository.tasks.single.todos.map((todo) => todo.title), ['Outline', 'Draft']);
+      expect(find.byType(TaskFormScreen), findsNothing);
+    });
+
+    testWidgets('tapping another field moves the focus there', (tester) async {
+      await _openForm(tester);
+      await tester.tap(find.widgetWithText(TextFormField, 'Description'));
+      await tester.pump();
+      expect(_editable(tester, 'Description').focusNode.hasFocus, isTrue);
+
+      await tester.tap(find.widgetWithText(TextFormField, 'Title'));
+      await tester.pump();
+
+      expect(_editable(tester, 'Title').focusNode.hasFocus, isTrue);
+      expect(_editable(tester, 'Description').focusNode.hasFocus, isFalse);
+      expect(tester.testTextInput.isVisible, isTrue);
+    });
   });
 }

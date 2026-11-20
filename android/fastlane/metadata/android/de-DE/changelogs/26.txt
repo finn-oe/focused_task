@@ -1,0 +1,3 @@
+• Die Tastatur schließt sich, wenn du neben ein Textfeld tippst – der Speichern-Button bleibt nach dem Anlegen von Unteraufgaben erreichbar.
+• Neu: ein Speichern-Button oben im Aufgabenformular.
+• Auch Scrollen im Aufgabenformular schließt die Tastatur.

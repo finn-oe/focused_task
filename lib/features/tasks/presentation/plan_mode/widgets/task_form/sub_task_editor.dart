@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import 'package:focused_task/core/l10n/l10n.dart';
+import 'package:focused_task/core/ui/keyboard.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
 /// Inline sub-task list: type and press Enter to add (focus stays), edit in place, swipe or tap the bin to delete,
@@ -94,6 +95,7 @@ class _SubTaskEditorState extends State<SubTaskEditor> {
                     ),
                     Expanded(
                       child: TextFormField(
+                        onTapOutside: unfocusOnTapOutside,
                         initialValue: row.todo.title,
                         decoration: const InputDecoration(border: InputBorder.none, isDense: true),
                         onChanged: (value) {
@@ -117,6 +119,7 @@ class _SubTaskEditorState extends State<SubTaskEditor> {
           ],
         ),
         TextField(
+          onTapOutside: unfocusOnTapOutside,
           controller: _newController,
           focusNode: _newFocus,
           textInputAction: TextInputAction.done,
