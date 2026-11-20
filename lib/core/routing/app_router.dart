@@ -6,6 +6,7 @@ import 'package:focused_task/core/utils/date_utils.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_period.dart';
 import 'package:focused_task/features/calendar/presentation/calendar_screen.dart';
 import 'package:focused_task/features/categories/presentation/categories_screen.dart';
+import 'package:focused_task/features/settings/presentation/reminders_settings_screen.dart';
 import 'package:focused_task/features/settings/presentation/settings_screen.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/break_screen.dart';
@@ -15,6 +16,7 @@ import 'package:focused_task/features/tasks/presentation/focus_mode/focus_screen
 import 'package:focused_task/features/tasks/presentation/focus_mode/pause_screen.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/plan_screen.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/task_form_screen.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/task_schedule_screen.dart';
 import 'package:focused_task/features/tasks/presentation/stats/stats_screen.dart';
 
 /// Paths of the app's routes.
@@ -31,8 +33,14 @@ abstract final class AppRoutes {
   static const finishedForToday = '/finished-for-today';
   static const taskForm = '/task-form';
 
+  /// Start time, deadline and reminder of the task in the form (#10); returns the edited schedule.
+  static const taskSchedule = '/task-schedule';
+
   /// Category management, below [settings].
   static const categories = '/settings/categories';
+
+  /// Reminders, dates and notifications (#10), below [settings].
+  static const reminders = '/settings/reminders';
 
   /// Query parameter of [plan] with the shown day (`YYYY-MM-DD`); missing = today.
   static const dateParameter = 'date';
@@ -105,7 +113,10 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.plan}) {
               GoRoute(
                 path: AppRoutes.settings,
                 builder: (context, state) => const SettingsScreen(),
-                routes: [GoRoute(path: 'categories', builder: (context, state) => const CategoriesScreen())],
+                routes: [
+                  GoRoute(path: 'categories', builder: (context, state) => const CategoriesScreen()),
+                  GoRoute(path: 'reminders', builder: (context, state) => const RemindersSettingsScreen()),
+                ],
               ),
             ],
           ),
@@ -131,6 +142,12 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.plan}) {
       GoRoute(
         path: AppRoutes.taskForm,
         builder: (context, state) => TaskFormScreen(task: state.extra as TaskEntity?),
+      ),
+      GoRoute(
+        path: AppRoutes.taskSchedule,
+        builder: (context, state) => TaskScheduleScreen(
+          request: state.extra as TaskScheduleRequest? ?? TaskScheduleRequest(schedule: TaskSchedule.none, day: DateTime.now().dateOnly),
+        ),
       ),
     ],
   );

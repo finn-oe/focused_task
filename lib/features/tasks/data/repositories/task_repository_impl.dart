@@ -63,7 +63,9 @@ class TaskRepositoryImpl implements ITaskRepository {
     TaskPriority priority = TaskPriority.low,
     int? targetDurationMinutes,
     int? categoryId,
+    TaskSchedule schedule = TaskSchedule.none,
   }) {
+    final times = _scheduleCompanion(schedule);
     return _database.createTask(
       TasksCompanion.insert(
         title: title,
@@ -73,8 +75,29 @@ class TaskRepositoryImpl implements ITaskRepository {
         priority: Value(priority.value),
         targetDurationMinutes: Value(targetDurationMinutes),
         categoryId: Value(categoryId),
+        startMinute: times.startMinute,
+        dueDate: times.dueDate,
+        dueMinute: times.dueMinute,
+        reminderMinutes: times.reminderMinutes,
+        reminderOff: times.reminderOff,
       ),
     );
+  }
+
+  static TasksCompanion _scheduleCompanion(TaskSchedule schedule) {
+    final due = schedule.dueDate;
+    return TasksCompanion(
+      startMinute: Value(schedule.startMinute),
+      dueDate: Value(due?.dateOnly),
+      dueMinute: Value(due == null ? null : schedule.dueMinute),
+      reminderMinutes: Value(schedule.reminderMinutes),
+      reminderOff: Value(schedule.reminderOff),
+    );
+  }
+
+  @override
+  Stream<List<TaskEntity>> watchScheduledOpenTasks() {
+    return _database.watchScheduledOpenTasks().map((tasks) => tasks.map(_taskOnlyToEntity).toList(growable: false));
   }
 
   @override
@@ -86,6 +109,7 @@ class TaskRepositoryImpl implements ITaskRepository {
     DateTime? assignedDate,
     TaskPriority? priority,
     required int? categoryId,
+    TaskSchedule? schedule,
   }) {
     return _database.updateTaskDetails(
       taskId: taskId,
@@ -95,6 +119,7 @@ class TaskRepositoryImpl implements ITaskRepository {
       assignedDate: assignedDate,
       priority: priority?.value,
       categoryId: categoryId,
+      schedule: schedule == null ? const TasksCompanion() : _scheduleCompanion(schedule),
     );
   }
 
@@ -176,6 +201,7 @@ class TaskRepositoryImpl implements ITaskRepository {
       targetDurationMinutes: task.targetDurationMinutes,
       lastSeenAt: data.openSession?.lastSeenAt,
       categoryId: task.categoryId,
+      schedule: TaskSchedule(startMinute: task.startMinute, dueDate: task.dueDate, dueMinute: task.dueMinute, reminderMinutes: task.reminderMinutes, reminderOff: task.reminderOff),
       todos: data.todos.map((todo) => TaskTodoEntity(id: todo.id, title: todo.title, isCompleted: todo.isCompleted, sortOrder: todo.sortOrder)).toList(growable: false),
     );
   }

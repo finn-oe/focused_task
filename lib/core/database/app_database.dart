@@ -35,7 +35,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration {
@@ -55,7 +55,8 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('ALTER TABLE tasks ADD COLUMN last_seen_at INTEGER NULL');
         }
         if (from < 5) {
-          // Rebuilds `tasks` in the current schema, so `category_id` (schema 6) already exists afterwards.
+          // Rebuilds `tasks` in the current schema, so `category_id` (schema 6) and the times (schema 8) already exist
+          // afterwards.
           await _migrateToSessionLog(m);
         }
         if (from < 6) {
@@ -64,6 +65,14 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 7) {
           await m.createTable(inboxItems);
+        }
+        // Start/due times and reminders (#10); existing tasks have none. Rebuilt databases (from < 5) have them already.
+        if (from < 8 && from >= 5) {
+          await m.addColumn(tasks, tasks.startMinute);
+          await m.addColumn(tasks, tasks.dueDate);
+          await m.addColumn(tasks, tasks.dueMinute);
+          await m.addColumn(tasks, tasks.reminderMinutes);
+          await m.addColumn(tasks, tasks.reminderOff);
         }
       },
       beforeOpen: (details) async {
@@ -101,7 +110,7 @@ class AppDatabase extends _$AppDatabase {
       }
     }
 
-    await m.alterTable(TableMigration(tasks, newColumns: [tasks.categoryId]));
+    await m.alterTable(TableMigration(tasks, newColumns: [tasks.categoryId, tasks.startMinute, tasks.dueDate, tasks.dueMinute, tasks.reminderMinutes, tasks.reminderOff]));
   }
 
   Expression<bool> _isInDay(Tasks table, DateTime day) {
@@ -231,6 +240,14 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
+  /// Open tasks with a start time or a deadline (#10), without sub-tasks.
+  Stream<List<Task>> watchScheduledOpenTasks() {
+    return (select(tasks)
+          ..where((task) => task.isCompleted.equals(false) & (task.startMinute.isNotNull() | task.dueDate.isNotNull()))
+          ..orderBy([(task) => OrderingTerm.asc(task.assignedDate), (task) => OrderingTerm.asc(task.sortOrder)]))
+        .watch();
+  }
+
   Future<TaskWithTodos?> getTaskById(int taskId) async {
     final task = await (select(tasks)..where((t) => t.id.equals(taskId))).getSingleOrNull();
     if (task == null) return null;
@@ -252,9 +269,15 @@ class AppDatabase extends _$AppDatabase {
     DateTime? assignedDate,
     int? priority,
     required int? categoryId,
+    TasksCompanion schedule = const TasksCompanion(),
   }) {
     return (update(tasks)..where((t) => t.id.equals(taskId))).write(
       TasksCompanion(
+        startMinute: schedule.startMinute,
+        dueDate: schedule.dueDate,
+        dueMinute: schedule.dueMinute,
+        reminderMinutes: schedule.reminderMinutes,
+        reminderOff: schedule.reminderOff,
         title: Value(title),
         categoryId: Value(categoryId),
         description: Value(description),

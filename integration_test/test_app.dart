@@ -24,7 +24,12 @@ class TestApp {
   static Future<TestApp> start(WidgetTester tester, {Map<String, Object> preferences = const {'settings.locale': 'en'}, Future<void> Function(AppDatabase database)? seed}) async {
     SharedPreferences.setMockInitialValues(preferences);
     final app = TestApp._(AppDatabase(NativeDatabase.memory()), await SharedPreferences.getInstance(), FakeTargetAlarm());
-    addTearDown(app.database.close);
+    addTearDown(() async {
+      // Unmount first: a flow that failed midway leaves the app's queries running, and close() would wait for them
+      // forever, so every later flow (and the CI job) hung after one failure.
+      await tester.pumpWidget(const SizedBox());
+      await app.database.close().timeout(const Duration(seconds: 10));
+    });
     await seed?.call(app.database);
     await app._pump(tester);
     return app;
@@ -48,20 +53,25 @@ class TestApp {
         child: const FocusedTaskApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.settle();
   }
 }
 
 /// Small helpers shared by the flows.
 extension FlowActions on WidgetTester {
+  /// [pumpAndSettle] that gives up after 30 s instead of 10 min, so a hang fails with the stack of the step that hangs.
+  Future<void> settle() {
+    return pumpAndSettle(const Duration(milliseconds: 100), EnginePhase.sendSemanticsUpdate, const Duration(seconds: 30));
+  }
+
   Future<void> tapAndSettle(Finder finder) async {
     await ensureVisible(finder);
     await tap(finder);
-    await pumpAndSettle();
+    await settle();
   }
 
   Future<void> enterTextInField(String label, String text) async {
     await enterText(find.widgetWithText(TextField, label), text);
-    await pumpAndSettle();
+    await settle();
   }
 }

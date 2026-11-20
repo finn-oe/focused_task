@@ -3,6 +3,19 @@
 All notable changes to Focused Task. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [Semantic Versioning](https://semver.org/).
 Every merged pull request is released as its own version (see "Releases" in `CLAUDE.md`).
 
+## [1.18.0] - 2026-11-20
+
+### Added
+- **Start and due times** (optional): in the task form, "Schedule & reminder" opens a sub-page with a start time on the task's day, a due date with an optional time (default 17:00) and the reminder. Times never change the order of the plan; moving or rolling over a task keeps its start time and due date. (#10)
+- **Task reminders**: before the start time, or – without one – before the deadline, early enough for the work still left on the estimate. Default 15 min (adjustable), per task 5–60 min or off; the sub-page previews when it comes. A reminder whose time has passed while the start or deadline is still ahead comes at once, only once. (#10)
+- Task tiles show the start time and the deadline ("Due Fri", in the warning colour within a day and the error colour when overdue); today's plan shows "2 tasks overdue" with their list. (#10)
+- **Reminders & dates** settings page: task reminders, default lead time and due time, an optional **"Plan your day"** reminder on working days without tasks, and an optional **inactivity reminder** during working hours ("Ready for the next focus block?" after 60 min without focus by default). (#10)
+
+### Changed
+- The task form shows the basics first: title, day, estimate, category, priority, sub-tasks, description; the times are one tap away. (#10)
+- The notification settings (permission hint, test notification) moved to the new "Reminders & dates" page. (#10)
+- Database schema version 8 (new optional columns on `tasks`). Existing data is kept. (#10)
+
 ## [1.17.0] - 2026-11-20
 
 ### Added

@@ -1214,4 +1214,183 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get statsParkedThoughtReviewed => 'Durchgesehen';
+
+  @override
+  String get taskFormSchedule => 'Zeitplan & Erinnerung';
+
+  @override
+  String get taskFormScheduleNotSet => 'Nicht festgelegt';
+
+  @override
+  String taskScheduleStart(String time) {
+    return 'Start $time';
+  }
+
+  @override
+  String taskScheduleDue(String date) {
+    return 'Fällig $date';
+  }
+
+  @override
+  String taskScheduleReminderBefore(String duration) {
+    return '$duration vorher';
+  }
+
+  @override
+  String get taskScheduleReminderOff => 'Keine Erinnerung';
+
+  @override
+  String get taskScheduleTitle => 'Zeitplan & Erinnerung';
+
+  @override
+  String get taskScheduleStartTime => 'Startzeit';
+
+  @override
+  String taskScheduleStartHint(String day) {
+    return 'Am Tag der Aufgabe ($day)';
+  }
+
+  @override
+  String get taskScheduleNone => 'Keine';
+
+  @override
+  String get taskScheduleDueDate => 'Fälligkeitsdatum';
+
+  @override
+  String get taskScheduleDueTime => 'Uhrzeit der Frist';
+
+  @override
+  String taskScheduleDueTimeDefault(String time) {
+    return 'Standard ($time)';
+  }
+
+  @override
+  String get taskScheduleClear => 'Entfernen';
+
+  @override
+  String get taskScheduleReminder => 'Erinnerung';
+
+  @override
+  String taskScheduleReminderDefault(String duration) {
+    return 'Standard ($duration)';
+  }
+
+  @override
+  String get taskScheduleReminderOffOption => 'Aus';
+
+  @override
+  String taskScheduleReminderAt(String time) {
+    return 'Erinnerung um $time';
+  }
+
+  @override
+  String get taskScheduleReminderNow => 'Der Zeitpunkt ist schon vorbei – du wirst sofort erinnert.';
+
+  @override
+  String get taskScheduleReminderNeedsTime => 'Lege eine Startzeit oder ein Fälligkeitsdatum fest, um erinnert zu werden.';
+
+  @override
+  String get taskScheduleReminderDueHint => 'Vor der Frist – so früh, dass die noch offene geschätzte Zeit reicht.';
+
+  @override
+  String get taskScheduleRemindersDisabled => 'Aufgaben-Erinnerungen sind in den Einstellungen ausgeschaltet.';
+
+  @override
+  String taskStartsAt(String time) {
+    return 'Beginnt um $time';
+  }
+
+  @override
+  String planOverdueBanner(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count Aufgaben überfällig', one: '1 Aufgabe überfällig');
+    return '$_temp0';
+  }
+
+  @override
+  String get planOverdueShow => 'Anzeigen';
+
+  @override
+  String get planOverdueSheetTitle => 'Überfällige Aufgaben';
+
+  @override
+  String planOverduePlannedFor(String day) {
+    return 'Geplant für $day';
+  }
+
+  @override
+  String get settingsReminders => 'Erinnerungen & Termine';
+
+  @override
+  String get settingsRemindersHint => 'Aufgaben-Erinnerungen, Tagesplanung, Inaktivität und Benachrichtigungen';
+
+  @override
+  String get settingsTaskReminders => 'Aufgaben-Erinnerungen';
+
+  @override
+  String get settingsTaskRemindersHint => 'Vor der Startzeit oder Frist einer Aufgabe';
+
+  @override
+  String get settingsDefaultLead => 'Standard-Erinnerung';
+
+  @override
+  String get settingsDefaultDueTime => 'Standard-Uhrzeit für Fristen';
+
+  @override
+  String get settingsDefaultDueTimeHint => 'Für Fristen ohne Uhrzeit';
+
+  @override
+  String get settingsDailyPlanning => 'Tagesplanung';
+
+  @override
+  String get settingsDailyPlanningHint => '„Plane deinen Tag“ an Arbeitstagen, wenn noch nichts geplant ist';
+
+  @override
+  String get settingsReminderTime => 'Uhrzeit';
+
+  @override
+  String get settingsInactivity => 'Erinnerung bei Inaktivität';
+
+  @override
+  String get settingsInactivityHint => 'Während der Arbeitszeit an Arbeitstagen, wenn länger keine Fokus-Sitzung lief';
+
+  @override
+  String get settingsWorkStart => 'Arbeitszeit von';
+
+  @override
+  String get settingsWorkEnd => 'Arbeitszeit bis';
+
+  @override
+  String get settingsIdleTime => 'Erinnern nach';
+
+  @override
+  String get settingsWorkingDaysFromGoals => 'Die Arbeitstage legst du in den Einstellungen unter Ziele fest.';
+
+  @override
+  String reminderTaskStartBody(String time) {
+    return 'Beginnt um $time';
+  }
+
+  @override
+  String reminderTaskDueBody(String time) {
+    return 'Fällig $time';
+  }
+
+  @override
+  String get reminderPlanDayTitle => 'Plane deinen Tag';
+
+  @override
+  String get reminderPlanDayBody => 'Für heute ist noch nichts geplant. Wähle die Aufgaben, auf die du dich konzentrieren willst.';
+
+  @override
+  String get reminderInactivityTitle => 'Bereit für den nächsten Fokus-Block?';
+
+  @override
+  String reminderInactivityBody(String duration) {
+    return 'Seit $duration keine Fokus-Sitzung.';
+  }
+
+  @override
+  String taskOverdueDue(String date) {
+    return 'Überfällig, war fällig $date';
+  }
 }

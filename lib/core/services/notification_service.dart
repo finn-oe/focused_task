@@ -23,6 +23,18 @@ abstract final class NotificationIds {
 
   /// The break is over (#27).
   static const breakOver = 5;
+
+  /// "Plan your day" (#10).
+  static const dailyPlanning = 6;
+
+  /// "Ready for the next focus block?" (#10).
+  static const inactivity = 7;
+
+  /// First id of the task reminders (#10); each task gets its own above it.
+  static const _taskReminderBase = 100000;
+
+  /// The reminder of task [taskId] (#10).
+  static int taskReminder(int taskId) => _taskReminderBase + taskId;
 }
 
 /// A system notification. Texts are already localized.

@@ -1211,4 +1211,183 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get statsParkedThoughtReviewed => 'Reviewed';
+
+  @override
+  String get taskFormSchedule => 'Schedule & reminder';
+
+  @override
+  String get taskFormScheduleNotSet => 'Not set';
+
+  @override
+  String taskScheduleStart(String time) {
+    return 'Start $time';
+  }
+
+  @override
+  String taskScheduleDue(String date) {
+    return 'Due $date';
+  }
+
+  @override
+  String taskScheduleReminderBefore(String duration) {
+    return '$duration before';
+  }
+
+  @override
+  String get taskScheduleReminderOff => 'No reminder';
+
+  @override
+  String get taskScheduleTitle => 'Schedule & reminder';
+
+  @override
+  String get taskScheduleStartTime => 'Start time';
+
+  @override
+  String taskScheduleStartHint(String day) {
+    return 'On the task\'s day ($day)';
+  }
+
+  @override
+  String get taskScheduleNone => 'None';
+
+  @override
+  String get taskScheduleDueDate => 'Due date';
+
+  @override
+  String get taskScheduleDueTime => 'Due time';
+
+  @override
+  String taskScheduleDueTimeDefault(String time) {
+    return 'Default ($time)';
+  }
+
+  @override
+  String get taskScheduleClear => 'Remove';
+
+  @override
+  String get taskScheduleReminder => 'Reminder';
+
+  @override
+  String taskScheduleReminderDefault(String duration) {
+    return 'Default ($duration)';
+  }
+
+  @override
+  String get taskScheduleReminderOffOption => 'Off';
+
+  @override
+  String taskScheduleReminderAt(String time) {
+    return 'Reminder at $time';
+  }
+
+  @override
+  String get taskScheduleReminderNow => 'The reminder time has passed – you\'ll be reminded right away.';
+
+  @override
+  String get taskScheduleReminderNeedsTime => 'Set a start time or a due date to get a reminder.';
+
+  @override
+  String get taskScheduleReminderDueHint => 'Before the deadline, early enough for the time still left on the estimate.';
+
+  @override
+  String get taskScheduleRemindersDisabled => 'Task reminders are turned off in the settings.';
+
+  @override
+  String taskStartsAt(String time) {
+    return 'Starts at $time';
+  }
+
+  @override
+  String planOverdueBanner(int count) {
+    String _temp0 = intl.Intl.pluralLogic(count, locale: localeName, other: '$count tasks overdue', one: '1 task overdue');
+    return '$_temp0';
+  }
+
+  @override
+  String get planOverdueShow => 'Show';
+
+  @override
+  String get planOverdueSheetTitle => 'Overdue tasks';
+
+  @override
+  String planOverduePlannedFor(String day) {
+    return 'Planned for $day';
+  }
+
+  @override
+  String get settingsReminders => 'Reminders & dates';
+
+  @override
+  String get settingsRemindersHint => 'Task reminders, daily planning, inactivity and notifications';
+
+  @override
+  String get settingsTaskReminders => 'Task reminders';
+
+  @override
+  String get settingsTaskRemindersHint => 'Before a task\'s start time or deadline';
+
+  @override
+  String get settingsDefaultLead => 'Default reminder';
+
+  @override
+  String get settingsDefaultDueTime => 'Default due time';
+
+  @override
+  String get settingsDefaultDueTimeHint => 'For deadlines with only a date';
+
+  @override
+  String get settingsDailyPlanning => 'Daily planning';
+
+  @override
+  String get settingsDailyPlanningHint => '\"Plan your day\" on working days when nothing is planned yet';
+
+  @override
+  String get settingsReminderTime => 'Time';
+
+  @override
+  String get settingsInactivity => 'Inactivity reminder';
+
+  @override
+  String get settingsInactivityHint => 'During working hours on working days, when no focus session ran for a while';
+
+  @override
+  String get settingsWorkStart => 'Working hours from';
+
+  @override
+  String get settingsWorkEnd => 'Working hours until';
+
+  @override
+  String get settingsIdleTime => 'Remind after';
+
+  @override
+  String get settingsWorkingDaysFromGoals => 'Working days are set under Goals in the settings.';
+
+  @override
+  String reminderTaskStartBody(String time) {
+    return 'Starts at $time';
+  }
+
+  @override
+  String reminderTaskDueBody(String time) {
+    return 'Due $time';
+  }
+
+  @override
+  String get reminderPlanDayTitle => 'Plan your day';
+
+  @override
+  String get reminderPlanDayBody => 'Nothing is planned for today yet. Pick the tasks you want to focus on.';
+
+  @override
+  String get reminderInactivityTitle => 'Ready for the next focus block?';
+
+  @override
+  String reminderInactivityBody(String duration) {
+    return 'No focus session for $duration.';
+  }
+
+  @override
+  String taskOverdueDue(String date) {
+    return 'Overdue, was due $date';
+  }
 }

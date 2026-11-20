@@ -2,7 +2,16 @@ import 'package:focused_task/features/tasks/domain/entities/task.dart';
 
 /// The editable values of a task in the form. Value equality tells whether there are unsaved changes.
 class TaskDraft {
-  const TaskDraft({required this.title, required this.description, required this.date, required this.targetMinutes, required this.priority, required this.todos, this.categoryId});
+  const TaskDraft({
+    required this.title,
+    required this.description,
+    required this.date,
+    required this.targetMinutes,
+    required this.priority,
+    required this.todos,
+    this.categoryId,
+    this.schedule = TaskSchedule.none,
+  });
 
   /// An empty task on [date], optionally in [categoryId].
   factory TaskDraft.empty(DateTime date, {int? categoryId}) {
@@ -18,6 +27,7 @@ class TaskDraft {
       priority: task.priority,
       todos: List.unmodifiable(task.todos),
       categoryId: task.categoryId,
+      schedule: task.schedule,
     );
   }
 
@@ -34,6 +44,9 @@ class TaskDraft {
   /// `null` = no category.
   final int? categoryId;
 
+  /// Start time, deadline and reminder (#10), edited on the form's sub-page.
+  final TaskSchedule schedule;
+
   bool get hasTitle => title.trim().isNotEmpty;
 
   TaskDraft copyWith({
@@ -46,6 +59,7 @@ class TaskDraft {
     List<TaskTodoEntity>? todos,
     int? categoryId,
     bool clearCategory = false,
+    TaskSchedule? schedule,
   }) {
     return TaskDraft(
       title: title ?? this.title,
@@ -55,6 +69,7 @@ class TaskDraft {
       priority: priority ?? this.priority,
       todos: todos == null ? this.todos : List.unmodifiable(todos),
       categoryId: clearCategory ? null : categoryId ?? this.categoryId,
+      schedule: schedule ?? this.schedule,
     );
   }
 
@@ -77,9 +92,10 @@ class TaskDraft {
         other.targetMinutes == targetMinutes &&
         other.priority == priority &&
         other.categoryId == categoryId &&
+        other.schedule == schedule &&
         _sameTodos(other.todos, todos);
   }
 
   @override
-  int get hashCode => Object.hash(title.trim(), description.trim(), date.year, date.month, date.day, targetMinutes, priority, categoryId, todos.length);
+  int get hashCode => Object.hash(title.trim(), description.trim(), date.year, date.month, date.day, targetMinutes, priority, categoryId, schedule, todos.length);
 }

@@ -160,7 +160,16 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
           const _GoalsSection(),
           const SizedBox(height: 24),
-          const _NotificationsSection(),
+          Text(l10n.settingsNotifications, style: textTheme.titleLarge),
+          ListTile(
+            key: const Key('settingsReminders'),
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.notifications_outlined),
+            title: Text(l10n.settingsReminders),
+            subtitle: Text(l10n.settingsRemindersHint),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.go(AppRoutes.reminders),
+          ),
         ],
       ),
     );
@@ -335,49 +344,6 @@ class _GoalsSection extends ConsumerWidget {
                 onSelected: goal.workingDays.length == 1 && goal.workingDays.contains(weekday) ? null : (selected) => notifier.setWorkingDay(weekday, selected),
               ),
           ],
-        ),
-      ],
-    );
-  }
-}
-
-/// Hint when notifications were refused, and a test notification to check they arrive.
-class _NotificationsSection extends ConsumerWidget {
-  const _NotificationsSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final denied = ref.watch(settingsNotifierProvider.select((settings) => settings.notificationsDenied));
-    final notifier = ref.read(settingsNotifierProvider.notifier);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(l10n.settingsNotifications, style: theme.textTheme.titleLarge),
-        const SizedBox(height: 8),
-        if (denied)
-          Card(
-            elevation: 0,
-            color: theme.colorScheme.errorContainer,
-            child: ListTile(
-              leading: Icon(Icons.notifications_off_outlined, color: theme.colorScheme.onErrorContainer),
-              title: Text(l10n.settingsNotificationsDenied, style: TextStyle(color: theme.colorScheme.onErrorContainer)),
-              trailing: TextButton(onPressed: notifier.requestNotificationPermission, child: Text(l10n.settingsNotificationsAskAgain)),
-            ),
-          ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.settingsNotificationsTest),
-          subtitle: Text(l10n.settingsNotificationsTestHint),
-          trailing: OutlinedButton(
-            onPressed: () async {
-              await notifier.sendTestNotification();
-              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.settingsNotificationsTestScheduled)));
-            },
-            child: Text(l10n.settingsNotificationsTestButton),
-          ),
         ),
       ],
     );

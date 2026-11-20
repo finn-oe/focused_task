@@ -14,6 +14,7 @@ TaskEntity buildTask({
   int? targetDurationMinutes,
   List<TaskTodoEntity> todos = const [],
   int? categoryId,
+  TaskSchedule schedule = TaskSchedule.none,
 }) {
   return TaskEntity(
     id: id,
@@ -28,5 +29,6 @@ TaskEntity buildTask({
     targetDurationMinutes: targetDurationMinutes,
     todos: todos,
     categoryId: categoryId,
+    schedule: schedule,
   );
 }

@@ -1,0 +1,4 @@
+• Optional start and due times for tasks, with a reminder before the start or early enough to finish before the deadline.
+• Tasks show their start time and deadline; overdue tasks are easy to spot.
+• New “Reminders & dates” settings: default reminder, “Plan your day” and a gentle nudge when you haven’t focused for a while.
+• The task form now shows the basics first.

@@ -10,6 +10,7 @@ import 'package:focused_task/core/ui/category_palette.dart';
 import 'package:focused_task/features/tasks/presentation/focus_mode/focus_request.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_form/task_form_fields.dart';
 import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_move_feedback.dart';
+import 'package:focused_task/features/tasks/presentation/plan_mode/widgets/task_schedule_chips.dart';
 import 'package:focused_task/features/tasks/domain/entities/task.dart';
 import 'package:focused_task/core/utils/duration_extensions.dart';
 import 'package:focused_task/core/utils/date_utils.dart';
@@ -170,7 +171,13 @@ class TaskListItem extends ConsumerWidget {
             ),
           ],
         ),
-        subtitle: Text(task.description ?? l10n.taskNoDescription, style: isCompleted ? TextStyle(color: colorScheme.onSurfaceVariant) : null),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(task.description ?? l10n.taskNoDescription, style: isCompleted ? TextStyle(color: colorScheme.onSurfaceVariant) : null),
+            TaskScheduleChips(task: task),
+          ],
+        ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
